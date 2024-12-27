@@ -1,0 +1,16 @@
+
+.vscode/
+
+
+#build file
+bin/
+
+obj/
+
+#Environments
+appsettings.*.json
+appsettings.json
+
+
+
+

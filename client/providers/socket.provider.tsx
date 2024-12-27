@@ -14,22 +14,22 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
-  useEffect(() => {
-    const socket = io('http://localhost:8080');
-    socketRef.current = socket;
+  // useEffect(() => {
+  //   const socket = io('http://localhost:8080');
+  //   socketRef.current = socket;
 
-    socket.on('connect', () => {
-      setIsConnected(true); 
-    });
+  //   socket.on('connect', () => {
+  //     setIsConnected(true); 
+  //   });
 
-    socket.on('disconnect', () => {
-      setIsConnected(false);
-    });
+  //   socket.on('disconnect', () => {
+  //     setIsConnected(false);
+  //   });
 
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
+  //   return () => {
+  //     socket.disconnect();
+  //   };
+  // }, []);
 
   const on = (event: string, callback: (...args: any[]) => void) => {
     socketRef.current?.on(event, callback);
@@ -52,7 +52,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         off,
       }}
     >
-      {isConnected ? children : null}
+      {children}
     </SocketContext.Provider>
   );
 };
