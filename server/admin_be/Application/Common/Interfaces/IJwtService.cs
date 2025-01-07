@@ -1,13 +1,14 @@
 
 
+using Application.Dtos.Account;
 using Domain.Entities;
 
 namespace Application.Identities
 {
     public interface IJwtService
     {
-        string generateAccessToken(AccountEntity account);
-        string generateRefreshToken(AccountEntity account);
+        string generateAccessToken(AccountDto ccount);
+        string generateRefreshToken(AccountDto account);
 
     }
 }

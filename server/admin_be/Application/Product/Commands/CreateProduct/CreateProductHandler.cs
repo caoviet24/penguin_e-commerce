@@ -14,7 +14,7 @@ namespace Application.Product.Commands.CreateProductCommand
     {
         public string product_name { get; set; } = null!;
         public string image { get; set; } = null!;
-        public double price_sale { get; set; }
+        public double sale_price { get; set; }
         public double promotional_price { get; set; }
         public int stock_quantity { get; set; }
         public string color { get; set; } = null!;
@@ -23,6 +23,7 @@ namespace Application.Product.Commands.CreateProductCommand
     }
     public class CreateProductCommand : IRequest<ProductDto>
     {
+        public string booth_id { get; set; } = null!;
         public string product_desc { get; set; } = null!;
         public string category_detail_id { get; set; } = null!;
         public List<CreateProductDetailCommand> list_product_detail { get; set; } = new List<CreateProductDetailCommand>();
@@ -33,14 +34,18 @@ namespace Application.Product.Commands.CreateProductCommand
         {
             try
             {
-                var newProduct = await dbHelper.QueryProceduceByUserAsync<ProductDto>(
+                var newProduct = await dbHelper.QueryProceduceSingleDataAsync<ProductDto>(
                     "sp_create_product",
                     new
                     {
                         product_id = Guid.NewGuid().ToString(),
                         product_desc = request.product_desc,
                         status = StatusProduct.Inactive,
-                        category_detail_id = request.category_detail_id
+                        category_detail_id = request.category_detail_id,
+                        created_at = DateTime.UtcNow,
+                        booth_id = request.booth_id,
+                        last_updated = DateTime.UtcNow,
+                        updated_by = request.booth_id
                     }
                 );
 
@@ -51,6 +56,7 @@ namespace Application.Product.Commands.CreateProductCommand
 
                 foreach (var item in request.list_product_detail)
                 {
+
 
                     string _sizes = string.Join(",", item.sizes);
 
@@ -63,12 +69,12 @@ namespace Application.Product.Commands.CreateProductCommand
                             image = item.image,
                             color = item.color,
                             size = _sizes,
-                            sale_price = item.price_sale,
+                            sale_price = item.sale_price,
                             promotional_price = item.promotional_price,
                             sale_quantity = 0,
                             stock_quantity = item.stock_quantity,
-                            created_at = DateTime.Now,
-                            updated_at = DateTime.Now,
+                            created_at = DateTime.UtcNow,
+                            updated_at = DateTime.UtcNow,
                             product_id = newProduct.Id
                         }
                     );

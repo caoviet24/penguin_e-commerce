@@ -30,12 +30,15 @@ namespace Application.MyBooth.Queries.GetBoothInactive
                 commandType: CommandType.StoredProcedure
             );
 
+            var data = boothData.Read<BoothDto>().ToList();
+            var total = boothData.ReadSingle<int>();
+
             return new ResponDataDto
             {
-                total_record = boothData.Read<int>().FirstOrDefault(),
+                total_record = total,
                 page_number = request.page_number,
                 page_size = request.page_size,
-                data = boothData.Read<BoothDto>().ToList()
+                data = data
             };
         }
     }

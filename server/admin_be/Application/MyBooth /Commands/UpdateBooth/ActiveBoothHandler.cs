@@ -17,7 +17,7 @@ namespace Application.MyBooth .Commands.UpdateBooth
     {
         public async Task<BoothDto> Handle(ActiveBoothCommand request, CancellationToken cancellationToken)
         {
-            var data = await dbHelper.QueryProceduceByUserAsync<BoothDto>
+            var data = await dbHelper.ExecuteUpdateProduceByUserAsync<BoothDto>
             (
                 "sp_active_booth_by_id",
                 new

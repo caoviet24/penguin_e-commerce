@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Application.Common.Dtos;
+using Application.Interface;
+using Dapper;
 using Domain.Enums;
 using MediatR;
 using WebApi.DBHelper;
@@ -13,60 +16,58 @@ namespace Application.OrderItem.Commands.CreateOrderItem
     public class CreateOrderItemCommand : IRequest<OrderItemDto>
     {
         public string seller_id { get; set; } = null!;
-        public string pay_method { get; set; } = null!;
-        public List<CreateOrderItemDetailCommand> list_order_item_detail = null!;
+        public string product_detail_id { get; set; } = null!;
+        public int quantity { get; set; }
+        public string size { get; set; } = null!;
+        public string color { get; set; } = null!;
     }
-    public class CreateOrderItemHandler(IDbHelper dbHelper) : IRequestHandler<CreateOrderItemCommand, OrderItemDto>
+    public class CreateOrderItemHandler(IDbConnection dbConnection, IUser user) : IRequestHandler<CreateOrderItemCommand, OrderItemDto>
     {
         public async Task<OrderItemDto> Handle(CreateOrderItemCommand request, CancellationToken cancellationToken)
         {
-            var orderData = await dbHelper.QueryProceduceByUserAsync<OrderItemDto>
+            var orderData = await dbConnection.QueryMultipleAsync
             (
                 "sp_create_order_item",
                 new
                 {
-                    order_item = Guid.NewGuid().ToString(),
-                    status_order = StatusOrderItem.waiting,
-                    pay_method = request.pay_method,
-                    total_order = 0,
+                    order_id = Guid.NewGuid().ToString(),
                     seller_id = request.seller_id,
-                }
+                    buyer_id = user.getCurrentUser(),
+                    product_detail_id = request.product_detail_id,
+                    quantity = request.quantity,
+                    size = request.size,
+                    color = request.color,
+                    created_at = DateTime.UtcNow,
+                    updated_by = user.getCurrentUser(),
+                    last_updated = DateTime.UtcNow,
+                },
+                commandType: CommandType.StoredProcedure
             );
 
-            
+            Dictionary<string, OrderItemDto> orderDic = new Dictionary<string, OrderItemDto>();
 
-            foreach (var req in orderData.list_order_item_detail)
-            {
-                var orderDetailData = await dbHelper.QueryProceduceSingleDataAsync<OrderItemDetailDto>
-                (
-                    "sp_create_order_detail_item",
-                    new
-                    {
-                        order_detail_id = Guid.NewGuid().ToString(),
-                        product_detail_id = req.product_detail_id,
-                        quantity = req.quantity,
-                        size = req.size,
-                        color = req.color,
-                        order_id = orderData.Id
-                    }
-                );
-
-                orderData.total_order += (req.quantity * orderDetailData.sale_price);
-
-                orderData.list_order_item_detail.Add(orderDetailData);
-            }
-
-              await dbHelper.QueryProceduceSingleDataAsync<OrderItemDto>
-            (
-                "sp_update_total_order_by_Id",
-                new
+            orderData.Read<OrderItemDto, ProductDetailDto, OrderItemDto>(
+                (ord, prod) => 
                 {
-                    order_id = orderData.Id,
-                    total_order = orderData.total_order
-                }
+                    if(!orderDic.TryGetValue(ord.Id, out var entry))
+                    {
+                        entry = ord;
+                        orderDic.Add(entry.Id, entry);
+                    }
+
+                    if(prod.product_name != null)
+                    {
+                        entry.product_detail = prod;
+                    }
+
+                    return entry;
+
+                },
+                splitOn: "product_detail_id"
             );
 
-            return orderData;
+
+            return orderDic.Values.First();
         }
     }
 }

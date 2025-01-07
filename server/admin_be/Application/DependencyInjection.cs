@@ -3,6 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using MediatR;
 using WebApi.DBHelper;
 using FluentValidation;
+using Application.Common.Interfaces;
+using Application.Auth;
 
 namespace Application
 {
@@ -10,6 +12,7 @@ namespace Application
     {
         public static IServiceCollection AddApplicationService(this IServiceCollection service)
         {
+            service.AddScoped<IAuthService, AuthService>();
 
             service.AddMediatR(cfg =>
             {

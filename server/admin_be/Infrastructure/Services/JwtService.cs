@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Application.Dtos.Account;
 using Application.Identities;
 using Domain.Entities;
 using Microsoft.Extensions.Configuration;
@@ -18,7 +19,7 @@ namespace Infrastructure.Services
         {
             _configuration = configuration;
         }
-        public string generateAccessToken(AccountEntity account)
+        public string generateAccessToken(AccountDto account)
         {
             var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_configuration["Jwt:AccessKey"]));
             List<Claim> claims = new List<Claim>
@@ -41,7 +42,7 @@ namespace Infrastructure.Services
             var tokenString = tokenHandler.CreateToken(token);
             return tokenHandler.WriteToken(tokenString);
         }
-        public string generateRefreshToken(AccountEntity account)
+        public string generateRefreshToken(AccountDto account)
         {
             var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_configuration["Jwt:RefreshKey"]));
             List<Claim> claims = new List<Claim>

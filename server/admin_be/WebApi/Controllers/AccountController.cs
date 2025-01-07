@@ -23,8 +23,8 @@ namespace WebApi.Controllers
             return Ok(data);
         }
 
-        [HttpGet("get-by-id")]
-        public async Task<IActionResult> GetAccountById(GetAccountByIdQuery request)
+        [HttpGet("get-by-id/{acc_id}")]
+        public async Task<IActionResult> GetAccountById([FromRoute] GetAccountByIdQuery request)
         {
             var data = await mediator.Send(request);
             return Ok(data);

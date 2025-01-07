@@ -21,7 +21,7 @@ namespace Application.Product.Commands.CreateProductCommand
         {
             RuleFor(x => x.product_name).NotEmpty().WithMessage("Tên sản phẩm là bắt buộc");
             RuleFor(x => x.color).NotEmpty().WithMessage("Màu sắc là bắt buộc");
-            RuleFor(x => x.price_sale).GreaterThan(0).WithMessage("Giá bán phải lớn hơn 0");
+            RuleFor(x => x.sale_price).GreaterThan(0).WithMessage("Giá bán phải lớn hơn 0");
             RuleFor(x => x.promotional_price).GreaterThan(0).WithMessage("Giá khuyến mãi là bắt buộc");
         }
     }

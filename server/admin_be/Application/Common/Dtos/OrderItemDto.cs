@@ -8,11 +8,15 @@ namespace Application.Common.Dtos
     public class OrderItemDto
     {
         public string Id { get; set; } = null!;
-        public int status_order{ get; set; }
-        public string pay_method { get; set; } = null!;
-        public double total_order { get; set; }
+        public string product_detail_id { get; set; } = null!;
+        public int quantity { get; set; }
+        public string size { get; set; } = null!;
+        public string color { get; set; } = null!;
         public string seller_id { get; set; } = null!;
-        public string buyer_id { get; set; } = null!;       
-        public List<OrderItemDetailDto> list_order_item_detail { get; set; } = new List<OrderItemDetailDto>();
+        public DateTime created_at { get; set; }
+        public string buyer_id { get; set; } = null!;
+        public string updated_by { get; set; } = null!;
+        public DateTime last_updated { get; set; }
+        public virtual ProductDetailDto product_detail { get; set; } = null!;
     }
 }

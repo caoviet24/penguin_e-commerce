@@ -21,12 +21,6 @@ namespace Application.Identities.Commands.SignUp
     {
         public string username { get; set; } = null!;
         public string password { get; set; } = null!;
-        public string full_name { get; set; } = null!;
-        public int gender { get; set; }
-        public DateTime birth { get; set; }
-        public string avatar { get; set; } = null!;
-        public string address { get; set; } = null!;
-        public string phone { get; set; } = null!;
     }
     public class CreateSignUpHandler(IDbConnection dbConnection, IMapper mapper) : IRequestHandler<CreateSignUpCommand, AccountDto>
     {
@@ -80,18 +74,18 @@ namespace Application.Identities.Commands.SignUp
                     password = BCrypt.Net.BCrypt.HashPassword(request.password, 10),
                     role = Role.User.ToString(),
                     is_banned = false,
-                    created_at = DateTime.Now,
-                    updated_at = DateTime.Now,
+                    created_at = DateTime.UtcNow,
+                    updated_at = DateTime.UtcNow,
 
                     user_id = Guid.NewGuid().ToString(),
-                    full_name = request.full_name,
+                    full_name = request.username,
                     nick_name = $"user_{new Random().Next(10000, 99999)}",
-                    gender = request.gender == 0 ? "Nam" : "Nữ",
-                    birth = request.birth,
-                    avatar = request.avatar,
-                    address = request.address,
-                    phone = request.phone,
-                    last_updated = DateTime.Now,
+                    gender = "",
+                    birth = DateTime.UtcNow,
+                    avatar = "",
+                    address = "",
+                    phone = "",
+                    last_updated = DateTime.UtcNow,
                     updated_by = acc_id,
                 },
                 commandType: CommandType.StoredProcedure,

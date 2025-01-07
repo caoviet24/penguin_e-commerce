@@ -1,25 +1,79 @@
-'use client';
-import React from 'react';
+"use client";
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import Carousel from 'react-material-ui-carousel';
+// import Carousel from 'react-material-ui-carousel';
 import { FaStar } from 'react-icons/fa';
+import { useQuery } from '@tanstack/react-query';
+import Cookie from 'js-cookie';
+import { identityService } from '@/services/identities.service';
+import { useAppDispatch, useAppSelector } from '@/redux/store';
+import { useDispatch } from 'react-redux';
+import { setMyAcount } from '@/redux/slices/account.slice';
+import { productService } from '@/services/product.service';
+import CardProduct from '@/components/CardProduct/CardProduct';
+import { Divider } from '@mui/material';
+import Link from 'next/link';
+import "react-responsive-carousel/lib/styles/carousel.min.css"; // requires a loader
+import { Carousel } from 'react-responsive-carousel';
+import { orderItemService } from '@/services/orderItem.service';
+import { setAddToCart, setCarts } from '@/redux/slices/cart.slice';
 
 export default function Home() {
-    const sliders = [
+    const { my_account } = useAppSelector(state => state.account);
+    const dispatch = useAppDispatch();
+
+
+    const [a, setA] = useState([
         '/images/slider/1.avif',
         '/images/slider/2.avif',
         '/images/slider/3.avif',
         '/images/slider/4.avif',
-        '/images/slider/5.avif',
-    ];
+        '/images/slider/5.avif'
+    ]);
+
+    const { data: authData, isSuccess: isFetchAuthSuccess } = useQuery({
+        queryKey: ["auth-me"],
+        queryFn: identityService.authMe,
+        enabled: !!Cookie.get('access_token')
+    });
+
+    const { data: productData, isSuccess: isFetchProductSuccess } = useQuery({
+        queryKey: ["products"],
+        queryFn: () => productService.getProductPagination(1, 20)
+    });
+
+
+    const { data: orderItemData, isSuccess: isFetchOrderItemSuccess } = useQuery({
+        queryKey: ["order-items", my_account?.id],
+        queryFn: () => orderItemService.getOrderItemByUserId(my_account?.id),
+        enabled: !!my_account?.id
+
+    })
+
+    useEffect(() => {
+
+        if (isFetchAuthSuccess) {
+            dispatch(setMyAcount(authData));
+        }
+
+        if (isFetchOrderItemSuccess) {
+            dispatch(setCarts(orderItemData));
+        }
+
+
+
+    }, [isFetchAuthSuccess, isFetchOrderItemSuccess]);
 
     return (
-        <div className="container flex flex-col justify-between mx-auto mt-5">
-            <div className="flex w-full flex-1 gap-2">
-                <Carousel className="flex-1">
-                    {sliders.map((slider, index) => (
-                        <img src={slider} alt="slider" />
+        <div className="container flex flex-col justify-between mx-auto mt-5 mb-10">
+            <div className="flex w-full flex-1 gap-2 bg-white p-5">
+                <Carousel>
+                    {a.map((slider, index) => (
+                        <div key={index} className='h-[390px] w-full'>
+                            <img src={slider} className='h-full w-full' />
+                        </div>
                     ))}
+
                 </Carousel>
 
                 <div className="flex flex-col h-full w-[350px]">
@@ -69,7 +123,7 @@ export default function Home() {
                     </div>
                 </div>
             </div>
-            <div className='flex justify-between'>
+            <div className='flex justify-between bg-white mt-2 p-5'>
                 <div className='flex items-center flex-col justify-center text-center'>
                     <Image src="/images/choice.png" alt="1" width={40} height={40} />
                     <span>
@@ -85,7 +139,7 @@ export default function Home() {
                 <div className='flex items-center flex-col justify-center text-center'>
                     <Image src="/images/freeship.avif" alt="1" width={40} height={40} />
                     <span>
-                        Giao hàng 
+                        Giao hàng
                         <br />
                         Miễn phí
                     </span>
@@ -99,7 +153,7 @@ export default function Home() {
                 <div className='flex items-center flex-col justify-center text-center'>
                     <Image src="/images/hours.png" alt="1" width={40} height={40} />
                     <span>
-                       Khung giờ <br /> Săn sale
+                        Khung giờ <br /> Săn sale
                     </span>
                 </div>
                 <div className='flex items-center flex-col justify-center text-center'>
@@ -111,10 +165,21 @@ export default function Home() {
                 <div className='flex items-center flex-col justify-center text-center'>
                     <Image src="/images/global.png" alt="1" width={40} height={40} />
                     <span>
-                        Nạp thẻ, Dịch vụ - Xem phim
+                        Nạp thẻ, Dịch vụ <br /> - Xem phim
                     </span>
                 </div>
             </div>
+
+            <div className='flex flex-col mt-10 p-5 bg-white'>
+                <h2 className='text-xl py-2'>Dành cho bạn</h2>
+                <Divider />
+                <div className='grid grid-cols-6 gap-2 mt-4'>
+                    {productData && productData.data.map(pro => (
+                        <CardProduct product={pro} key={pro.id} />
+                    ))}
+                </div>
+            </div>
+            <Link className='block w-48 text-center px-10 py-2 bg-gray-200 mx-auto mt-5 transition-all hover:scale-105' href='/product'>Xem tất cả</Link>
         </div>
     );
 }

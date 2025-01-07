@@ -15,5 +15,6 @@ namespace Application.Common.Dtos
         public string avatar { get; set; } = null!;
         public string address { get; set; } = null!;
         public string phone { get; set; } = null!;
+        public string acc_id { get; set; } = null!;
     }
 }

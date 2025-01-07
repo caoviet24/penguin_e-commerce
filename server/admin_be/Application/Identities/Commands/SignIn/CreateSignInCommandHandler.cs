@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Application.Common.Dtos;
 using Application.Dtos;
 using Application.Dtos.Account;
 using BCrypt.Net;
@@ -23,7 +24,7 @@ namespace Application.Identities.Commands.SignIn
     {
         public async Task<TokenDto> Handle(CreateSignInCommand request, CancellationToken cancellationToken)
         {
-            var account = await dbHelper.QueryProceduceSingleDataAsync<AccountEntity>
+            var account = await dbHelper.QueryProceduceSingleDataAsync<AccountDto>
             (
                 "sp_get_account_by_username",
                 new
@@ -43,10 +44,27 @@ namespace Application.Identities.Commands.SignIn
                 throw new BadRequestException("Password is incorrect.");
             }
 
+            var accessToken = jwtService.generateAccessToken(account);
+            var refreshToken = jwtService.generateRefreshToken(account);
+
+            await dbHelper.QueryProceduceSingleDataAsync<RefreshTokenDto>
+            (
+                "sp_create_refresh_token",
+                new
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    token = refreshToken,
+                    created_at = DateTime.UtcNow,
+                    created_by = account.Id,
+                    last_updated = DateTime.UtcNow,
+                    updated_by = account.Id
+                }
+            );
+
             return new TokenDto
             {
-                accessToken = jwtService.generateAccessToken(account),
-                refreshToken = jwtService.generateRefreshToken(account)
+                access_token = accessToken,
+                refresh_token = refreshToken
             };
         }
     }

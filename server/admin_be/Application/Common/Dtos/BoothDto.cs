@@ -7,7 +7,7 @@ namespace Application.Common.Dtos
 {
     public class BoothDto
     {
-        public string? Id { get; set; } = null!;
+        public string Id { get; set; } = null!;
         public string booth_name { get; set; } = null!;
         public string booth_description { get; set; } = null!;
         public string booth_avatar { get; set; } = null!;

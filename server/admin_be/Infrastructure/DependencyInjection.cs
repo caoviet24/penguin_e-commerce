@@ -45,12 +45,7 @@ public static class Infrastructure
             };
         });
 
-        
-        service.AddAuthorization(options =>
-        {
-            options.AddPolicy("Admin", policy => policy.RequireClaim("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", "Admin"));
-        });
-
+    
 
         service.AddScoped<IJwtService, JwtService>();
         service.AddScoped<ISaveChangesInterceptor, EntityInterceptor>();

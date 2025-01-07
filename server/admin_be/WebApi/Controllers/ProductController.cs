@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Application.Product.Commands.CreateProductCommand;
+using Application.Product.Queries.GetByDesc;
 using Application.Product.Queries.GetProductById;
 using Application.Product.Queries.GetProductsPagination;
 using MediatR;
@@ -21,6 +22,13 @@ namespace WebApi.Controllers
         public async Task<IActionResult> GetProductWithPagination([FromQuery] GetProductsPaginationQuery query)
         {
             logger.LogInformation("Get product with pagination");
+            return Ok(await mediator.Send(query));
+        }
+
+        [HttpGet("get-by-desc")]
+        public async Task<IActionResult> GetProductByDesc([FromQuery] GetProductByDescPaginationQuery query)
+        {
+            logger.LogInformation("Get product by desc: {product_desc}", query.product_desc);
             return Ok(await mediator.Send(query));
         }
 

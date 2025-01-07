@@ -20,7 +20,7 @@ namespace Application.MyBooth .Queries.GetBoothByName
     {
         public async Task<ResponDataDto> Handle(GetBoothByNamePaginationQuery request, CancellationToken cancellationToken)
         {
-            var data = await dbConnection.QueryMultipleAsync
+            var boothData = await dbConnection.QueryMultipleAsync
             (
                 "sp_get_booth_by_name_pagination",
                 new
@@ -32,12 +32,15 @@ namespace Application.MyBooth .Queries.GetBoothByName
                 commandType: CommandType.StoredProcedure
             );
 
+            var data = boothData.Read<BoothDto>().ToList();
+            var total = boothData.ReadSingle<int>();
+
             return new ResponDataDto
             {
-                total_record = data.Read<int>().FirstOrDefault(),
+                total_record = total,
                 page_number = request.page_number,
                 page_size = request.page_size,
-                data = data.Read<BoothDto>().ToList()
+                data = data
             };
 
         }

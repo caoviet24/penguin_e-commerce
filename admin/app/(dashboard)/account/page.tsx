@@ -84,12 +84,10 @@ export default function AccountTable() {
 
     useEffect(() => {
         if (isFetchAccountSuccess) {
-            console.log('Accounts fetched:', accountsData);
             setDataTable(accountsData.data);
         }
     
         if (isFetchAccountByIdSuccess && accountByIdData) {
-            console.log('Account by ID fetched:', accountByIdData);
             setDataTable([accountByIdData]);
         }
     }, [isFetchAccountSuccess, accountsData, isFetchAccountByIdSuccess, accountByIdData]);

@@ -18,8 +18,9 @@ namespace Domain.Entities
         public Double discount { get; set; }
         public string type_discount { get; set; } = null!;
         public int status_voucher { get; set; }
+        public string boot_id { get; set; } = null!;
         public virtual MyBoothEntity MyBooth { get; set; } = null!;
         public virtual AccountEntity Account { get; set; } = null!;
-        public virtual ICollection<VoucherUseOrderItem> VoucherUseOrderItems { get; set; } = null!;
+        public virtual ICollection<VoucherUseSaleBillEntity> VoucherUseSaleBills { get; set; } = null!;
     }
 }

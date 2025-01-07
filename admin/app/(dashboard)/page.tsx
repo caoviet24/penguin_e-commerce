@@ -116,7 +116,6 @@ export default function DashBoard() {
     useEffect(() => {
         if (socket) {
             socket.on('user-online', (data: any) => {
-                console.log(data);
 
                 setTimeout(() => {
                     refetchAccountOnline();

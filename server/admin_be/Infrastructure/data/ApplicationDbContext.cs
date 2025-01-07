@@ -89,7 +89,7 @@ public class ApplicationDbContext : DbContext
 
                         entity.HasOne(d => d.MyBooth)
                         .WithMany(p => p.ListProduct)
-                        .HasForeignKey(d => d.created_by);
+                        .HasForeignKey(d => d.booth_id);
 
                         entity.HasOne(d => d.CategoryDetail)
                         .WithMany(p => p.ListProduct)
@@ -134,7 +134,7 @@ public class ApplicationDbContext : DbContext
 
                         entity.HasOne(e => e.MyBooth)
                         .WithMany(e => e.ListVoucher)
-                        .HasForeignKey(e => e.created_by)
+                        .HasForeignKey(e => e.boot_id)
                         .OnDelete(DeleteBehavior.NoAction);
                 });
 
@@ -162,19 +162,18 @@ public class ApplicationDbContext : DbContext
 
                 });
 
-
-                modelBuilder.Entity<VoucherUseOrderItem>(entity =>
+                modelBuilder.Entity<VoucherUseSaleBillEntity>(entity =>
                 {
-                        entity.ToTable("VoucherUseOrderItem");
+                        entity.ToTable("VoucherUseSaleBill");
                         entity.HasKey(e => e.Id);
 
                         entity.HasOne(e => e.Voucher)
-                        .WithMany(e => e.VoucherUseOrderItems)
-                        .HasForeignKey(e => e.voucher_id)
-                        .OnDelete(DeleteBehavior.NoAction);
+                           .WithMany(e => e.VoucherUseSaleBills)
+                           .HasForeignKey(e => e.voucher_id)
+                           .OnDelete(DeleteBehavior.NoAction);
 
                         entity.HasOne(e => e.SaleBill)
-                        .WithMany(e => e.VoucherUseOrderItems)
+                        .WithMany(e => e.ListVoucherUseSaleBill)
                         .HasForeignKey(e => e.bill_id);
                 });
 
@@ -182,7 +181,6 @@ public class ApplicationDbContext : DbContext
                 {
                         entity.ToTable("SaleBill");
                         entity.HasKey(e => e.Id);
-                        entity.Property(e => e.Id).HasColumnName("sale_bill_id");
 
                         entity.HasOne(e => e.MyBooth)
                          .WithMany(e => e.ListSaleBill)
@@ -209,6 +207,27 @@ public class ApplicationDbContext : DbContext
                                 .WithMany(e => e.SaleBillDetails)
                                 .HasForeignKey(e => e.product_detail_id)
                                 .OnDelete(DeleteBehavior.NoAction);
+                });
+
+                modelBuilder.Entity<RefreshTokenEntity>(entity =>
+                {
+                        entity.ToTable("RefreshToken");
+                        entity.HasKey(e => e.Id);
+
+                        entity.HasOne(e => e.Account)
+                        .WithOne(e => e.RefreshToken)
+                        .HasForeignKey<RefreshTokenEntity>(e => e.created_by);
+                });
+
+                modelBuilder.Entity<NotifyEntity>(entity =>
+                {
+                        entity.ToTable("Notify");
+                        entity.HasKey(e => e.Id);
+
+                        entity.HasOne(e => e.Account)
+                        .WithMany(e => e.ListNotify)
+                        .HasForeignKey(e => e.receiver_id);
+                        
                 });
 
         }

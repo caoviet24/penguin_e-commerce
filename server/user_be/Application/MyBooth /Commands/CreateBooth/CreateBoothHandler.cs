@@ -30,6 +30,8 @@ namespace Application.MyBooth.Commands.CreateBooth
                     booth_name = request.booth_name
                 }
             );
+        
+        
 
             if(checkBoothExited != null)
             {

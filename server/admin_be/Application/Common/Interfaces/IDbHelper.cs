@@ -9,6 +9,7 @@ namespace WebApi.DBHelper
     public interface IDbHelper
     {
         Task<T> QueryProceduceSingleDataAsync<T>(string procedureName, object parameters);
+        Task<T> ExecuteUpdateProduceByUserAsync<T>(string procedureName, object parameters);
         Task<T> QueryProceduceByUserAsync<T>(string procedureName, object parameters);
         Task<List<T>> QueryProceduceMultiDataAsync<T>(string procedureName, object parameters);
     }

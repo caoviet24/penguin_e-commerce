@@ -17,6 +17,7 @@ namespace Infrastructure.data.Interceptor
             _user = user;
         }
 
+
         public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
         {
             var entries = eventData.Context?.ChangeTracker?.Entries();
@@ -30,13 +31,13 @@ namespace Infrastructure.data.Interceptor
                     {
                         case EntityState.Added:
                             baseEntity.Id = Guid.NewGuid().ToString();
-                            baseEntity.created_at = DateTime.Now;
-                            baseEntity.last_updated = DateTime.Now;
+                            baseEntity.created_at = DateTime.UtcNow;
+                            baseEntity.last_updated = DateTime.UtcNow;
                             baseEntity.created_by = user;
                             baseEntity.updated_by = user;
                             break;
                         case EntityState.Modified:
-                            baseEntity.last_updated = DateTime.Now;
+                            baseEntity.last_updated = DateTime.UtcNow;
                             baseEntity.updated_by = user;
                             break;
                     }

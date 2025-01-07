@@ -18,26 +18,21 @@ namespace Application.CategoryDetail.Commands.CreateCategoryDetail
     {
         public async Task<CategoryDetailDto> Handle(CreateCategoryDetailCommand request, CancellationToken cancellationToken)
         {
-            try
-            {
-                var data = await dbHelper.QueryProceduceSingleDataAsync<CategoryDetailDto>(
-                    "sp_create_category_detail",
-                    new
-                    {
-                        category_detail_id = Guid.NewGuid().ToString(),
-                        category_detail_name = request.category_detail_name,
-                        created_at = DateTime.Now,
-                        updated_at = DateTime.Now,
-                        category_id = request.category_id
-                    }
 
-                );
-                return data;
-            }
-            catch (Exception ex)
-            {
-                throw new BadRequestException(ex.Message);
-            }
+            var data = await dbHelper.QueryProceduceSingleDataAsync<CategoryDetailDto>(
+                "sp_create_category_detail",
+                new
+                {
+                    category_detail_id = Guid.NewGuid().ToString(),
+                    category_detail_name = request.category_detail_name,
+                    created_at = DateTime.UtcNow,
+                    updated_at = DateTime.UtcNow,
+                    category_id = request.category_id
+                }
+
+            );
+            return data;
+
         }
     }
 }

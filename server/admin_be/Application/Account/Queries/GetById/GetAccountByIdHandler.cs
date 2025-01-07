@@ -25,6 +25,7 @@ namespace Application.Account.Queries.GetById
                 }
             );
             return data;
+    
         }
     }
 

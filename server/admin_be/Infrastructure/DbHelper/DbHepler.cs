@@ -16,21 +16,21 @@ namespace WebApi.DBHelper
         {
             var dynamicParameters = new DynamicParameters(parameters);
 
-           
-                var result = await dbConnection.QueryFirstOrDefaultAsync<T>
-                (
-                    procedureName,
-                    dynamicParameters,
-                    commandType: CommandType.StoredProcedure
-                );
 
-                if (result == null)
-                {
-                    return default!;
-                }
+            var result = await dbConnection.QueryFirstOrDefaultAsync<T>
+            (
+                procedureName,
+                dynamicParameters,
+                commandType: CommandType.StoredProcedure
+            );
 
-                return result;
-            
+            if (result == null)
+            {
+                return default!;
+            }
+
+            return result;
+
         }
 
 
@@ -63,32 +63,44 @@ namespace WebApi.DBHelper
         public async Task<T> QueryProceduceByUserAsync<T>(string procedureName, dynamic parameters)
         {
             var dynamicParameters = new DynamicParameters(parameters);
-            dynamicParameters.Add("created_at", DateTime.Now);
-            dynamicParameters.Add("last_updated", DateTime.Now);
+            dynamicParameters.Add("created_at", DateTime.UtcNow);
             dynamicParameters.Add("created_by", user.getCurrentUser());
+            dynamicParameters.Add("last_updated", DateTime.UtcNow);
             dynamicParameters.Add("updated_by", user.getCurrentUser());
 
-            try
-            {
-                var result = await dbConnection.QueryFirstOrDefaultAsync<T>
-                (
-                    procedureName,
-                    dynamicParameters,
-                    commandType: CommandType.StoredProcedure
-                );
+            var result = await dbConnection.QueryFirstOrDefaultAsync<T>
+            (
+                procedureName,
+                dynamicParameters,
+                commandType: CommandType.StoredProcedure
+            );
 
-                if (result == null)
-                {
-                    return default!;
-                }
-                return result;
-            }
-            catch (Exception ex)
+            if (result == null)
             {
-                throw new InvalidOperationException("Error executing query.", ex);
+                return default!;
             }
+            return result;
+
         }
 
+        public async Task<T> ExecuteUpdateProduceByUserAsync<T>(string procedureName, object parameters)
+        {
+            var dynamicParameters = new DynamicParameters(parameters);
+            dynamicParameters.Add("last_updated", DateTime.UtcNow);
+            dynamicParameters.Add("updated_by", user.getCurrentUser());
 
+            var result = await dbConnection.QueryFirstOrDefaultAsync<T>
+            (
+                procedureName,
+                dynamicParameters,
+                commandType: CommandType.StoredProcedure
+            );
+
+            if (result == null)
+            {
+                return default!;
+            }
+            return result;
+        }
     }
 }

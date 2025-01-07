@@ -8,8 +8,8 @@ namespace Application.Common.Dtos
     public class ProductDto
     {
         public string Id { get; set; } = null!;
-        public string product_desc { get; set; }  = null!;
-        public string created_by { get; set; } = null!;
+        public string product_desc { get; set; } = null!;
+        public string booth_id { get; set; } = null!;
         public string updated_by { get; set; } = null!;
         public DateTime created_at { get; set; }
         public DateTime last_updated { get; set; }

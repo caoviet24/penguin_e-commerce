@@ -262,16 +262,16 @@ namespace Infrastructure.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("booth_id")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("category_detail_id")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("created_by")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("last_updated")
                         .HasColumnType("datetime2");
@@ -289,9 +289,9 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("category_detail_id");
+                    b.HasIndex("booth_id");
 
-                    b.HasIndex("created_by");
+                    b.HasIndex("category_detail_id");
 
                     b.ToTable("Product", (string)null);
                 });
@@ -335,6 +335,37 @@ namespace Infrastructure.Migrations
                     b.ToTable("ProductReview", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.RefreshTokenEntity", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("created_by")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("last_updated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("refresh_token")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("updated_by")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("created_by")
+                        .IsUnique();
+
+                    b.ToTable("RefreshToken", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.SaleBillDetailEntity", b =>
                 {
                     b.Property<string>("Id")
@@ -371,8 +402,11 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.SaleBillEntity", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("sale_bill_id");
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("address_delivery")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("boot_id")
                         .IsRequired()
@@ -390,7 +424,15 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("last_updated")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("name_receiver")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("pay_method")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("phone_delivery")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -518,6 +560,10 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("boot_id")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime2");
 
@@ -565,12 +611,14 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("boot_id");
+
                     b.HasIndex("created_by");
 
                     b.ToTable("Voucher", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Entities.VoucherUseOrderItem", b =>
+            modelBuilder.Entity("Domain.Entities.VoucherUseSaleBillEntity", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -589,7 +637,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("voucher_id");
 
-                    b.ToTable("VoucherUseOrderItem", (string)null);
+                    b.ToTable("VoucherUseSaleBill", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.CategoryDetailEntity", b =>
@@ -665,16 +713,16 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.ProductEntity", b =>
                 {
+                    b.HasOne("Domain.Entities.MyBoothEntity", "MyBooth")
+                        .WithMany("ListProduct")
+                        .HasForeignKey("booth_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.CategoryDetailEntity", "CategoryDetail")
                         .WithMany("ListProduct")
                         .HasForeignKey("category_detail_id")
                         .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.MyBoothEntity", "MyBooth")
-                        .WithMany("ListProduct")
-                        .HasForeignKey("created_by")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("CategoryDetail");
@@ -699,6 +747,17 @@ namespace Infrastructure.Migrations
                     b.Navigation("Account");
 
                     b.Navigation("ProductDetail");
+                });
+
+            modelBuilder.Entity("Domain.Entities.RefreshTokenEntity", b =>
+                {
+                    b.HasOne("Domain.Entities.AccountEntity", "Account")
+                        .WithOne("RefreshToken")
+                        .HasForeignKey("Domain.Entities.RefreshTokenEntity", "created_by")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("Domain.Entities.SaleBillDetailEntity", b =>
@@ -763,16 +822,16 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.VoucherEntity", b =>
                 {
+                    b.HasOne("Domain.Entities.MyBoothEntity", "MyBooth")
+                        .WithMany("ListVoucher")
+                        .HasForeignKey("boot_id")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.AccountEntity", "Account")
                         .WithMany("ListVoucher")
                         .HasForeignKey("created_by")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.MyBoothEntity", "MyBooth")
-                        .WithMany("ListVoucher")
-                        .HasForeignKey("created_by")
-                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Account");
@@ -780,16 +839,16 @@ namespace Infrastructure.Migrations
                     b.Navigation("MyBooth");
                 });
 
-            modelBuilder.Entity("Domain.Entities.VoucherUseOrderItem", b =>
+            modelBuilder.Entity("Domain.Entities.VoucherUseSaleBillEntity", b =>
                 {
                     b.HasOne("Domain.Entities.SaleBillEntity", "SaleBill")
-                        .WithMany("VoucherUseOrderItems")
+                        .WithMany("ListVoucherUseSaleBill")
                         .HasForeignKey("bill_id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.VoucherEntity", "Voucher")
-                        .WithMany("VoucherUseOrderItems")
+                        .WithMany("VoucherUseSaleBills")
                         .HasForeignKey("voucher_id")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -812,6 +871,9 @@ namespace Infrastructure.Migrations
                     b.Navigation("ListVoucher");
 
                     b.Navigation("MyBooth");
+
+                    b.Navigation("RefreshToken")
+                        .IsRequired();
 
                     b.Navigation("User")
                         .IsRequired();
@@ -859,12 +921,12 @@ namespace Infrastructure.Migrations
                 {
                     b.Navigation("ListSaleBillDetail");
 
-                    b.Navigation("VoucherUseOrderItems");
+                    b.Navigation("ListVoucherUseSaleBill");
                 });
 
             modelBuilder.Entity("Domain.Entities.VoucherEntity", b =>
                 {
-                    b.Navigation("VoucherUseOrderItems");
+                    b.Navigation("VoucherUseSaleBills");
                 });
 #pragma warning restore 612, 618
         }

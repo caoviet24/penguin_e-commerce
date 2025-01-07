@@ -12,7 +12,7 @@ namespace Application.Common.Dtos
         public string image { get; set; } = null!;
         public string color { get; set; } = null!;
         public string size { get; set; } = null!;
-        public double price_sale { get; set; }
+        public double sale_price { get; set; }
         public double promotional_price { get; set; }
         public int sale_quantity { get; set; }
         public int stock_quantity { get; set; }

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Application.Common.Dtos;
 using Application.Common.Dtos.ResponData;
 using Application.Voucher.Commands.CreateVoucher;
+using Application.Voucher.Queries.GetVoucherActive;
 using Application.Voucher.Queries.GetVoucherInactivePagination;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -23,6 +24,13 @@ namespace WebApi.Controllers
         public Task<ResponDataDto> getInactive([FromQuery] GetVoucherInactivePaginationQuery query)
         {
             logger.LogInformation("Get inactive voucher");
+            return mediator.Send(query);
+        }
+
+        [HttpGet("get-active")]
+        public Task<ResponDataDto> getActive([FromQuery] GetVoucherActiveQuery query)
+        {
+            logger.LogInformation("Get active voucher");
             return mediator.Send(query);
         }
 
