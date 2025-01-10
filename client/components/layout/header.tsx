@@ -9,12 +9,20 @@ import useDebounce from '@/hooks/useDebounce';
 import { LuUserRoundCheck } from "react-icons/lu";
 import RenderWithCondition from '../RenderWithCondition/renderwithcondition';
 import { useAppSelector } from '@/redux/store';
+import Cookie  from 'js-cookie';
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
     const { my_account } = useAppSelector(state => state.account);
     const { cart } = useAppSelector(state => state.cart);
+    const router = useRouter();
 
-
+    const handleLogout = () => {
+        localStorage.clear();
+        Cookie.remove('access_token');
+        Cookie.remove('refresh_token');
+        router.push('/sign-in');
+    }
 
     const [hotSearch, setHotSearch] = useState([
         'Quần bò ống đứng',
@@ -122,13 +130,10 @@ export default function Header() {
                         </div>
                     </div>
 
-
-
-
                     {
                         my_account
                             ?
-                            <div className="relative group" >
+                            <div className="relative group z-50" >
                                 <Link href={`/account/${my_account.id}`}>
                                     <LuUserRoundCheck size={30} />
                                 </Link>
@@ -139,10 +144,10 @@ export default function Header() {
                                     <Link className="p-2 hover:bg-purple-500 hover:text-white transition" href="/purchase">
                                         Đơn hàng
                                     </Link>
-                                    <Link className="p-2 hover:bg-purple-500 hover:text-white transition" href="/account/wishlist">
+                                    <Link className="p-2 hover:bg-purple-500 hover:text-white transition" href="/shop/register">
                                         Trở thành người bán hàng
                                     </Link>
-                                    <button className='w-full text-start'>
+                                    <button onClick={handleLogout} className='w-full text-start'>
                                         <p className="p-2 hover:bg-purple-500 hover:text-white transition">
                                             Đăng xuất
                                         </p>

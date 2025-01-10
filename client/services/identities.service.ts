@@ -18,8 +18,15 @@ async function login(username: string, password: string) {
     return res.data;
 }
 
-async function register() {
-    
+
+
+async function register(username: string, password: string) {
+    await delay(2000);
+    const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/account/register`, {
+        username,
+        password
+    });
+    return res.data;
 }
 
 export const identityService = {

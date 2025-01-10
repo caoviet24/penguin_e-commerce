@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Cookie from "js-cookie";
 import useHookMutation from "@/hooks/useHookMutation";
-import { identityService } from "@/services/identity.service";
+import { identityService } from "@/services/identities.service";
 
 
 const formSchema = z.object({

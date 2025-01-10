@@ -17,5 +17,6 @@ namespace Application.Common.Dtos
         public string created_by { get; set; } = null!;
         public DateTime updated_at { get; set; }
         public string updated_by { get; set; } = null!;
+        public bool is_deleted { get; set; }
     }
 }

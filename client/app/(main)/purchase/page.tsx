@@ -1,30 +1,52 @@
 "use client";
 import { useAppSelector } from "@/redux/store";
 import { billService } from "@/services/bill.service";
+import { ISaleBill, ResponseData } from "@/types";
+import { Divider } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import React from "react";
+import Image from "next/image";
+import Link from "next/link";
+import React, { useEffect } from "react";
 import { BiSearchAlt2 } from "react-icons/bi";
+import { CiShop } from "react-icons/ci";
+import { FaFacebookMessenger } from "react-icons/fa";
 
 export default function Purchase() {
     const { my_account } = useAppSelector(state => state.account);
     const [tabActice, setTabActive] = React.useState(0);
-    const [tabData, setTabData] = React.useState([]);
+    const [tabData, setTabData] = React.useState<ISaleBill[] | []>([]);
+    const statusMessages = {
+        0: "Người gửi đang chuẩn bị hàng",
+        1: "Đã gửi hàng",
+        2: "Đã giao hàng"
+    };
+
 
     const handleChangeTab = (idx: number) => {
         setTabActive(idx);
     };
 
 
-    const { data } = useQuery({
+    const { data: billWait, isSuccess: isFetchBillWaitSuccess } = useQuery<ResponseData<ISaleBill[]>>({
         queryKey: ["get-bill-wait-by-buyer-id",],
         queryFn: () => billService.getStatusWaitByBuyerId({ buyer_id: my_account.id, page_number: 1, page_size: 100 }),
         enabled: tabActice === 0,
-    })
+    });
+
+    useEffect(() => {
+        if (isFetchBillWaitSuccess) {
+            setTabData(billWait.data.flat());
+
+            console.log(billWait.data.flat().map((a) => a.list_sale_bill_detail));
+
+        }
+
+    }, [isFetchBillWaitSuccess])
 
     return (
         <div className="container">
-            <div className="bg-white grid grid-cols-4 w-full mt-5">
-                {["Chờ lấy hàng", "Vận chuyển", "Hoàn thành", "Đã Hủy"].map((a, idx) => (
+            <div className="bg-white grid grid-cols-5 w-full mt-5">
+                {["Chờ lấy hàng", "Vận chuyển", "Hoàn thành", "Đã Hủy", "Bị hủy"].map((a, idx) => (
                     <button
                         key={idx}
                         onClick={() => handleChangeTab(idx)}
@@ -50,7 +72,71 @@ export default function Purchase() {
             </div>
 
             <div>
+                {tabData && tabData.length > 0 && tabData.map((item: ISaleBill, idx: number) => (
+                    <div key={item.id} className="bg-white p-3 mt-3">
+                        <div className="flex justify-between">
+                            <div className="flex items-center gap-2">
+                                <CiShop size={30} />
+                                <span className="text-lg capitalize">{item.booth.booth_name}</span>
+                                <div className='flex gap-2'>
+                                    <button className='bg-orange-200 text-orange-500 border border-solid border-orange-500 flex items-center gap-2 py-1 px-3'>
+                                        <FaFacebookMessenger size={15} />
+                                        <span>Chat ngay</span>
+                                    </button>
+                                    <Link href={`/shop/${item.booth.id}`} className='flex items-center gap-2 border border-solid border-gray-200 py-1 px-3'>
+                                        <CiShop size={20} />
+                                        <span>Xem shop</span>
+                                    </Link>
+                                </div>
+                            </div>
 
+                            <div className="flex items-center gap-2 mt-2 text-[#51A99C]">
+                                <Image src='/images/freeship.avif' alt='freeship' width={24} height={24} />
+                                <span>{statusMessages[item.status_bill as keyof typeof statusMessages]}
+                                </span>
+                            </div>
+                        </div>
+
+                        <Divider className="py-2" />
+                        {item.list_sale_bill_detail.map((b, idx) => (
+                            <div key={idx} className="flex justify-between items-center gap-2 py-2">
+                                <div>
+                                    <Image src={b.product_detail.image} alt={b.product_detail.product_name} width={70} height={70} />
+                                </div>
+                                <div className="flex flex-1 flex-col">
+                                    <p>{b.product_detail.product_name}</p>
+                                    <p>Phân loại hàng: {b.size} - {b.color}</p>
+                                    <p>x{b.quantity}</p>
+                                </div>
+                                <div>
+                                    {b.product_detail.promotional_price > 0 ?
+                                        <div className="flex flex-row gap-2">
+                                            <p className="line-through opacity-60">{b.product_detail.sale_price.toLocaleString()}đ</p>
+                                            <p className="text-red-500">{b.product_detail.promotional_price.toLocaleString()}đ</p>
+                                        </div>
+                                        :
+                                        <p>{b.product_detail.sale_price.toLocaleString()}đ</p>
+                                    }
+                                </div>
+                            </div>
+                        ))}
+
+                        <Divider className="py-2" />
+
+                        <div className="flex justify-end items-center py-5 mt-2">
+                            <p>Tổng tiền:</p>
+                            <p className="text-3xl text-red-500">{item.total_bill.toLocaleString()}đ</p>
+                        </div>
+                        <div className="flex justify-end items-center gap-2 mt-2">
+                            <button className="bg-white font-medium border opacity-70 border-solid border-purple-500 px-4 py-[8px] rounded transition">
+                                Liên hệ người bán
+                            </button>
+                            {item.status_bill === 0 && <button className="bg-purple-500 text-white font-medium px-4 py-[9px] rounded transition ">
+                                Hủy đơn hàng
+                            </button>}
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );

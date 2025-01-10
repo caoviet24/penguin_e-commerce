@@ -3,13 +3,21 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using Application.MyBooth.Commands.Active;
+using Application.MyBooth.Commands.Ban;
 using Application.MyBooth.Commands.CreateBooth;
 using Application.MyBooth.Commands.DeleteBooth;
+using Application.MyBooth.Commands.Restore;
+using Application.MyBooth.Commands.UnBan;
 using Application.MyBooth.Commands.UpdateBooth;
-using Application.MyBooth.Queries.GetBoothByAccId;
+using Application.MyBooth.Queries.GetActive;
+using Application.MyBooth.Queries.GetActiving;
+using Application.MyBooth.Queries.GetBanned;
 using Application.MyBooth.Queries.GetBoothById;
 using Application.MyBooth.Queries.GetBoothByName;
 using Application.MyBooth.Queries.GetBoothInactive;
+using Application.MyBooth.Queries.GetByAccId;
+using Application.MyBooth.Queries.GetDeleted;
 using Application.MyBooth.Queries.GetListProductById;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -23,31 +31,63 @@ namespace WebApi.Controllers
     public class BoothController(ILogger<BoothController> logger, IMediator mediator) : Controller
     {
         [HttpGet("get-by-acc-id/{acc_id}")]
-        public async Task<IActionResult> GetBoothByAccId([FromRoute] GetBoothByAccIdPaginationQuery request)
+        public async Task<IActionResult> GetByAccId([FromRoute] GetBoothByAccIdQuery request)
         {
-            logger.LogInformation("Get booth by account id: {account_id}", request.account_id);
+            logger.LogInformation("Get booth by account id: {account_id}", request.acc_id);
             var data = await mediator.Send(request);
             return Ok(data);
         }
 
         [HttpGet("get-by-name")]
-        public async Task<IActionResult> GetBoothByName(GetBoothByNamePaginationQuery request)
+        public async Task<IActionResult> GetByName(GetBoothByNamePaginationQuery request)
         {
             logger.LogInformation("Get booth by name: {booth_name}", request.booth_name);
             var data = await mediator.Send(request);
             return Ok(data);
         }
 
-        [HttpGet("get-booth-inactive")]
-        public async Task<IActionResult> GetBoothInactive(GetBoothInActivePaginationQuery request)
+        [HttpGet("get-deleted")]
+        public async Task<IActionResult> GetDeleted(GetBoothDeletedQuery request)
+        {
+            logger.LogInformation("Get booth deleted");
+            var data = await mediator.Send(request);
+            return Ok(data);
+        }
+
+        [HttpGet("get-activing")]
+        public async Task<IActionResult> GetActiving(GetBoothActivingQuery request)
+        {
+            logger.LogInformation("Get booth activing");
+            var data = await mediator.Send(request);
+            return Ok(data);
+        }
+
+        [HttpGet("get-active")]
+        public async Task<IActionResult> GetBoothActive(GetBoothActiveQuery request)
+        {
+            logger.LogInformation("Get booth active");
+            var data = await mediator.Send(request);
+            return Ok(data);
+        }
+
+        [HttpGet("get-inactive")]
+        public async Task<IActionResult> GetInactive(GetBoothInActivePaginationQuery request)
         {
             logger.LogInformation("Get booth inactive");
             var data = await mediator.Send(request);
             return Ok(data);
         }
 
+        [HttpGet("get-banned")]
+        public async Task<IActionResult> GetBanned(GetBoothBannedQuery request)
+        {
+            logger.LogInformation("Get booth banned");
+            var data = await mediator.Send(request);
+            return Ok(data);
+        }
+
         [HttpGet("get-by-id/{booth_id}")]
-        public async Task<IActionResult> GetBoothById([FromRoute] GetBoothByIdQuery request)
+        public async Task<IActionResult> GetById([FromRoute] GetBoothByIdQuery request)
         {
             logger.LogInformation("Get booth by id: {booth_id}", request.booth_id);
             var data = await mediator.Send(request);
@@ -63,32 +103,55 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreateBooth([FromBody] CreateBoothCommand request)
-        {          
-            var data = await mediator.Send(request);
-            return Ok(data);
-        }
-
-        [HttpPut("ban")]
-        public async Task<IActionResult> BanBooth(BanBoothCommand request)
+        public async Task<IActionResult> Create([FromBody] CreateBoothCommand request)
         {
             var data = await mediator.Send(request);
             return Ok(data);
         }
 
-        [HttpPut("active")]
-        public async Task<IActionResult> ActiveBooth(ActiveBoothCommand request)
+        [HttpPut("update")]
+        public async Task<IActionResult> Update([FromBody] UpdateBoothCommand request)
         {
             var data = await mediator.Send(request);
             return Ok(data);
         }
 
-        [HttpDelete("delete")]
-        public async Task<IActionResult> DeleteBooth(DeleteBoothCommand request)
+        [HttpPut("ban/{booth_id}")]
+        public async Task<IActionResult> Ban(BanBoothCommand request)
         {
             var data = await mediator.Send(request);
             return Ok(data);
         }
+
+        [HttpPut("unban/{booth_id}")]
+        public async Task<IActionResult> UnBan(UnBanBoothCommand request)
+        {
+            var data = await mediator.Send(request);
+            return Ok(data);
+        }
+
+        [HttpPut("active/{booth_id}")]
+        public async Task<IActionResult> Active(ActiveBoothCommand request)
+        {
+            var data = await mediator.Send(request);
+            return Ok(data);
+        }
+
+
+        [HttpPut("delete/{booth_id}")]
+        public async Task<IActionResult> Delete(DeleteBoothCommand request)
+        {
+            var data = await mediator.Send(request);
+            return Ok(data);
+        }
+
+        [HttpPut("restore/{booth_id}")]
+        public async Task<IActionResult> Restore(RestoreBoothCommand request)
+        {
+            var data = await mediator.Send(request);
+            return Ok(data);
+        }
+
 
     }
 }

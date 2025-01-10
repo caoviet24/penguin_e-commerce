@@ -8,10 +8,12 @@ namespace Application.Dtos
     {
         public string Id { get; set; } = null!;
         public string category_name { get; set; }  = null!;
+        public string image { get; set; }  = null!;
         public DateTime created_at { get; set; }
         public DateTime last_updated { get; set; }
         public string created_by { get; set; }  = null!;
         public string updated_by { get; set; }  = null!;
+        public bool is_deleted { get; set; }
 
         public List<CategoryDetailDto> list_category_detail { get; set; } = new List<CategoryDetailDto>();
     }

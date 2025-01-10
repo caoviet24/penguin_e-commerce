@@ -20,6 +20,7 @@ namespace Domain.Entities
         public DateTime created_at { get; set; } 
         public DateTime updated_at { get; set; }
         public string product_id { get; set; } = null!;
+        public bool is_deleted { get; set; }
         public virtual ProductEntity Product { get; set; } = null!;
         public virtual ICollection<OrderItemEntity> ListOrderItem { get; set; } = null!;
         public virtual ICollection<SaleBillDetailEntity> SaleBillDetails { get; set; } = null!;

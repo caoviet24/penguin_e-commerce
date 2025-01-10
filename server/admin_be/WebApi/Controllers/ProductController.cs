@@ -3,10 +3,17 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using Application.Product.Commands.CreateProductCommand;
+using Application.Product.Commands.Create;
+using Application.Product.Commands.Delete;
+using Application.Product.Commands.DeleteSoft;
+using Application.Product.Queries.GetActive;
+using Application.Product.Queries.GetActiveByBoothId;
 using Application.Product.Queries.GetByDesc;
+using Application.Product.Queries.GetDeleted;
+using Application.Product.Queries.GetDeletedByBoothId;
+using Application.Product.Queries.GetInActive;
+using Application.Product.Queries.GetInActiveByBoothId;
 using Application.Product.Queries.GetProductById;
-using Application.Product.Queries.GetProductsPagination;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,10 +25,45 @@ namespace WebApi.Controllers
     [Route("product")]
     public class ProductController(ILogger<ProductController> logger, IMediator mediator) : Controller
     {
-        [HttpGet("list-product")]
-        public async Task<IActionResult> GetProductWithPagination([FromQuery] GetProductsPaginationQuery query)
+        [HttpGet("get-active")]
+        public async Task<IActionResult> GetActive([FromQuery] GetProductsActiveQuery query)
         {
-            logger.LogInformation("Get product with pagination");
+            logger.LogInformation("Get active products");
+            return Ok(await mediator.Send(query));
+        }
+
+        [HttpGet("get-active-by-booth-id")]
+        public async Task<IActionResult> GetActiveByBoothId([FromQuery] GetProductsActiveByBoothIdQuery query)
+        {
+            logger.LogInformation("Get active products by booth id");
+            return Ok(await mediator.Send(query));
+        }
+
+        [HttpGet("get-inactive")]
+        public async Task<IActionResult> GetInActive([FromQuery] GetProductsInActiveQuery query)
+        {
+            logger.LogInformation("Get inactive products");
+            return Ok(await mediator.Send(query));
+        }
+
+        [HttpGet("get-inactive-by-booth-id")]
+        public async Task<IActionResult> GetInActiveByBoothId([FromQuery] GetProductsInActiveByBoothIdQuery query)
+        {
+            logger.LogInformation("Get inactive products by booth id");
+            return Ok(await mediator.Send(query));
+        }
+
+        [HttpGet("get-deleted")]
+        public async Task<IActionResult> GetDeleted([FromQuery] GetProductsDeletedQuery query)
+        {
+            logger.LogInformation("Get deleted products");
+            return Ok(await mediator.Send(query));
+        }
+
+        [HttpGet("get-deleted-by-booth-id")]
+        public async Task<IActionResult> GetDeletedByBoothId([FromQuery] GetProductsDeletedByBoothIdQuery query)
+        {
+            logger.LogInformation("Get deleted products by booth id");
             return Ok(await mediator.Send(query));
         }
 
@@ -46,7 +88,18 @@ namespace WebApi.Controllers
             return Ok(await mediator.Send(command));
         }
 
-        
+        [HttpPut("delete-soft/{Id}")]
+        public async Task<IActionResult> DeleteSoft([FromRoute] DeleteSoftProductCommand command)
+        {
+            logger.LogInformation("Delete soft product with id: {Id}", command.Id);
+            return Ok(await mediator.Send(command));
+        }
 
+        [HttpDelete("delete/{Id}")]
+        public async Task<IActionResult> Delete([FromRoute] DeleteProductCommand command)
+        {
+            logger.LogInformation("Delete product with id: {Id}", command.Id);
+            return Ok(await mediator.Send(command));
+        }
     }
 }

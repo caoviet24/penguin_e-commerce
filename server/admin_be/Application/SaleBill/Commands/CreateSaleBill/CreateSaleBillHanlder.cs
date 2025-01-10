@@ -56,6 +56,7 @@ namespace Application.SaleBill.Commands.CreateSaleBill
                     name_receiver = request.name_receiver,
                     address_receiver = request.address_receiver,
                     phone_receiver = request.phone_receiver,
+                    is_deleted = false
                 }
             );
 

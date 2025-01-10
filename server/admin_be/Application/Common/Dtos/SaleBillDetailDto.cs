@@ -16,6 +16,6 @@ namespace Application.Common.Dtos
         public int quantity { get; set; }
         public string size { get; set; } = null!;
         public string color { get; set; } = null!;
-        public virtual ProductDetailDto ProductDetail { get; set; } = null!;
+        public virtual ProductDetailDto product_detail { get; set; } = null!;
     }
 }

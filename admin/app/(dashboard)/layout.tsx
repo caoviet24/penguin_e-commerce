@@ -1,10 +1,13 @@
 'use client';
-import { AccountIcon, PostIcon, UserIcon, VideoIcon } from '@/components/Icons';
+import { AccountIcon, PostIcon, VideoIcon } from '@/components/Icons';
 import { FcSettings } from 'react-icons/fc';
 import Header from '@/components/layout/Header';
 import Link from 'next/link';
 import { ReactNode } from 'react';
 import { HiOutlineHome } from 'react-icons/hi';
+import { CiShop } from "react-icons/ci";
+import { TbCategory } from "react-icons/tb";
+import { FaShopify } from 'react-icons/fa';
 
 export default function DashBoardLayOut({ children }: { children: ReactNode }) {
     return (
@@ -39,24 +42,24 @@ export default function DashBoardLayOut({ children }: { children: ReactNode }) {
                                 </Link>
                                 <Link
                                     className="flex flex-row items-center font-bold  justify-center lg:justify-start rounded-md h-12 focus:outline-none pr-3.5  lg:pr-6 text-black hover:text-primary-400 cursor-pointer "
-                                    href="/user"
+                                    href="/shop"
                                 >
                                     <span className="inline-flex justify-center items-center ml-3.5">
-                                        <UserIcon />
+                                       <FaShopify size={24}/>
                                     </span>
                                     <span className="ml-0 lg:ml-2 text-sm tracking-wide truncate capitalize hidden lg:block">
-                                        Người dùng
+                                        Gian hàng
                                     </span>
                                 </Link>
                                 <Link
                                     className="flex flex-row items-center  justify-center lg:justify-start rounded-md h-12 focus:outline-none pr-3.5  lg:pr-6 font-semibold text-black hover:text-primary-400 cursor-pointer "
-                                    href="/post"
+                                    href="/category"
                                 >
                                     <span className="inline-flex justify-center items-center ml-3.5">
-                                        <PostIcon />
+                                        <TbCategory size={24} />
                                     </span>
                                     <span className="ml-0 lg:ml-2 text-sm tracking-wide truncate capitalize hidden lg:block">
-                                        Bài đăng
+                                        Danh mục
                                     </span>
                                 </Link>
                                 <Link

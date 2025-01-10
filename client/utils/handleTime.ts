@@ -1,6 +1,6 @@
 
 
-export default function handleTime(time: string) {
+export default function handleTime(time: string | Date) {
     const date = new Date(time);
     const timeNow = Date.now();
 

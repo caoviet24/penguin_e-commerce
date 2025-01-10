@@ -39,7 +39,7 @@ export default function Home() {
 
     const { data: productData, isSuccess: isFetchProductSuccess } = useQuery({
         queryKey: ["products"],
-        queryFn: () => productService.getProductPagination(1, 20)
+        queryFn: () => productService.getPagination(1, 20)
     });
 
 

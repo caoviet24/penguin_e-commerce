@@ -17,6 +17,7 @@ namespace Application.Common.Dtos
         public string buyer_id { get; set; } = null!;
         public string updated_by { get; set; } = null!;
         public DateTime last_updated { get; set; }
+        public bool is_deleted { get; set; }
         public virtual ProductDetailDto product_detail { get; set; } = null!;
     }
 }

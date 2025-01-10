@@ -1,16 +1,3 @@
-export interface ICourse {
-    id: string;
-    title: string;
-    description: string;
-    image: string;
-    isPublished: boolean;
-    number_access: number;
-    number_lesson: number;
-    level: number;
-    createAt: string;
-    updateAt: string;
-}
-
 
 export interface StatisticalData2 {
     total: number,
@@ -37,76 +24,151 @@ export interface CardData {
     icon: JSX.Element;
 }
 
-export interface Account {
-    acc_id: string;
+export interface ResponseData<T> {
+    page_number: number;
+    page_size: number;
+    total_record: number;
+    data: T[]; 
+}
+
+
+export interface IAccount {
+    id: string;
     username: string;
     password: string;
-    tick: boolean;
     role: string;
-    isBan: boolean;
-    createdAt: string;
-    lastOnline: string;
-}
-
-export interface ResponseAccountData {
-    data: Account[];
-    total_record: number;
-    page: number;
-    limit: number;
+    is_banned: boolean;
+    created_at: Date;
+    updated_at: Date;
+    is_detele: boolean;
+    user: IUser;
 }
 
 
-export interface User{
-    acc_id: string;
+export interface IUser {
+    user_id: string;
     full_name: string;
-    nickname: string;
+    nick_name: string;
+    birth: Date;
     avatar: string;
-    bio: string;
+    address: string;
+    phone: string;
+    acc_id: string;
+    is_detele: boolean;
 }
 
-export interface ResponseUserData {
-    data: User[];
-    total_record: number;
-    page: number;
-    limit: number;
+export interface IBooth {
+    id: string;
+    booth_name: string;
+    booth_description: string;
+    booth_avatar: string;
+    is_active: boolean;
+    is_banned: boolean;
+    created_at: Date;
+    created_by: string;
+    updated_at: Date;
+    updated_by: string;
+    is_detele: boolean;
+}
+
+export interface ICategory {
+    id: string;
+    category_name: string;
+    image: string;
+    created_at: Date;
+    created_by: string;
+    updated_at: Date;
+    updated_by: string;
+    is_detele: boolean;
+    list_category_detail: ICategoryDetail[];
+}
+
+export interface ICategoryDetail {
+    id: string;
+    catogory_detail_name: string;
+    created_at: Date;
+    updated_at: Date;
+    category_id: string;
+    is_deleted: boolean;
+}
+
+export interface IProduct {
+    id: string;
+    product_desc: string;
+    booth_id: string;
+    is_detele: boolean;
+    list_product_detail: IProductDetail[];
+}
+
+export interface IProductDetail {
+    id: string;
+    product_name: string;
+    image: string;
+    color: string;
+    size: string;
+    sale_price: number;
+    promotional_price: number;
+    sale_quantity: number;
+    stock_quantity: number;
+    image: string;
+    created_at: Date;
+    updated_at: Date;
+    product_id: string;
 }
 
 
-
-
-export interface Post {
-    post_id : string,
-    title: string,
-    image: string,
-    num_likes: number,
-    num_comments: number,
-    location: string,
-    createdAt: string,
-    acc_id: string
-}
-
-export interface ResponsePostData {
-    data: Post[];
-    total_record: number;
-    page: number;
-    limit: number;
+export interface IOrderItem {
+    id: string;
+    product_detail_id: string;
+    quantity: number;
+    size: string;
+    color: string;
+    seller_id: string;
+    created_at: Date;
+    buyer_id: string;
+    updated_by: string;
+    last_updated: Date;
+    product_detail: IProductDetail;
 }
 
 
-export interface Video {
-    video_id : string,
-    title: string,
-    video: string,
-    num_likes: number,
-    num_comments: number,
-    location: string,
-    createdAt: string,
-    acc_id: string
+export interface IVoucher {
+    id: string;
+    voucher_type: string;
+    voucher_name: string;
+    voucher_code: string;
+    expiry_date: Date;
+    quantity_remain: number;
+    quantity_used: number;
+    discount: number;
+    type_discount: string;
+    status_voucher: number;
+    apply_for: string;
+    created_by: string;
+    boot_id: string;
+    is_detele: boolean;
 }
 
-export interface ResponseVideoData {
-    data: Video[];
-    total_record: number;
-    page: number;
-    limit: number;
+
+export interface ISaleBill {
+    id: string;
+    buyer_id: string;
+    seller_id: string;
+    total_bill: number;
+    status_bill: number;
+    created_at: Date;
+    updated_at: Date;
+    booth: IBooth;
+    list_sale_bill_detail: ISaleBillDetail[];
+}
+
+
+export interface ISaleBillDetail {
+    id: string;
+    sale_bill_id: string;
+    product_detail_id: string;
+    quantity: number;
+    size: string;
+    color: string;
+    product_detail: IProductDetail;
 }

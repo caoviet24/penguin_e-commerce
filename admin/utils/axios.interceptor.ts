@@ -11,7 +11,7 @@ interface RefreshTokenResponse {
 function fetchRefreshToken(token: string): Promise<RefreshTokenResponse> {
     return new Promise(async (resolve, reject) => {
         try {
-            const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
+            const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh-token`, {
                 headers: {
                     refresh_cookie: token,
                 },

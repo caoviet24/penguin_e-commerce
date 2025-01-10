@@ -66,7 +66,7 @@ namespace Application.Auth
 
             var refreshTokenData = await dbConnection.QueryFirstOrDefaultAsync<RefreshTokenDto>
             (
-                "sp_get_refresh_token",
+                "sp_get_by_refresh_token",
                 new
                 {
                     token = refresh_token
@@ -103,12 +103,11 @@ namespace Application.Auth
                 "sp_update_refresh_token",
                 new
                 {
-                    Id = refreshTokenData.Id,
                     token = refreshToken,
                     created_at = DateTime.UtcNow,
                     created_by = refreshTokenData.created_by,
                     last_updated = DateTime.UtcNow,
-                    updated_by = refreshTokenData.updated_by
+                    updated_by = refreshTokenData.updated_by,
                 },
                 commandType: CommandType.StoredProcedure
             );

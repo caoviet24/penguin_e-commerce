@@ -18,6 +18,7 @@ namespace Application.Common.Dtos
         public int stock_quantity { get; set; }
         public DateTime created_at { get; set; }
         public DateTime updated_at { get; set; }
-        public required string product_id { get; set; }
+        public string product_id { get; set; } = null!;
+        public bool is_deleted { get; set; }
     }
 }

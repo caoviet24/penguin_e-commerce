@@ -5,6 +5,7 @@ import Loader from '@/components/Loader/loader'
 import useHookMutation from '@/hooks/useHookMutation'
 import { identityService } from '@/services/identities.service'
 import Cookie from 'js-cookie'
+import Link from 'next/link';
 
 export default function SignIn() {
 
@@ -90,7 +91,7 @@ export default function SignIn() {
 
 					<div className="mt-4 text-sm flex justify-between items-center container-mr">
 						<p className="mr-3 md:mr-0 ">Nếu bạn chưa có tài khoản?</p>
-						<button className="hover:border text-white bg-[#002D74] hover:border-gray-400 rounded-xl py-2 px-5 hover:scale-110 hover:bg-[#002c7424] font-semibold duration-300">Đăng kí !</button>
+						<Link href='/sign-up' className="hover:border text-white bg-[#002D74] hover:border-gray-400 rounded-xl py-2 px-5 hover:scale-110 hover:bg-[#002c7424] font-semibold duration-300">Đăng kí !</Link>
 					</div>
 				</div>
 				<div className="w-1/2">

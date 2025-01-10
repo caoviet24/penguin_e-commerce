@@ -76,6 +76,7 @@ namespace Application.Identities.Commands.SignUp
                     is_banned = false,
                     created_at = DateTime.UtcNow,
                     updated_at = DateTime.UtcNow,
+                    is_deleted = false,
 
                     user_id = Guid.NewGuid().ToString(),
                     full_name = request.username,

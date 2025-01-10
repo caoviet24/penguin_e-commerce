@@ -71,7 +71,7 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
 
     const { data: productData, isSuccess } = useQuery<IProduct>({
         queryKey: ['product', slug],
-        queryFn: () => productService.getProductById(slug),
+        queryFn: () => productService.getById(slug),
         enabled: !!slug
     });
 
@@ -232,12 +232,12 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
                     <div className='flex items-center'>
                         <p className='w-1/5 opacity-60 capitalize'>Size</p>
                         <div className='flex gap-4'>
-                            {productDetailActive && productDetailActive.size.split(',').map((size) => (
-                                <button key={size}
-                                    className={`border border-solid px-4 py-2  border-gray-100 relative ${sizeActive === size && 'border-red-500'}`}
-                                    onClick={() => handleOnChangeSize(size)}>
-                                    {size}
-                                    {sizeActive === size
+                            {productDetailActive && productDetailActive.size.split(',').map((s) => (
+                                <button key={s}
+                                    className={`border border-solid px-4 py-2  border-gray-100 relative ${sizeActive === s && 'border-red-500'}`}
+                                    onClick={() => handleOnChangeSize(s)}>
+                                    {s}
+                                    {sizeActive === s
                                         &&
                                         <Image className='absolute right-0 bottom-0 z-10' src="/images/check.webp" alt="check" width={16} height={16} />
                                     }

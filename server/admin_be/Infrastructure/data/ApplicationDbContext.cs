@@ -46,9 +46,9 @@ public class ApplicationDbContext : DbContext
                         entity.ToTable("MyBooth");
                         entity.HasKey(e => e.Id);
 
-                        entity.HasOne(d => d.Account)
-                        .WithMany(p => p.MyBooth)
-                        .HasForeignKey(d => d.created_by);
+                        entity.HasOne(e => e.Account)
+                           .WithOne(e => e.MyBooth)
+                           .HasForeignKey<MyBoothEntity>(e => e.created_by);
                 });
 
                 modelBuilder.Entity<VerifyAccount>(entity =>
@@ -87,9 +87,11 @@ public class ApplicationDbContext : DbContext
                         entity.ToTable("Product");
                         entity.HasKey(e => e.Id);
 
+                        entity.Property(e => e.created_by).HasColumnName("booth_id");
+
                         entity.HasOne(d => d.MyBooth)
                         .WithMany(p => p.ListProduct)
-                        .HasForeignKey(d => d.booth_id);
+                        .HasForeignKey(d => d.created_by);
 
                         entity.HasOne(d => d.CategoryDetail)
                         .WithMany(p => p.ListProduct)
@@ -227,7 +229,7 @@ public class ApplicationDbContext : DbContext
                         entity.HasOne(e => e.Account)
                         .WithMany(e => e.ListNotify)
                         .HasForeignKey(e => e.receiver_id);
-                        
+
                 });
 
         }

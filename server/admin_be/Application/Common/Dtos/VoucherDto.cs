@@ -20,5 +20,6 @@ namespace Application.Common.Dtos
         public string apply_for { get; set; } = null!;
         public string created_by { get; set; } = null!;
         public string boot_id { get; set; } = null!;
+        public bool is_deleted { get; set; }
     }
 }

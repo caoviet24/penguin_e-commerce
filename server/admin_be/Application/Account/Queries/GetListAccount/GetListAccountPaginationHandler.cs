@@ -19,7 +19,7 @@ namespace Application.Account.Queries.GetListAccount
     {
         public async Task<ResponDataDto> Handle(GetListAccountPaginationQuery request, CancellationToken cancellationToken)
         {
-            var data = await dbConnection.QueryMultipleAsync
+            var accData = await dbConnection.QueryMultipleAsync
             (
                 "sp_get_accounts_pagination",
                 new
@@ -30,13 +30,16 @@ namespace Application.Account.Queries.GetListAccount
                 commandType: CommandType.StoredProcedure
             );
 
+            var data = accData.Read<AccountDto>().ToList();
+            var total = accData.Read<int>().FirstOrDefault();
+         
 
             return new ResponDataDto
             {
-                total_record = data.Read<int>().FirstOrDefault(),
+                total_record = total,
                 page_number = request.page_number,
                 page_size = request.page_size,
-                data = data.Read<AccountDto>().ToList()
+                data = data
             };
 
         }

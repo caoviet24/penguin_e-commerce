@@ -19,6 +19,7 @@ namespace Application.Common.Dtos
         public DateTime created_at { get; set; }
         public string updated_by { get; set; } = null!;
         public DateTime last_updated { get; set; }
+        public bool is_deleted { get; set; }
         public virtual BoothDto Booth { get; set; } = null!;
         public virtual ICollection<SaleBillDetailDto> list_sale_bill_detail { get; set; } = new List<SaleBillDetailDto>();
         

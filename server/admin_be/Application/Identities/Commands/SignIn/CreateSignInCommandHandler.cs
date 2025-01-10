@@ -57,7 +57,8 @@ namespace Application.Identities.Commands.SignIn
                     created_at = DateTime.UtcNow,
                     created_by = account.Id,
                     last_updated = DateTime.UtcNow,
-                    updated_by = account.Id
+                    updated_by = account.Id,
+                    is_deleted = false
                 }
             );
 

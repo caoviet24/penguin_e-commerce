@@ -15,6 +15,7 @@ namespace Application.Dtos.Account
         public bool is_banned { get; set; }
         public DateTime created_at { get; set; }
         public DateTime updated_at { get; set; }
+        public bool is_deleted { get; set; }
         public UserDto User { get; set; } = new UserDto();
     }
 }

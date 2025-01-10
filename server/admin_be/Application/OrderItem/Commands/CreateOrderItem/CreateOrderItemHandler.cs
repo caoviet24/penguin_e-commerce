@@ -40,6 +40,7 @@ namespace Application.OrderItem.Commands.CreateOrderItem
                     created_at = DateTime.UtcNow,
                     updated_by = user.getCurrentUser(),
                     last_updated = DateTime.UtcNow,
+                    is_deleted = false
                 },
                 commandType: CommandType.StoredProcedure
             );

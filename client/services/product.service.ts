@@ -2,8 +2,8 @@ import { IProduct, ResponseData } from "@/types";
 import axiosJWT from "@/utils/axios.interceptor";
 
 
-async function getProductPagination(page_number: number, page_size: number) : Promise<ResponseData<IProduct>> {
-    const res = await axiosJWT.get(`${process.env.NEXT_PUBLIC_API_URL}/product/list-product`, {
+async function getPagination(page_number: number, page_size: number) : Promise<ResponseData<IProduct>> {
+    const res = await axiosJWT.get(`${process.env.NEXT_PUBLIC_API_URL}/product/get-active`, {
         params: {
             page_number,
             page_size
@@ -12,13 +12,43 @@ async function getProductPagination(page_number: number, page_size: number) : Pr
     return res.data;
 }
 
-async function getProductById(id: string) : Promise<IProduct> {
+async function getActiveByBoothId(query: any) : Promise<ResponseData<IProduct>> {
+    const res = await axiosJWT.get(`${process.env.NEXT_PUBLIC_API_URL}/product/get-active-by-booth-id`, {
+        params: query
+    });
+    return res.data;
+}
+
+async function getInActiveByBoothId(query: any) : Promise<ResponseData<IProduct>> {
+    const res = await axiosJWT.get(`${process.env.NEXT_PUBLIC_API_URL}/product/get-inactive-by-booth-id`, {
+        params: query
+    });
+    return res.data;
+}
+
+async function getDeletedByBoothId(query: any) : Promise<ResponseData<IProduct>> {
+    const res = await axiosJWT.get(`${process.env.NEXT_PUBLIC_API_URL}/product/get-deleted-by-booth-id`, {
+        params: query
+    });
+    return res.data;
+}
+
+async function getById(id: string) : Promise<IProduct> {
     const res = await axiosJWT.get(`${process.env.NEXT_PUBLIC_API_URL}/product/get-by-id/${id}`);
     return res.data;
 }
 
 
+async function create(payload: any) {
+    const res = await axiosJWT.post(`${process.env.NEXT_PUBLIC_API_URL}/product/create`, payload);
+    return res.data;
+}
+
 export const productService = {
-    getProductPagination,
-    getProductById
+    getPagination,
+    getActiveByBoothId,
+    getInActiveByBoothId,
+    getDeletedByBoothId,
+    getById,
+    create
 }

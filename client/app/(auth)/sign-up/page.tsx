@@ -5,6 +5,8 @@ import Loader from '@/components/Loader/loader'
 import useHookMutation from '@/hooks/useHookMutation'
 import { identityService } from '@/services/identities.service'
 import Cookie from 'js-cookie'
+import { toast, ToastContainer } from 'react-toastify';
+import Link from 'next/link';
 
 export default function SignUp() {
 
@@ -24,24 +26,44 @@ export default function SignUp() {
 		setFormData({ ...formData, [name]: value })
 	}
 
-	const loginMutation = useHookMutation<any, { username: string; password: string }>(({ username, password }) => {
-		return identityService.login(username, password)
+	const registerMutation = useHookMutation<any, { username: string; password: string }>(({ username, password }) => {
+		return identityService.register(username, password)
 	});
 
-	const { isPending } = loginMutation;
+	const { isPending } = registerMutation;
 
-	const handleLogin = () => {
-		loginMutation.mutate({
+	const handleRegister = () => {
+		registerMutation.mutate({
 			username: formData.username,
 			password: formData.password
 		}, {
 			onSuccess: (data) => {
-				Cookie.set('access_token', data?.access_token);
-				Cookie.set('refresh_token', data?.refresh_token);
-				router.push('/')
+				toast.success('Đăng kí thành công, hệ thống chuyển hướng đăng nhập sau 3s',{
+                    position: "top-right",
+                    autoClose: 3000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: false,
+                    draggable: false,
+                    progress: undefined,
+                    theme: "light"
+                });
+
+                setTimeout(() => {
+                    router.push('/sign-in')
+                })
 			},
 			onError: () => {
-				setMessage("Thông tin đăng nhập không chính xác")
+				toast.error('Đăng kí không thành công',{
+                    position: "top-right",
+                    autoClose: 3000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: false,
+                    draggable: false,
+                    progress: undefined,
+                    theme: "light"
+                });
 			}
 		})
 	}
@@ -50,8 +72,8 @@ export default function SignUp() {
 		<section className="bg-gray-100 min-h-screen flex box-border justify-center items-center">
 			<div className="bg-[#dfa674] rounded-2xl flex max-w-3xl p-5 items-center">
 				<div className="md:w-1/2 px-8">
-					<h2 className="font-bold text-3xl text-[#002D74]">Login</h2>
-					<p className="text-sm mt-4 text-[#002D74]">If you already a member, easily log in now.</p>
+					<h2 className="font-bold text-3xl text-[#002D74]">Đăng kí</h2>
+					<p className="text-sm mt-4 text-[#002D74]">Nếu bạn đã chưa có tài khoản, đăng kí ngay !</p>
 
 					<div className="flex flex-col gap-4">
 						<input className="p-2 mt-8 rounded-xl border" type="text" name="username" placeholder="Tên đăng nhập" onChange={handleOnChange} />
@@ -61,15 +83,15 @@ export default function SignUp() {
 							disabled={isPending}
 							className={`bg-[#002D74] relative text-white py-2 rounded-xl hover:scale-105 duration-300 font-medium ${isPending && 'bg-[#1d3d5e]'}`}
 							type='button'
-							onClick={handleLogin}
+							onClick={handleRegister}
 						>
-							Đăng nhập
+							Đăng ký
 							{isPending && <Loader size='sm' />}
 						</button>
 					</div>
 					<div className="mt-6  items-center text-gray-100">
 						<hr className="border-gray-300" />
-						<p className="text-center text-sm">OR</p>
+						<p className="text-center text-sm">HOẶC</p>
 						<hr className="border-gray-300" />
 					</div>
 					<button className="bg-white border py-2 w-full rounded-xl mt-5 flex justify-center items-center text-sm hover:scale-105 duration-300 hover:bg-[#60a8bc4f] font-medium">
@@ -82,17 +104,19 @@ export default function SignUp() {
 
 						Đăng nhập với google
 					</button>
-					<div className="mt-10 text-sm border-b border-gray-500 py-5 playfair tooltip">Forget password?</div>
+					<div className="mt-10 text-sm border-b border-gray-500 py-5 playfair tooltip">Quên mật khẩu?</div>
 
 					<div className="mt-4 text-sm flex justify-between items-center container-mr">
-						<p className="mr-3 md:mr-0 ">If you don't have an account..</p>
-						<button className="hover:border register text-white bg-[#002D74] hover:border-gray-400 rounded-xl py-2 px-5 hover:scale-110 hover:bg-[#002c7424] font-semibold duration-300">Register</button>
+						<p className="mr-3 md:mr-0 ">Nếu bạn đã có tài khoản?</p>
+						<Link href="/sign-in" className="hover:border text-white bg-[#002D74] hover:border-gray-400 rounded-xl py-2 px-5 hover:scale-110 hover:bg-[#002c7424] font-semibold duration-300">Đăng kí !</Link>
 					</div>
 				</div>
 				<div className="w-1/2">
 					<img className="rounded-2xl max-h-[1600px] h-[400px]" src="/images/penguin.png" alt="login form image" />
 				</div>
 			</div>
+
+            <ToastContainer />
 		</section>
 	)
 }

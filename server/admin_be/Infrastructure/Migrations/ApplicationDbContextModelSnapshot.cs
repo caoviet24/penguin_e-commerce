@@ -32,6 +32,9 @@ namespace Infrastructure.Migrations
                     b.Property<bool>("is_banned")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("is_deleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("password")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -68,6 +71,9 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("is_deleted")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("updated_at")
                         .HasColumnType("datetime2");
 
@@ -97,6 +103,9 @@ namespace Infrastructure.Migrations
                     b.Property<string>("image")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("is_deleted")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("last_updated")
                         .HasColumnType("datetime2");
@@ -142,6 +151,9 @@ namespace Infrastructure.Migrations
                     b.Property<bool>("is_banned")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("is_deleted")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("last_updated")
                         .HasColumnType("datetime2");
 
@@ -151,9 +163,57 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("created_by");
+                    b.HasIndex("created_by")
+                        .IsUnique();
 
                     b.ToTable("MyBooth", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.NotifyEntity", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("created_at")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("created_by")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("is_delete")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("is_deleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("is_read")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("last_updated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("receiver_id")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("updated_by")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("receiver_id");
+
+                    b.ToTable("Notify", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.OrderItemEntity", b =>
@@ -177,6 +237,9 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("buyer_id");
+
+                    b.Property<bool>("is_deleted")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("last_updated")
                         .HasColumnType("datetime2");
@@ -223,6 +286,9 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("is_deleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("product_id")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -262,16 +328,20 @@ namespace Infrastructure.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("booth_id")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("category_detail_id")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("created_by")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("booth_id");
+
+                    b.Property<bool>("is_deleted")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("last_updated")
                         .HasColumnType("datetime2");
@@ -289,9 +359,9 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("booth_id");
-
                     b.HasIndex("category_detail_id");
+
+                    b.HasIndex("created_by");
 
                     b.ToTable("Product", (string)null);
                 });
@@ -311,6 +381,9 @@ namespace Infrastructure.Migrations
                     b.Property<string>("created_by")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("is_deleted")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("last_updated")
                         .HasColumnType("datetime2");
@@ -346,6 +419,9 @@ namespace Infrastructure.Migrations
                     b.Property<string>("created_by")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("is_deleted")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("last_updated")
                         .HasColumnType("datetime2");
@@ -421,6 +497,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("buyer_id");
 
+                    b.Property<bool>("is_deleted")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("last_updated")
                         .HasColumnType("datetime2");
 
@@ -486,6 +565,9 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("is_deleted")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("last_updated")
                         .HasColumnType("datetime2");
 
@@ -524,6 +606,9 @@ namespace Infrastructure.Migrations
                     b.Property<string>("identity")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("is_deleted")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("last_updated")
                         .HasColumnType("datetime2");
@@ -576,6 +661,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<DateTime>("expiry_date")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("is_deleted")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("last_updated")
                         .HasColumnType("datetime2");
@@ -665,8 +753,19 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.MyBoothEntity", b =>
                 {
                     b.HasOne("Domain.Entities.AccountEntity", "Account")
-                        .WithMany("MyBooth")
-                        .HasForeignKey("created_by")
+                        .WithOne("MyBooth")
+                        .HasForeignKey("Domain.Entities.MyBoothEntity", "created_by")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+                });
+
+            modelBuilder.Entity("Domain.Entities.NotifyEntity", b =>
+                {
+                    b.HasOne("Domain.Entities.AccountEntity", "Account")
+                        .WithMany("ListNotify")
+                        .HasForeignKey("receiver_id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -713,16 +812,16 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.ProductEntity", b =>
                 {
-                    b.HasOne("Domain.Entities.MyBoothEntity", "MyBooth")
-                        .WithMany("ListProduct")
-                        .HasForeignKey("booth_id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Domain.Entities.CategoryDetailEntity", "CategoryDetail")
                         .WithMany("ListProduct")
                         .HasForeignKey("category_detail_id")
                         .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.MyBoothEntity", "MyBooth")
+                        .WithMany("ListProduct")
+                        .HasForeignKey("created_by")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("CategoryDetail");
@@ -862,6 +961,8 @@ namespace Infrastructure.Migrations
                 {
                     b.Navigation("ListCategory");
 
+                    b.Navigation("ListNotify");
+
                     b.Navigation("ListOrderItem");
 
                     b.Navigation("ListProductReview");
@@ -870,7 +971,8 @@ namespace Infrastructure.Migrations
 
                     b.Navigation("ListVoucher");
 
-                    b.Navigation("MyBooth");
+                    b.Navigation("MyBooth")
+                        .IsRequired();
 
                     b.Navigation("RefreshToken")
                         .IsRequired();

@@ -52,7 +52,7 @@ namespace Application.SaleBill.Queries.GetBillStatusWaitByBuyerId
 
                     if (detail.product_detail_id != null)
                     {
-                        detail.ProductDetail = product;
+                        detail.product_detail = product;
                         billEntry.list_sale_bill_detail.Add(detail);
                     }
 

@@ -12,6 +12,7 @@ namespace Domain.Common
         public string created_by { get; set; } = null!;
         public DateTime last_updated { get; set; } = DateTime.UtcNow;
         public string updated_by { get; set; } = null!;
+        public bool is_deleted { get; set; } = false;
 
     }
 }

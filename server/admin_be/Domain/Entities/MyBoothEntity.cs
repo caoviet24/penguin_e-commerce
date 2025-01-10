@@ -12,7 +12,7 @@ namespace Domain.Entities
         public string booth_description { get; set; } = null!;
         public string booth_avatar { get; set; } = null!;
         public bool is_active { get; set; }
-        public Boolean is_banned { get; set; }
+        public bool is_banned { get; set; }
         public virtual AccountEntity Account { get; set; } = null!;
         public virtual ICollection<ProductEntity> ListProduct { get; set; } = null!;
         public virtual ICollection<VoucherEntity> ListVoucher { get; set; } = null!;

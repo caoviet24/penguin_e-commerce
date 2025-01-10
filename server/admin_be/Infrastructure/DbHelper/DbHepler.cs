@@ -15,8 +15,6 @@ namespace WebApi.DBHelper
         public async Task<T> QueryProceduceSingleDataAsync<T>(string procedureName, object parameters)
         {
             var dynamicParameters = new DynamicParameters(parameters);
-
-
             var result = await dbConnection.QueryFirstOrDefaultAsync<T>
             (
                 procedureName,
@@ -37,28 +35,23 @@ namespace WebApi.DBHelper
         public async Task<List<T>> QueryProceduceMultiDataAsync<T>(string procedureName, object parameters)
         {
             var dynamicParameters = new DynamicParameters(parameters);
-            try
+            var result = (await dbConnection.QueryAsync<T>
+            (
+                procedureName,
+                dynamicParameters,
+                commandType: CommandType.StoredProcedure
+            )).ToList();
+
+            if (result == null)
             {
-                var result = (await dbConnection.QueryAsync<T>
-                (
-                    procedureName,
-                    dynamicParameters,
-                    commandType: CommandType.StoredProcedure
-                )).ToList();
 
-                if (result == null)
-                {
-
-                    return default!;
-                }
-
-                return result;
+                return default!;
             }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("Error executing query.", ex);
-            }
+
+            return result;
         }
+
+
 
         public async Task<T> QueryProceduceByUserAsync<T>(string procedureName, dynamic parameters)
         {
@@ -67,6 +60,7 @@ namespace WebApi.DBHelper
             dynamicParameters.Add("created_by", user.getCurrentUser());
             dynamicParameters.Add("last_updated", DateTime.UtcNow);
             dynamicParameters.Add("updated_by", user.getCurrentUser());
+            dynamicParameters.Add("is_deleted", false);
 
             var result = await dbConnection.QueryFirstOrDefaultAsync<T>
             (

@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Application.ProductDetail.Commands.Create;
+using Application.ProductDetail.Commands.DeleteSoft;
+using Application.ProductDetail.Commands.Restore;
 using Application.ProductDetail.Queries.GetProductDetailByCgId;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -16,6 +19,27 @@ namespace WebApi.Controllers
         public async Task<IActionResult> GetProductDetailByCgDetailId([FromQuery] GetProductDetailByCgDetailIdQuery request)
         {
             logger.LogInformation("Get product detail by category detail id: {category_id}", request.cg_detail_id);
+            return Ok(await mediator.Send(request));
+        }
+
+        [HttpPost("create")]
+        public async Task<IActionResult> Create([FromBody] CreateProductDetailCommand2 request)
+        {
+            logger.LogInformation("Create product detail");
+            return Ok(await mediator.Send(request));
+        }
+
+        [HttpPut("delete-soft/{id}")]
+        public async Task<IActionResult> DeleteSoft([FromRoute] DeleteSoftProductDetailCommand request)
+        {
+            logger.LogInformation("Delete soft product detail");
+            return Ok(await mediator.Send(request));
+        }
+
+        [HttpPut("restore/{id}")]
+        public async Task<IActionResult> DeleteSoft([FromRoute] RestoreProductDetailCommand request)
+        {
+            logger.LogInformation("Delete soft product detail");
             return Ok(await mediator.Send(request));
         }
     }

@@ -15,10 +15,11 @@ namespace Domain.Entities
         public bool is_banned { get; set; }
         public DateTime created_at { get; set; }
         public DateTime updated_at { get; set; }
+        public bool is_deleted { get; set; }
         public virtual UserEntity User { get; set; } = null!;
         public virtual RefreshTokenEntity RefreshToken { get; set; } = null!;
         public virtual VerifyAccount VerifyAccount { get; set; } = null!;
-        public virtual ICollection<MyBoothEntity> MyBooth { get; set; } = null!;
+        public virtual MyBoothEntity MyBooth { get; set; } = null!;
         public virtual ICollection<CategoryEntity> ListCategory { get; set; } = null!;
         public virtual ICollection<OrderItemEntity> ListOrderItem { get; set; } = null!;
         public virtual ICollection<SaleBillEntity> ListSaleBill { get; set; } = null!;

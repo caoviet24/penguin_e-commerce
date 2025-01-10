@@ -12,5 +12,6 @@ namespace Application.Common.Dtos
         public DateTime created_at { get; set; }
         public DateTime updated_at { get; set; }
         public string category_id {get; set;} = null!;
+        public bool is_deleted {get; set;}
     }
 }

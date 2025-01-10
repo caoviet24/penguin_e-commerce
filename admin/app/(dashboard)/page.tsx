@@ -2,15 +2,13 @@
 import React, { useState, useEffect, use } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import Card from '@/components/Card/card';
-import { statisticalService } from '@/services/statistical.service';
 import { ChartData, StatisticalData, StatisticalData2 } from '@/types';
 import { IoMdMore } from 'react-icons/io';
 import ChartLine from '@/components/chart_component/ChartLine/chartLine';
 import { Popper } from '@mui/material';
 import { accountService } from '@/services/account.service';
 import { AccountIcon, PostIcon, UserIcon, VideoIcon } from '@/components/Icons';
-import { postService } from '@/services/post.service';
-import { videoService } from '@/services/video.service';
+
 import Cookie from 'js-cookie';
 import getDateRange from '@/utils/getDateRange';
 import ChartBar from '@/components/chart_component/ChartBar/chartBar';
@@ -47,94 +45,8 @@ export default function DashBoard() {
 
     const { start_date, end_date } = getDateRange(timeOption);
 
-    const {
-        data: accountsOnlineData,
-        isSuccess: isFetchAccountOnlineSuccess,
-        refetch: refetchAccountOnline,
-    } = useQuery({
-        queryKey: ['get-accounts-online'],
-        queryFn: accountService.getAccountOnline,
-        enabled: !!Cookie.get('access_token'),
-    });
 
-    const [
-        statistalcalCardDataAccount,
-        statistalcalCardDataPost,
-        statistalcalCardDataVideo,
-        statistalcalChartDataAccount,
-        statistalcalChartDataPost,
-        statistalcalChartDataVideo,
-    ] = useQueries({
-        queries: [
-            {
-                queryKey: ['get-statistical-account-2', start_date, end_date],
-                queryFn: () => accountService.getStatisticalAccount(start_date, end_date),
-                enabled: !!Cookie.get('access_token'),
-            },
-            {
-                queryKey: ['get-statistical-post-2', start_date, end_date],
-                queryFn: () => postService.getStatisticalPost(start_date, end_date),
-                enabled: !!Cookie.get('access_token'),
-            },
-            {
-                queryKey: ['get-statistical-video-2', start_date, end_date],
-                queryFn: () => videoService.getStatisticalVideo(start_date, end_date),
-                enabled: !!Cookie.get('access_token'),
-            },
-            {
-                queryKey: ['get-num-account-by-time', start_date, end_date],
-                queryFn: () => statisticalService.getNumAccountByTime(start_date, end_date, timeOption),
-                enabled: !!start_date && !!end_date && !!Cookie.get('access_token'),
-            },
-            {
-                queryKey: ['get-num-post-by-time', start_date, end_date],
-                queryFn: () => statisticalService.getNumPostByTime(start_date, end_date, timeOption),
-                enabled: !!start_date && !!end_date && !!Cookie.get('access_token'),
-            },
-            {
-                queryKey: ['get-num-video-by-time', start_date, end_date],
-                queryFn: () => statisticalService.getNumVideoByTime(start_date, end_date, timeOption),
-                enabled: !!start_date && !!end_date && !!Cookie.get('access_token'),
-            },
-        ],
-    });
 
-    useEffect(() => {
-        if (isFetchAccountOnlineSuccess) {
-            setAccountOnline(accountsOnlineData?.total);
-        }
-    }, [isFetchAccountOnlineSuccess, accountsOnlineData]);
-
-    useEffect(() => {
-        socket.emit('join-room-userId', 'system');
-
-        return () => {
-            socket.emit('leave-room-userId', 'system');
-        };
-    }, []);
-
-    useEffect(() => {
-        if (socket) {
-            socket.on('user-online', (data: any) => {
-
-                setTimeout(() => {
-                    refetchAccountOnline();
-                }, 2000);
-            });
-
-            socket.on('user-offline', (data: any) => {
-                console.log(data);
-
-                refetchAccountOnline();
-                setTimeout(() => {}, 1000);
-            });
-        }
-
-        return () => {
-            socket.off('user-online');
-            socket.off('user-offline');
-        };
-    }, [socket]);
 
     return (
         <div className="flex flex-col bg-gray-100">
@@ -235,124 +147,12 @@ export default function DashBoard() {
                     </div>
                 </div>
                 <div className="grid grid-cols-4 gap-6 w-full mx-auto mt-6">
-                    <Card
-                        cardData={{
-                            rate: statistalcalCardDataAccount.data?.rate ?? 0,
-                            title: 'Tài khoản',
-                            total: statistalcalCardDataAccount.data?.total ?? 0,
-                            icon: <AccountIcon size={35} />,
-                        }}
-                    />
-                    <Card
-                        cardData={{
-                            rate: statistalcalCardDataAccount.data?.rate ?? 0,
-                            title: 'Người dùng',
-                            total: statistalcalCardDataAccount.data?.total ?? 0,
-                            icon: <UserIcon size={35} />,
-                        }}
-                    />
-                    <Card
-                        cardData={{
-                            rate: statistalcalCardDataPost.data?.rate ?? 0,
-                            title: 'Bài đăng',
-                            total: statistalcalCardDataPost.data?.total ?? 0,
-                            icon: <PostIcon size={35} />,
-                        }}
-                    />
-                    <Card
-                        cardData={{
-                            rate: statistalcalCardDataVideo.data?.rate ?? 0,
-                            title: 'Video',
-                            total: statistalcalCardDataVideo.data?.total ?? 0,
-                            icon: <VideoIcon size={35} />,
-                        }}
-                    />
+
                 </div>
 
                 <div className="grid grid-cols-3 gap-6 py-2">
-                    <RenderWithCondition condition={timeOption === 'day'}>
-                        <div className="flex items-center justify-center w-full p-5 bg-white rounded-lg shadow-lg">
-                            <ChartBar
-                                chartData={{
-                                    title: `Biểu đồ tài khoản đăng kí ${
-                                        timeOption === 'day' ? 'hôm nay' : start_date + ' đến ' + end_date
-                                    }`,
-                                    lable: 'Số lượng tài khoản',
-                                    data: statistalcalChartDataAccount.data,
-                                    lineColor: 'rgba(75, 192, 192, 1)',
-                                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                                }}
-                            />
-                        </div>
-                        <div className="flex items-center justify-center w-full p-5 bg-white rounded-lg shadow-lg">
-                            <ChartBar
-                                chartData={{
-                                    title: `Biểu đồ số lượng bài đăng ${
-                                        timeOption === 'day' ? 'hôm nay' : start_date + ' đến ' + end_date
-                                    }`,
-                                    lable: 'Số lượng bài đăng',
-                                    data: statistalcalChartDataPost.data,
-                                    lineColor: 'rgba(255, 205, 86, 1)',
-                                    backgroundColor: 'rgba(255, 205, 86, 0.2)',
-                                }}
-                            />
-                        </div>
-                        <div className="flex items-center justify-center w-full p-5 bg-white rounded-lg shadow-lg">
-                            <ChartBar
-                                chartData={{
-                                    title: `Biểu đồ số lượng video ${
-                                        timeOption === 'day' ? 'hôm nay' : start_date + ' đến ' + end_date
-                                    }`,
-                                    lable: 'Số lượng video',
-                                    data: statistalcalChartDataVideo.data,
-                                    lineColor: 'rgba(255, 99, 132, 1)',
-                                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                                }}
-                            />
-                        </div>
-                    </RenderWithCondition>
 
-                    <RenderWithCondition condition={timeOption !== 'day'}>
-                        <div className="flex items-center justify-center w-full p-5 bg-white rounded-lg shadow-lg">
-                            <ChartLine
-                                chartData={{
-                                    title: `Biểu đồ số lượng tài khoản ${
-                                        timeOption === 'day' ? 'hôm nay' : start_date + ' đến ' + end_date
-                                    }`,
-                                    lable: 'Số lượng tài khoản',
-                                    data: statistalcalChartDataAccount.data,
-                                    lineColor: 'rgba(75, 192, 192, 1)',
-                                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                                }}
-                            />
-                        </div>
-                        <div className="flex items-center justify-center w-full p-5 bg-white rounded-lg shadow-lg">
-                            <ChartLine
-                                chartData={{
-                                    title: `Biểu đồ số lượng bài đăng ${
-                                        timeOption === 'day' ? 'hôm nay' : start_date + ' đến ' + end_date
-                                    }`,
-                                    lable: 'Số lượng bài đăng',
-                                    data: statistalcalChartDataPost.data,
-                                    lineColor: 'rgba(255, 205, 86, 1)',
-                                    backgroundColor: 'rgba(255, 205, 86, 0.2)',
-                                }}
-                            />
-                        </div>
-                        <div className="flex items-center justify-center w-full p-5 bg-white rounded-lg shadow-lg">
-                            <ChartLine
-                                chartData={{
-                                    title: `Biểu đồ số lượng video ${
-                                        timeOption === 'day' ? 'hôm nay' : start_date + ' đến ' + end_date
-                                    }`,
-                                    lable: 'Số lượng video',
-                                    data: statistalcalChartDataVideo.data,
-                                    lineColor: 'rgba(255, 99, 132, 1)',
-                                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                                }}
-                            />
-                        </div>
-                    </RenderWithCondition>
+
                 </div>
             </div>
         </div>

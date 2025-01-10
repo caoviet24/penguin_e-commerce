@@ -8,10 +8,10 @@
 npm i
 ```
 2. Create a .env File
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
-REACT_APP_OAUTH_CLIENT_ID=
-REACT_APP_OPENCAGE_API_KEY=
+```env.local
+NEXT_PUBLIC_API_URL=http://localhost:5000
+NEXT_PUBLIC_OPENCAGE_API_KEY=
+NEXT_PUBLIC_IMGBB_API_KEY=
 ```
 3. Start the Server
 ```bash

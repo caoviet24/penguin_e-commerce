@@ -58,7 +58,8 @@ namespace Application.Voucher.Commands.CreateVoucher
                     discount = request.discount,
                     type_discount = request.type_discount,
                     status_voucher = StatusVoucher.Inactive,
-                    booth_id = request.booth_id
+                    booth_id = request.booth_id,
+                    is_deleted = false
                 }
             );
             return data;

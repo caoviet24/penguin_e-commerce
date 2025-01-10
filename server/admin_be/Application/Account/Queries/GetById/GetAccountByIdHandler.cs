@@ -21,11 +21,11 @@ namespace Application.Account.Queries.GetById
                 "sp_get_account_by_id",
                 new
                 {
-                    acc_id = request.acc_id
+                    Id = request.acc_id
                 }
             );
             return data;
-    
+
         }
     }
 
