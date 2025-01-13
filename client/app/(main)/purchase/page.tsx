@@ -1,50 +1,146 @@
 "use client";
+import EvaluateForm from "@/components/EvaluateForm/EvaluateForm";
+import useHookMutation from "@/hooks/useHookMutation";
 import { useAppSelector } from "@/redux/store";
 import { billService } from "@/services/bill.service";
 import { ISaleBill, ResponseData } from "@/types";
-import { Divider } from "@mui/material";
-import { useQuery } from "@tanstack/react-query";
+import { Divider, Modal } from "@mui/material";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect } from "react";
 import { BiSearchAlt2 } from "react-icons/bi";
 import { CiShop } from "react-icons/ci";
 import { FaFacebookMessenger } from "react-icons/fa";
+import { toast, ToastContainer } from "react-toastify";
 
 export default function Purchase() {
     const { my_account } = useAppSelector(state => state.account);
     const [tabActice, setTabActive] = React.useState(0);
-    const [tabData, setTabData] = React.useState<ISaleBill[] | []>([]);
+    const [tabData, setTabData] = React.useState<ResponseData<ISaleBill>>();
+    const [billSelected, setBillSelected] = React.useState<ISaleBill>();
     const statusMessages = {
         0: "Người gửi đang chuẩn bị hàng",
-        1: "Đã gửi hàng",
-        2: "Đã giao hàng"
+        1: "Đang giao hàng",
+        2: "Đơn hàng giao thành công",
+        3: "Đơn hàng đã hủy",
+        4: "Đơn hàng bị hủy"
     };
-
-
     const handleChangeTab = (idx: number) => {
         setTabActive(idx);
     };
 
 
-    const { data: billWait, isSuccess: isFetchBillWaitSuccess } = useQuery<ResponseData<ISaleBill[]>>({
-        queryKey: ["get-bill-wait-by-buyer-id",],
-        queryFn: () => billService.getStatusWaitByBuyerId({ buyer_id: my_account.id, page_number: 1, page_size: 100 }),
-        enabled: tabActice === 0,
+
+    const resultBillData = useQueries({
+        queries: [
+            {
+                queryKey: ["bill-wait", my_account.id, tabActice === 0],
+                queryFn: () => billService.getStatusWaitByBuyerId({
+                    buyer_id: my_account.id,
+                    status: tabActice,
+                    page_number: 1,
+                    page_size: 10
+                }),
+                enabled: tabActice === 0
+            },
+            {
+                queryKey: ["bill-transport", my_account.id, tabActice === 1],
+                queryFn: () => billService.getStatusWaitByBuyerId({
+                    buyer_id: my_account.id,
+                    status: tabActice,
+                    page_number: 1,
+                    page_size: 10
+                }),
+                enabled: tabActice === 1
+            },
+            {
+                queryKey: ["bill-success", my_account.id, tabActice === 2],
+                queryFn: () => billService.getStatusWaitByBuyerId({
+                    buyer_id: my_account.id,
+                    status: tabActice,
+                    page_number: 1,
+                    page_size: 10
+                }),
+                enabled: tabActice === 2
+            },
+            {
+                queryKey: ["bill-cancel", my_account.id, tabActice === 3],
+                queryFn: () => billService.getStatusWaitByBuyerId({
+                    buyer_id: my_account.id,
+                    status: tabActice,
+                    page_number: 1,
+                    page_size: 10
+                }),
+                enabled: tabActice === 3
+            },
+            {
+                queryKey: ["seller-cancel", my_account.id, tabActice === 4],
+                queryFn: () => billService.getStatusWaitByBuyerId({
+                    buyer_id: my_account.id,
+                    status: tabActice,
+                    page_number: 1,
+                    page_size: 10
+                }),
+                enabled: tabActice === 4
+            }
+        ]
     });
 
     useEffect(() => {
-        if (isFetchBillWaitSuccess) {
-            setTabData(billWait.data.flat());
-
-            console.log(billWait.data.flat().map((a) => a.list_sale_bill_detail));
-
+        if (resultBillData[tabActice].isSuccess) {
+            setTabData(resultBillData[tabActice].data);
         }
+    }, [resultBillData, tabActice]);
 
-    }, [isFetchBillWaitSuccess])
+    const updateStatusBillMutation = useHookMutation((data: any) => billService.updateStatus(data));
+    const handleUpdateStatus = (status: number, bill_id: string) => {
+        updateStatusBillMutation.mutate({
+            status: status,
+            bill_id: bill_id
+        }, {
+            onSuccess: () => {
+                resultBillData[tabActice].refetch();
+                toast.success("Cập nhật trạng thái đơn hàng thành công", {
+                    position: "top-right",
+                    autoClose: 2000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                });
+            },
+            onError: () => {
+                toast.error("Cập nhật trạng thái đơn hàng thất bại", {
+                    position: "top-right",
+                    autoClose: 2000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                });
+            }
+        });
+    };
+
+    const handleEvaluateSuccess = () => {
+        toast.success("Đánh giá thành công", {
+            position: "top-right",
+            autoClose: 2000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+        });
+        setBillSelected(undefined);
+    }
+
 
     return (
-        <div className="container">
+        <div className="container my-10">
             <div className="bg-white grid grid-cols-5 w-full mt-5">
                 {["Chờ lấy hàng", "Vận chuyển", "Hoàn thành", "Đã Hủy", "Bị hủy"].map((a, idx) => (
                     <button
@@ -63,7 +159,6 @@ export default function Purchase() {
                 <input
                     className="w-full bg-gray-100 text-gray-700 text-sm border border-gray-300 rounded-md pl-3 pr-28 py-2 transition duration-300 ease-in-out focus:outline-none focus:border-purple-500 hover:border-gray-400 shadow-sm focus:shadow-md"
                     placeholder="Nhập từ khóa tìm kiếm...."
-
                 />
                 <button className="absolute top-1 right-1 flex items-center rounded bg-purple-600 py-1 px-2.5 border border-transparent text-center text-sm text-white transition-all shadow-sm hover:shadow-md focus:bg-purple-500 focus:shadow-none active:bg-purple-500 hover:bg-purple-500 disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none">
                     <BiSearchAlt2 size={20} />
@@ -72,7 +167,7 @@ export default function Purchase() {
             </div>
 
             <div>
-                {tabData && tabData.length > 0 && tabData.map((item: ISaleBill, idx: number) => (
+                {tabData && tabData.data.length > 0 && tabData.data.map((item: ISaleBill, idx: number) => (
                     <div key={item.id} className="bg-white p-3 mt-3">
                         <div className="flex justify-between">
                             <div className="flex items-center gap-2">
@@ -131,13 +226,35 @@ export default function Purchase() {
                             <button className="bg-white font-medium border opacity-70 border-solid border-purple-500 px-4 py-[8px] rounded transition">
                                 Liên hệ người bán
                             </button>
-                            {item.status_bill === 0 && <button className="bg-purple-500 text-white font-medium px-4 py-[9px] rounded transition ">
-                                Hủy đơn hàng
+                            {item.status_bill === 0 &&
+                                <button onClick={() => handleUpdateStatus(3, item.id)} className="bg-purple-500 text-white font-medium px-4 py-[9px] rounded transition ">
+                                    Hủy đơn hàng
+                                </button>}
+                            {item.status_bill === 1 &&
+                                <button onClick={() => handleUpdateStatus(2, item.id)} className="bg-purple-500 text-white font-medium px-4 py-[9px] rounded transition ">
+                                    Đã nhận được hàng
+                                </button>}
+                            {item.status_bill === 2 &&
+                                <button onClick={() => setBillSelected(item)} className="bg-purple-500 text-white font-medium px-4 py-[9px] rounded transition ">
+                                    Đánh giá
+                                </button>}
+                            {item.status_bill === 3 && <button className="bg-purple-500 text-white font-medium px-4 py-[9px] rounded transition ">
+                                Mua lại hàng
                             </button>}
                         </div>
                     </div>
                 ))}
             </div>
+            <Modal 
+             open={!!billSelected} 
+             className="flex items-center justify-center"
+            onClose={() => setBillSelected(undefined)}
+            >
+                <div>
+                    {billSelected && <EvaluateForm bill={billSelected} onSuccess={handleEvaluateSuccess} />}
+                </div>
+            </Modal>
+            <ToastContainer />
         </div>
     );
 }

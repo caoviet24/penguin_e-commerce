@@ -4,13 +4,14 @@ export interface StatisticalData2 {
     rate: number,
 }
 
-export interface StatisticalData {
-    day: string;
-    num: number;
+export interface Statistical {
+    date: string;
+    total: number;
+    products_sold: number;
 }
 
 export interface ChartData {
-    data: StatisticalData[];
+    data: Statistical[];
     title: string;
     lable: string;
     lineColor: string;
@@ -119,6 +120,18 @@ export interface IProductDetail {
     updated_at: Date;
     product_id: string;
     is_deleted: boolean;
+}
+
+export interface IProductReview {
+    id: string;
+    product_detail_id: string;
+    rating: number;
+    content: string;
+    created_at: Date;
+    updated_at: Date;
+    created_at: string;
+    product_detail: IProductDetail;
+    user: IUser;
 }
 
 

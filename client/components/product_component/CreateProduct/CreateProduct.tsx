@@ -5,7 +5,7 @@ import useHookMutation from "@/hooks/useHookMutation";
 import { categoryService } from "@/services/category.service";
 import { productService } from "@/services/product.service";
 import { IBooth, ICategory, ResponseData } from "@/types";
-import { getUrlImage } from "@/utils/getLinkImage";
+import { getUrlImage } from "@/utils/getUrlImage";
 import { Avatar, colors, Modal } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";

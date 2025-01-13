@@ -15,7 +15,7 @@ import {
     TableRow,
 } from '@mui/material';
 
-import { ICategory, ResponseData } from '@/types';
+import { ICategory, ICategoryDetail, ResponseData } from '@/types';
 import { toast, ToastContainer } from 'react-toastify';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import handleTime from '@/utils/handleTime';
@@ -29,6 +29,8 @@ import { BiPlusCircle, BiSearchAlt } from 'react-icons/bi';
 import CreateCateogory from '@/components/category_component/CreateCategory/CreateCateogory';
 import CategoryDetail from '@/components/category_component/CategoryDetail/CategoryDetail';
 import useDebouce from '@/hooks/useDebouce';
+import { useAppDispatch } from '@/redux/store';
+import { setCategories } from '@/redux/slices/category.slice';
 
 interface Column {
     id: 'id' | 'image' | 'cg_name' | 'created_at';
@@ -56,6 +58,7 @@ export default function Category() {
     const [openDelete, setOpenDelete] = useState(false);
     const [categorySelected, setCategorySeleted] = useState<ICategory>();
     const [searchValue, setSearchValue] = useState('');
+    const dispatch = useAppDispatch();
 
     const { isSuccess: isFetchByNameSuccess, data: categoryByNameData, refetch: refetchByName } = useQuery({
         queryKey: ['category-by-name', page, rowsPerPage],
@@ -283,7 +286,7 @@ export default function Category() {
                                 {columns.map((column) => {
                                     const formattedRow = {
                                         id: cg.id,
-                                        image: <Avatar src={cg.image} alt={cg.category_name} className='!h-20 !w-20 ' />,
+                                        image: <Avatar src={cg.image} alt={cg.category_name} className='!h-16 !w-16 ' />,
                                         cg_name: cg.category_name,
                                         created_at: handleTime(cg.created_at),
                                     };

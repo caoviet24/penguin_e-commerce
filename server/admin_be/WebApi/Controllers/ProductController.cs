@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using Application.Product.Commands.Create;
+using Application.Product.Commands.Active;
 using Application.Product.Commands.Delete;
 using Application.Product.Commands.DeleteSoft;
+using Application.Product.Commands.InActive;
+using Application.Product.Commands.Restore;
+using Application.Product.Create;
 using Application.Product.Queries.GetActive;
 using Application.Product.Queries.GetActiveByBoothId;
 using Application.Product.Queries.GetByDesc;
@@ -88,10 +91,31 @@ namespace WebApi.Controllers
             return Ok(await mediator.Send(command));
         }
 
+        [HttpPut("active/{Id}")]
+        public async Task<IActionResult> Active([FromRoute] ActiveProductCommand command)
+        {
+            logger.LogInformation("Active product with id: {Id}", command.Id);
+            return Ok(await mediator.Send(command));
+        }
+
+        [HttpPut("inactive/{Id}")]
+        public async Task<IActionResult> InActive([FromRoute] InActiveProductCommand command)
+        {
+            logger.LogInformation("InActive product with id: {Id}", command.Id);
+            return Ok(await mediator.Send(command));
+        }
+
         [HttpPut("delete-soft/{Id}")]
         public async Task<IActionResult> DeleteSoft([FromRoute] DeleteSoftProductCommand command)
         {
             logger.LogInformation("Delete soft product with id: {Id}", command.Id);
+            return Ok(await mediator.Send(command));
+        }
+
+        [HttpPut("restore/{Id}")]
+        public async Task<IActionResult> Restore([FromRoute] RestoreProductCommand command)
+        {
+            logger.LogInformation("Restore product with id: {Id}", command.Id);
             return Ok(await mediator.Send(command));
         }
 

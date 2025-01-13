@@ -28,7 +28,7 @@ namespace WebApi.Controllers
 {
     [Authorize]
     [Route("booth")]
-    public class BoothController(ILogger<BoothController> logger, IMediator mediator) : Controller
+    public class BoothController(ILogger<BoothController> logger, IMediator mediator) : ControllerBase
     {
         [HttpGet("get-by-acc-id/{acc_id}")]
         public async Task<IActionResult> GetByAccId([FromRoute] GetBoothByAccIdQuery request)

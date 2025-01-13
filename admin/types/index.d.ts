@@ -85,17 +85,21 @@ export interface ICategory {
 
 export interface ICategoryDetail {
     id: string;
-    catogory_detail_name: string;
+    category_detail_name: string;
+    category_id: string;
     created_at: Date;
     updated_at: Date;
-    category_id: string;
     is_deleted: boolean;
 }
 
 export interface IProduct {
     id: string;
     product_desc: string;
+    status: boolean;
+    created_at: Date;
     booth_id: string;
+    updated_at: Date;
+    updated_by: string;
     is_detele: boolean;
     list_product_detail: IProductDetail[];
 }
@@ -114,6 +118,7 @@ export interface IProductDetail {
     created_at: Date;
     updated_at: Date;
     product_id: string;
+    is_deleted: boolean;
 }
 
 

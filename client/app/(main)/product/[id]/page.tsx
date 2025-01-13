@@ -1,5 +1,5 @@
 "use client"
-import { IBooth, IProduct, IProductDetail } from '@/types';
+import { IBooth, IProduct, IProductDetail, IProductReview } from '@/types';
 import { useQuery } from '@tanstack/react-query';
 import React, { useMemo, useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -14,6 +14,9 @@ import useHookMutation from '@/hooks/useHookMutation';
 import { orderItemService } from '@/services/orderItem.service';
 import { useAppDispatch } from '@/redux/store';
 import { setAddToCart } from '@/redux/slices/cart.slice';
+import { productReviewService } from '@/services/productReview.service';
+import handleTimeVn from '@/utils/handleTimeVn';
+import handleTime from '@/utils/handleTime';
 
 export default function AccountId({ params }: { params: Promise<{ id: string }> }) {
     const { id: slug } = React.use(params);
@@ -67,8 +70,6 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
         })
     }
 
-
-
     const { data: productData, isSuccess } = useQuery<IProduct>({
         queryKey: ['product', slug],
         queryFn: () => productService.getById(slug),
@@ -81,14 +82,18 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
         enabled: !!slug && !!productData?.booth_id
     });
 
+    const { data: reviewsData } = useQuery({
+        queryKey: ['product-reviews', slug],
+        queryFn: () => productReviewService.getByProductId(slug),
+        enabled: !!slug
+    })
+
     const addToCartMutaion = useHookMutation(data => {
         return orderItemService.addToCart(data);
     })
 
 
     const handleAddToCart = () => {
-
-
         addToCartMutaion.mutate(formData, {
             onSuccess: (data) => {
                 toast.success('Thêm sản phẩm thành công!', {
@@ -139,10 +144,9 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
             <div className="flex gap-4 bg-white w-full p-4">
                 <div className='w-2/5 flex flex-col'>
                     {productDetailActive?.image ? (
-                        <Image
-                            className='border border-solid border-gray-100 shadow-sm'
+                        <img
+                            className='border border-solid border-gray-100 shadow-sm !w-[500px] !h-[485px]'
                             src={productDetailActive.image} alt="product"
-                            width={500} height={500}
                         />
                     ) : (
                         <p>....</p>
@@ -186,7 +190,7 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
                             productDetailActive?.promotional_price > 0 ?
                             <div className='flex flex-row gap-2 items-center'>
                                 <p className='text-3xl line-through opacity-75 font-light'>{productDetailActive?.sale_price.toLocaleString()}đ</p>
-                                <p className='text-red-500 text-4xl'>{(productDetailActive?.sale_price - productDetailActive?.promotional_price).toLocaleString()}đ</p>
+                                <p className='text-red-500 text-4xl'>{(productDetailActive?.promotional_price).toLocaleString()}đ</p>
                             </div>
                             :
                             <p className='text-red-500 text-4xl'>{productDetailActive?.sale_price.toLocaleString()}đ</p>
@@ -214,10 +218,10 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
                             {productData?.list_product_detail.map((prod) => (
                                 <button
                                     key={prod.id}
-                                    className={`flex gap-2 border border-solid border-gray-100 px-4 py-2 relative ${colorActive === prod.id && 'border-red-500'}`}
+                                    className={`flex items-center gap-2 border border-solid border-gray-100 px-4 py-2 relative ${colorActive === prod.id && 'border-red-500'}`}
                                     onClick={() => handleOnChangeColor(prod)}
                                 >
-                                    <Image src={prod.image} alt="product" width={24} height={24} />
+                                    <img src={prod.image} className='!h-6 !w-6' alt="product" />
                                     <span>
                                         {prod.color}
                                     </span>
@@ -232,14 +236,14 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
                     <div className='flex items-center'>
                         <p className='w-1/5 opacity-60 capitalize'>Size</p>
                         <div className='flex gap-4'>
-                            {productDetailActive && productDetailActive.size.split(',').map((s) => (
-                                <button key={s}
-                                    className={`border border-solid px-4 py-2  border-gray-100 relative ${sizeActive === s && 'border-red-500'}`}
+                            {productDetailActive && productDetailActive.size.split(',').map((s, idx) => (
+                                <button key={idx}
+                                    className={`border border-solid px-4 py-2 border-gray-100 relative ${sizeActive === s && 'border-red-500'}`}
                                     onClick={() => handleOnChangeSize(s)}>
                                     {s}
                                     {sizeActive === s
                                         &&
-                                        <Image className='absolute right-0 bottom-0 z-10' src="/images/check.webp" alt="check" width={16} height={16} />
+                                        <img className='absolute right-0 bottom-0 z-10 !h-[16px] !w-[16px]' src="/images/check.webp" alt="check" />
                                     }
                                 </button>
                             ))}
@@ -280,7 +284,7 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
 
             </div>
             <div className="flex gap-4 bg-white w-full p-4">
-                <div className='flex'>
+                <div className='flex gap-5'>
                     <Avatar src={boothData?.booth_avatar} alt="booth" sx={{ width: 100, height: 100 }} />
                     <div className='flex flex-col gap-1 justify-center'>
                         <p className="capitalize">{boothData?.booth_name}</p>
@@ -297,7 +301,7 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
                         </div>
                     </div>
                 </div>
-                <div>|</div>
+                <div className='h-11 w-[2px] bg-black'></div>
                 <div>
                     <div className='flex items-center gap-4'>
                         <p className='w-20'>Ngày tạo:</p>
@@ -315,12 +319,58 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
                 <h2 className='text-xl'>Đánh giá sản phẩm</h2>
                 <Divider />
                 <div className='min-h-56'>
-                    <div className='h-full w-full flex flex-col items-center justify-center'>
-                        <Image src="/images/no-rating.png" alt="1" width={100} height={100} />
-                        <span>
-                            Chưa có đánh giá sản phẩm
-                        </span>
-                    </div>
+                    {!reviewsData ?
+                        <div className='h-full w-full flex flex-col items-center justify-center'>
+                            <Image src="/images/no-rating.png" alt="1" width={100} height={100} />
+                            <span>
+                                Chưa có đánh giá sản phẩm
+                            </span>
+                        </div>
+                        :
+                        <div className='flex flex-col gap-5'>
+                            {reviewsData?.map((review: IProductReview) => (
+                                <div key={review.id} className='flex gap-4'>
+                                    <div className='flex flex-col gap-2'>
+                                        <div className='flex flex-row items-center gap-2'>
+                                            <Avatar src={review.user.avatar ? review.user.avatar : '/images/white-avatar.jpeg'} alt="user" sx={{ width: 40, height: 40 }} />
+                                            <div className='flex flex-col'>
+                                                <div className='flex flex-row items-center gap-2'>
+                                                    <p>{review.user.full_name}</p>
+                                                    <div className='flex flex-row gap-1'>
+                                                        {[1, 2, 3, 4, 5].map((rate) => (
+                                                            <FaStar size={12} key={rate} color={review.rating > rate ? 'yellow' : ''} />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <p className='text-sm opacity-65'>{handleTime(review.created_at)}</p>
+                                            </div>
+                                        </div>
+                                        <div className='flex gap-2'>
+                                            <Image src={review.product_detail.image} alt="product" height={75} width={75} />
+                                            <Image src={review.product_detail.image} alt="product" height={75} width={75} />
+                                            <Image src={review.product_detail.image} alt="product" height={75} width={75} />
+                                            <Image src={review.product_detail.image} alt="product" height={75} width={75} />
+                                            <Image src={review.product_detail.image} alt="product" height={75} width={75} />
+                                        </div>
+                                        <div>
+                                            <p className='text-base'>
+                                                <span className='opacity-60'>Đánh giá: </span>
+                                                <span className='!opacity-100'>{review.content}</span>
+                                            </p>
+                                            <p className='text-base'>
+                                                <span className='opacity-60'>Sản phẩm:</span>
+                                                <span className='!opacity-100'>{review.product_detail.product_name}</span>
+                                            </p>
+                                            <p className='text-base'>
+                                                <span className='opacity-60'>Phân loại:</span>
+                                                <span className='!opacity-100'>{review.product_detail.color} - {review.product_detail.size.split(',')[0]}</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    }
                 </div>
             </div>
             <ToastContainer />

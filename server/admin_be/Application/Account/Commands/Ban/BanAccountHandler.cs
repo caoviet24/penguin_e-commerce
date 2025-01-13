@@ -10,7 +10,7 @@ namespace Application.Account.Commands.Ban
 {
     public class BanAccountCommand : IRequest<AccountDto>
     {
-        public string Id { get; set; } = null!;
+        public string acc_id { get; set; } = null!;
     }
     public class BanAccountHandler(IDbHelper db) : IRequestHandler<BanAccountCommand, AccountDto>
     {
@@ -20,7 +20,7 @@ namespace Application.Account.Commands.Ban
                 "sp_ban_account_by_id",
                 new
                 {
-                    acc_id = request.Id
+                    acc_id = request.acc_id
                 }
             );
             return data;

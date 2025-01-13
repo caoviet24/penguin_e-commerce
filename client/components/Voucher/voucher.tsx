@@ -22,7 +22,7 @@ export default function Voucher({
                     </div>
                     <div className='flex-1 px-2 flex flex-col justify-center'>
                         {voucher.type_discount === 'percent' ?
-                            <p>Giảm {voucher.discount * 100}%</p>
+                            <p>Giảm {voucher.discount}%</p>
                             :
                             <p>Giảm ₫{voucher.discount.toLocaleString()}đ</p>
                         }
@@ -46,7 +46,7 @@ export default function Voucher({
                     </div>
                     <div className='flex-1 px-2 flex flex-col justify-center'>
                     {voucher.type_discount === 'percent' ?
-                            <p>Giảm {voucher.discount * 100}%</p>
+                            <p>Giảm {voucher.discount}%</p>
                             :
                             <p>Giảm ₫{voucher.discount.toLocaleString()}đ</p>
                         }

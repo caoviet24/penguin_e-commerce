@@ -43,8 +43,6 @@ export default function DashBoard() {
         setTimeOption('year');
     };
 
-    const { start_date, end_date } = getDateRange(timeOption);
-
 
 
 

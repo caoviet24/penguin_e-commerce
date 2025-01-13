@@ -13,6 +13,9 @@ import useHookMutation from '@/hooks/useHookMutation';
 import { billService } from '@/services/bill.service';
 import { useRouter } from 'next/navigation';
 import { toast, ToastContainer } from 'react-toastify';
+import { orderItemService } from '@/services/orderItem.service';
+import { useDispatch } from 'react-redux';
+import { setDeleteToCart } from '@/redux/slices/cart.slice';
 
 
 export default function CheckOut() {
@@ -33,6 +36,7 @@ export default function CheckOut() {
     const [idxAddress, setIdxAddress] = React.useState(0);
 
     const router = useRouter();
+    const dispatch = useDispatch();
 
     const {
         storedValue: storedValueLocation,
@@ -73,7 +77,7 @@ export default function CheckOut() {
         let city = cities.find(city => city.code == cityId);
         setInfo({
             ...info,
-            address: `${city?.name} - `
+            address: `${city?.name}-`
         })
 
         const data = await locationVNService.getDistricts();
@@ -91,7 +95,7 @@ export default function CheckOut() {
             let district = districts.find(district => district.code == e.target.value);
             setInfo({
                 ...info,
-                address: `${info.address} ${district?.name} - `
+                address: `${info.address} ${district?.name}-`
             })
         }
     }
@@ -100,7 +104,7 @@ export default function CheckOut() {
         let ward = wards.find(ward => ward.code == e.target.value);
         setInfo({
             ...info,
-            address: `${info.address} ${ward?.name} - `
+            address: `${info.address} ${ward?.name}-`
         })
     }
 
@@ -144,10 +148,10 @@ export default function CheckOut() {
     }, [my_account]);
 
     const totalBill = useMemo(() => {
-        return storedValueTempBill.list_voucher.reduce((total: number, voucher: IVoucher) => {
+        return storedValueTempBill.list_voucher?.reduce((total: number, voucher: IVoucher) => {
             if (voucher.voucher_type === 'freeship') {
                 if (voucher.type_discount === 'percent') {
-                    return total + (shipFee - shipFee * voucher.discount);
+                    return total + (shipFee - shipFee * (voucher.discount / 100));
                 } else {
                     return total + (shipFee - voucher.discount);
                 }
@@ -161,6 +165,10 @@ export default function CheckOut() {
 
     const createBillMutation = useHookMutation((data) => {
         return billService.createBill(data);
+    });
+
+    const deleteOrderItemMutation = useHookMutation((id: string) => {
+        return orderItemService.deleteOrderItem(id);
     })
     const handleCreateBill = () => {
 
@@ -182,8 +190,30 @@ export default function CheckOut() {
                 voucher_id: voucher.id
             }))
         }, {
-            onSuccess: (data) => {
+            onSuccess: async (data) => {
+                await deleteOrderItemMutation.mutate(storedValueTempBill.list_bill_detail.map((item: IOrderItem) => item.id), {
+                    onSuccess: (data) => {
+                        storedValueTempBill.list_bill_detail.forEach((item: IOrderItem) => {
+                            dispatch(setDeleteToCart({
+                                id: item.product_detail_id
+                            }));
+                        })
 
+                        router.push(`/purchase`);
+                        removeValueTempBill();
+                    },
+                    onError: (error) => {
+                        toast.error('Đã có lỗi xảy ra!', {
+                            position: "top-right",
+                            autoClose: 3000,
+                            hideProgressBar: false,
+                            closeOnClick: true,
+                            pauseOnHover: true,
+                            draggable: true,
+                            progress: 0,
+                        });
+                    }
+                });
             },
             onError: (error) => {
                 toast.error('Đã có lỗi xảy ra!', {
@@ -196,7 +226,7 @@ export default function CheckOut() {
                     progress: 0,
                 });
             }
-        } )
+        })
     }
 
 
@@ -244,7 +274,7 @@ export default function CheckOut() {
                     </div>
                 </div>
                 <div>
-                    {storedValueTempBill.list_bill_detail.map((item: IOrderItem) => (
+                    {storedValueTempBill.list_bill_detail?.map((item: IOrderItem) => (
                         <div key={item.id} className='flex justify-between items-center p-2 rounded-md'>
                             <div className='w-2/5 flex items-center justify-between px-5 gap-2'>
                                 <div className='flex items-center gap-2'>
@@ -261,11 +291,11 @@ export default function CheckOut() {
                                     <p className="line-through">{item.product_detail.sale_price.toLocaleString()}đ</p>
                                     {
                                         item.product_detail.promotional_price > 0 &&
-                                        <p className='text-red-500'>{(item.product_detail.sale_price - item.product_detail.promotional_price).toLocaleString()}đ</p>
+                                        <p className='text-red-500'>{(item.product_detail.promotional_price).toLocaleString()}đ</p>
                                     }
                                 </div>
                                 <p>{item.quantity}</p>
-                                <p>{(item.quantity * (item.product_detail.sale_price - item.product_detail.promotional_price)).toLocaleString()}đ</p>
+                                <p>{(item.quantity * (item.product_detail.promotional_price > 0 ? item.product_detail.promotional_price : item.product_detail.sale_price)).toLocaleString()}đ</p>
 
                             </div>
                         </div>
@@ -292,17 +322,20 @@ export default function CheckOut() {
 
                     <div className='flex flex-col text-end text-lg py-2'>
                         <p>Giá gốc:
-                            <span className="opacity-85 text-red-500"> {storedValueTempBill.list_bill_detail.reduce((total: number, item: IOrderItem) => total + item.quantity * (item.product_detail.sale_price - item.product_detail.promotional_price), 0).toLocaleString()}đ</span>
+                            <span className="opacity-85 text-red-500"> {storedValueTempBill.list_bill_detail?.reduce((total: number, item: IOrderItem) =>
+                                total + item.quantity * (item.product_detail.promotional_price > 0 ? item.product_detail.promotional_price : item.product_detail.sale_price
+                                ), 0).toLocaleString()}đ
+                            </span>
                         </p>
                         <p >Phí vận chuyển:
                             <span className="opacity-85 text-red-500"> {shipFee.toLocaleString()}đ</span>
                         </p>
-                        {storedValueTempBill.list_voucher.map((voucher: IVoucher) => (
+                        {storedValueTempBill.list_voucher?.map((voucher: IVoucher) => (
                             <div key={voucher.id}>
                                 {voucher.voucher_type === 'freeship' ?
                                     voucher.type_discount === 'percent' ?
                                         <p>Giảm tiền giao hàng :
-                                            <span className="opacity-85 text-red-500"> {voucher.discount * 100}%</span>
+                                            <span className="opacity-85 text-red-500"> {voucher.discount}%</span>
                                         </p>
                                         :
                                         <p>Giảm tiền giao hàng:
@@ -311,7 +344,7 @@ export default function CheckOut() {
                                     :
                                     voucher.type_discount === 'percent' ?
                                         <p>Giảm giá đơn hàng:
-                                            <span className="opacity-85 text-red-500"> {voucher.discount * 100}%</span>
+                                            <span className="opacity-85 text-red-500"> {voucher.discount}%</span>
                                         </p>
                                         :
                                         <p>Giảm giá đơn hàng:
@@ -324,7 +357,7 @@ export default function CheckOut() {
                         <p className="font-bold border-t border-gray-300 pt-5 mt-5">
                             Tổng cộng:
                             <span className="text-red-500 text-4xl">
-                                {totalBill.toLocaleString()}đ
+                                {totalBill?.toLocaleString()}đ
                             </span>
                         </p>
 
@@ -355,6 +388,7 @@ export default function CheckOut() {
                                     type="radio"
                                     className="w-3 h-3 cursor-pointer appearance-none rounded-full border-2 border-gray-300 checked:bg-orange-500 checked:border-orange-500 focus:outline-none"
                                     name='address'
+                                    value={index}
                                     checked={idxAddress === index}
                                     onChange={() => setIdxAddress(index)}
                                 />
@@ -427,7 +461,12 @@ export default function CheckOut() {
                         </div>
                         <textarea cols={2} rows={3} onChange={handleOnChangeNewAddress} name='address' className='border border-solid border-gray-300 py-2 px-2 rounded-lg' placeholder='Địa chỉ cụ thể' value={info.address} />
 
-                        <input onChange={handleOnChangeNewAddress} name='phone' className='border border-solid border-gray-300 py-2 px-2 rounded-lg' placeholder='Số điện thoại' />
+                        <input
+                            value={info.phone}
+                            onChange={handleOnChangeNewAddress}
+                            name='phone'
+                            className='border border-solidborder-gray-300 py-2 px-2 rounded-lg'
+                            placeholder='Số điện thoại' />
                     </div>
 
                     <button className='flex flex-row items-center gap-1 text-gray-500 mt-2 border border-gray-400 px-4 py-2'>

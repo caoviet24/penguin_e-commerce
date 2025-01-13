@@ -10,7 +10,7 @@ export default function CardProduct({ product }: { product: IProduct }) {
         const priceSale = product.list_product_detail[0].sale_price;
         const promotionalPrice = product.list_product_detail[0].promotional_price;
         if (priceSale === 0) return 0;
-        return ((promotionalPrice / priceSale) * 100);
+        return (Math.ceil((priceSale - promotionalPrice) / priceSale * 100));
     }, [product]);
 
     const handleOnClickProduct = () => {
@@ -32,7 +32,7 @@ export default function CardProduct({ product }: { product: IProduct }) {
                     alt="product"
                     className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5/6 h-5/6 rounded-lg z-20"
                 />
-                {percent > 0 && <span className='text-white absolute top-7 right-6 text-lg font-bold z-30'> - {percent}%</span>}
+                {percent > 0 && <span className='text-white text-sm absolute top-[18px] right-[13px] font-bold z-30'> - {percent}%</span>}
                 {percent == 0 && <img src="/images/hot.png" alt="hot" className=" absolute top-4 right-1.5 text-lg font-bold z-30 h-6 object-cover" />}
 
                 <div className='flex flex-row gap-1 absolute bottom-4 left-3 z-30 h-6'>

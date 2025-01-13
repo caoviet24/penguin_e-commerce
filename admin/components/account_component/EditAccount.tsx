@@ -44,7 +44,7 @@ export default function EditAccount({ account, onUpdateSuccess }: { account: IAc
     const handleUpdateAccount = async (data: z.infer<typeof formSchema>) => {
         if (account.id) {
             updateAccountMutation.mutate({
-                acc_id: account.id,
+                id: account.id,
                 ...data
             }, {
                 onSuccess: () => {

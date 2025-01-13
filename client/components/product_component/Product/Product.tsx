@@ -6,7 +6,7 @@ import { categoryService } from "@/services/category.service";
 import { productService } from "@/services/product.service";
 import { productDetailService } from "@/services/productdetail.service";
 import { IBooth, ICategory, IProduct, IProductDetail, ResponseData } from "@/types";
-import { getUrlImage } from "@/utils/getLinkImage";
+import { getUrlImage } from "@/utils/getUrlImage";
 import { Avatar, colors, Modal } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
@@ -14,6 +14,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { AiOutlinePicture } from "react-icons/ai";
 import { BiEditAlt, BiMinusCircle, BiPlusCircle, BiPlusMedical } from "react-icons/bi";
 import { toast, ToastContainer } from "react-toastify";
+import ProductDetail from "../ProductDetail/ProductDetail";
 
 
 interface IProductDetailPayload {
@@ -37,10 +38,11 @@ interface IProductPayload {
 interface IProps {
     mode: 'update' | 'delete' | 'view';
     product: IProduct;
-    onSuccess?: () => void;
+    onSuccess?: (product: IProduct) => void;
+    onClose?: () => void;
 }
 
-export default function Product({ mode, product, onSuccess }: IProps) {
+export default function Product({ mode, product, onSuccess, onClose }: IProps) {
 
     const [payLoadProdetail, setPayLoadProdetail] = useState<IProductDetailPayload>({
         product_id: product.id,
@@ -70,6 +72,8 @@ export default function Product({ mode, product, onSuccess }: IProps) {
     }, [product, dataProduct]);
 
     const [openModal, setOpenModal] = useState(false);
+    const [productDetailSelected, setProductDetailSelected] = useState<IProductDetail>();
+    const [openDialog, setOpenDialog] = useState(false);
 
     const { data: cgData } = useQuery<ResponseData<ICategory>>({
         queryKey: ["category-detail"],
@@ -93,9 +97,6 @@ export default function Product({ mode, product, onSuccess }: IProps) {
     };
 
 
-    const handleCreateProduct = () => {
-
-    };
 
     const [size, setSize] = useState<string>("");
 
@@ -105,7 +106,7 @@ export default function Product({ mode, product, onSuccess }: IProps) {
 
     const createProductDetailMutation = useHookMutation((data: any) => {
         return productDetailService.create(data);
-    })
+    });
     const handleAddProductDetail = () => {
         createProductDetailMutation.mutate(payLoadProdetail, {
             onSuccess: (data) => {
@@ -138,13 +139,24 @@ export default function Product({ mode, product, onSuccess }: IProps) {
                 setOpenModal(false);
             },
         });
+    }
 
+    const deleteSoftProductMutation = useHookMutation((id: string) => {
+        return productService.deleteSoft(id);
+    })
 
+    const handleDeleteSoftProduct = () => {
+        deleteSoftProductMutation.mutate(product.id, {
+            onSuccess: (data) => {
+                onSuccess && onSuccess(data);
+            }
+        })
     }
 
     const deleteSoftProductDetailMutation = useHookMutation((id: string) => {
         return productDetailService.deleteSoft(id);
     });
+
     const handleDeleteProductDetail = (pd: IProductDetail) => {
         deleteSoftProductDetailMutation.mutate(pd.id, {
             onSuccess: (data: IProductDetail) => {
@@ -159,7 +171,7 @@ export default function Product({ mode, product, onSuccess }: IProps) {
                     });
                 };
 
-                toast.success(`Xóa sản phẩm ${data.product_name} thành công`, {
+                toast.success(`Xóa chi tiết sản phẩm ${data.product_name} thành công`, {
                     position: "top-right",
                     autoClose: 3000,
                     hideProgressBar: false,
@@ -175,6 +187,7 @@ export default function Product({ mode, product, onSuccess }: IProps) {
     const restoreProductDetailMutation = useHookMutation((id: string) => {
         return productDetailService.restore(id);
     });
+
     const HandleRestoreProductDetail = (pd: IProductDetail) => {
         restoreProductDetailMutation.mutate(pd.id, {
             onSuccess: (data: IProductDetail) => {
@@ -200,6 +213,31 @@ export default function Product({ mode, product, onSuccess }: IProps) {
                 });
             },
         });
+    }
+
+    const handleUpdateProductDetailSuccess = (data: IProductDetail) => {
+        let idx = dataProduct?.list_product_detail.findIndex((prod) => prod.id === data.id);
+        if (idx !== -1) {
+            setDataProduct((prev) => {
+                if (!prev) return prev;
+                return {
+                    ...prev,
+                    list_product_detail: idx !== undefined ? [...prev.list_product_detail, prev.list_product_detail[idx] = data] : prev.list_product_detail,
+                };
+            });
+        };
+
+        toast.success(`Cập nhật sản phẩm ${data.product_name} thành công`, {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined
+        });
+
+        setProductDetailSelected(undefined);
     }
 
     return (
@@ -247,13 +285,13 @@ export default function Product({ mode, product, onSuccess }: IProps) {
 
             <div className="flex justify-between items-center mt-5">
                 <p className="font-bold">Danh sách sản phẩm</p>
-                <button
+                {mode === "update" && <button
                     onClick={() => setOpenModal(true)}
                     className={`flex items-center opacity-100 justify-center gap-2 space-y-1 text-base font-semibold text-white bg-orange-500 rounded-lg px-4 py-2`}
                 >
                     <BiPlusCircle size={24} />
                     Thêm chi tiết sản phẩm
-                </button>
+                </button>}
             </div>
 
             <div className="border border-solid border-gray-300 mt-3 h-[200px] overflow-y-auto">
@@ -297,7 +335,7 @@ export default function Product({ mode, product, onSuccess }: IProps) {
 
                                 {mode === 'update' && !pd.is_deleted && <button
                                     className="flex items-center justify-center"
-                                    onClick={() => HandleRestoreProductDetail(pd)}
+                                    onClick={() => setProductDetailSelected(pd)}
                                 >
                                     <BiEditAlt size={24} className="bg-green-500 rounded-full text-white" />
                                 </button>}
@@ -309,9 +347,14 @@ export default function Product({ mode, product, onSuccess }: IProps) {
             </div>
 
             <div className="flex justify-end">
-                <button onClick={handleCreateProduct} className="bg-blue-500 text-white rounded-lg px-5 py-2 mt-5">
-                    Xác nhận
+                {mode === "update" && <button onClick={onClose} className="bg-blue-500 text-white rounded-lg px-5 py-2 mt-5">
+                    Cập nhật sản phẩm
+                </button>}
+
+                {mode === "delete" && <button onClick={() => setOpenDialog(true)} className="bg-red-500 text-white rounded-lg px-5 py-2 mt-5 ml-3">
+                    Xóa sản phẩm
                 </button>
+                }
             </div>
 
             <Modal open={openModal} onClose={() => setOpenModal(false)} className="flex items-center justify-center">
@@ -492,6 +535,34 @@ export default function Product({ mode, product, onSuccess }: IProps) {
                         <button onClick={handleAddProductDetail} className="bg-blue-500 text-white rounded-lg px-5 py-2 mt-5">Thêm</button>
                     </div>
                 </div>
+            </Modal>
+
+            <Modal
+                open={!!productDetailSelected || openDialog}
+                onClose={() => {
+                    setProductDetailSelected(undefined);
+                    setOpenDialog(false);
+                }}
+                className="flex items-center justify-center"
+            >
+                <div>
+                    {productDetailSelected ? (<ProductDetail productDetail={productDetailSelected} onSuccess={handleUpdateProductDetailSuccess} />) : null}
+
+                    {openDialog &&
+                        <div>
+                            <div className="flex items-center justify-center">
+                                <div className="w-[400px] p-5 rounded-lg bg-white">
+                                    <p className="text-2xl pb-3">Xác nhận xóa sản phẩm </p>
+                                    <p>Bạn có chắc chắn muốn xóa sản phẩm {productDetailSelected?.product_name} không?</p>
+                                    <div className="flex justify-end gap-3 mt-5">
+                                        <button onClick={() => setOpenDialog(false)} className="bg-gray-500 text-white rounded-lg px-5 py-2">Hủy</button>
+                                        <button onClick={handleDeleteSoftProduct} className="bg-red-500 text-white rounded-lg px-5 py-2">Xóa</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>}
+                </div>
+
             </Modal>
             <ToastContainer />
         </div>

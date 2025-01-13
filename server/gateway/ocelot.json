@@ -9,8 +9,12 @@
                     "Port": 8000
                 }
             ],
-            "UpstreamPathTemplate":  "/user-api/{controller}/{everything}",
-            "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ]
+            "UpstreamPathTemplate": "/user-api/{controller}/{everything}",
+            "UpstreamHttpMethod": ["GET", "POST", "PUT", "DELETE"],
+            "AuthenticationOptions": {
+                "AuthenticationProviderKey": "Bearer",
+                "AllowedScopes": []
+            }
         },
         {
             "DownstreamPathTemplate": "/{controller}/{everything}",
@@ -22,10 +26,18 @@
                 }
             ],
             "UpstreamPathTemplate": "/admin-api/{controller}/{everything}",
-            "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ]
+            "UpstreamHttpMethod": ["GET", "POST", "PUT", "DELETE"],
+            "AuthenticationOptions": {
+                "AuthenticationProviderKey": "Bearer",
+                "AllowedScopes": []
+            }
         }
     ],
     "GlobalConfiguration": {
-      "BaseUrl": "https://localhost:8888"
+        "BaseUrl": "https://localhost:8888",
+        "AuthenticationOptions": {
+            "IdentityServerUri": "https://localhost:5000",
+            "AllowedScopes": []
+        }
     }
 }

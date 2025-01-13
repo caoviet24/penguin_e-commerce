@@ -21,7 +21,7 @@ import { accountService } from '@/services/account.service';
 import handleTime from '@/utils/handleTime';
 import EditAccount from '@/components/account_component/EditAccount';
 import DeleteAccount from '@/components/account_component/DeleteAccount';
-import { FaRegTrashAlt } from "react-icons/fa";
+import { FaRegTrashAlt, FaSearch } from "react-icons/fa";
 import { SiDatabricks } from "react-icons/si";
 import { CiRepeat } from 'react-icons/ci';
 import useHookMutation from '@/hooks/useHookMutation';
@@ -85,6 +85,14 @@ export default function AccountTable() {
                     page_size: rowsPerPage,
                 }),
                 enabled: tabActive === 1
+            },
+            {
+                queryKey: ['banned-accounts', page, rowsPerPage],
+                queryFn: () => accountService.getBanned({
+                    page_number: page + 1,
+                    page_size: rowsPerPage,
+                }),
+                enabled: tabActive === 2
             }
         ]
     })
@@ -92,6 +100,7 @@ export default function AccountTable() {
     useEffect(() => {
         if (resultAccount[tabActive].isSuccess) {
             setDataTable(resultAccount[tabActive].data);
+            // dispatch(setAccounts(resultAccount[tabActive].data?.data));
         }
 
     }, [resultAccount, tabActive]);
@@ -169,27 +178,56 @@ export default function AccountTable() {
         });
     }
 
+    const banAccountMutation = useHookMutation((id: string) => {
+        return accountService.banById(id);
+    })
+
+    const handleBanAccount = (acc: IAccount) => {
+        banAccountMutation.mutate(acc.id, {
+            onSuccess: () => {
+                toast.success('Cấm tài khoản thành công', {
+                    position: 'top-right',
+                    autoClose: 3000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: false,
+                    draggable: false,
+                    progress: undefined,
+                    theme: 'light'
+                });
+                resultAccount[tabActive].refetch();
+            }
+        });
+    }
+
+    const unBanAccountMutation = useHookMutation((id: string) => {
+        return accountService.unBanById(id);
+    })
+    const handleUnBanAccount = (acc: IAccount) => {
+        unBanAccountMutation.mutate(acc.id, {
+            onSuccess: () => {
+                toast.success('Bỏ cấm tài khoản thành công', {
+                    position: 'top-right',
+                    autoClose: 3000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: false,
+                    draggable: false,
+                    progress: undefined,
+                    theme: 'light'
+                });
+                resultAccount[tabActive].refetch();
+            }
+        });
+    }
+
     return (
         <Paper sx={{ width: '95%', overflow: 'hidden' }} className="mx-auto mt-10 px-2 py-5 shadow-lg">
-            <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-4'>
                 <div className="w-[500px]">
                     <div className="relative">
                         <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                            <svg
-                                className="w-4 h-4 text-gray-500 dark:text-gray-400"
-                                aria-hidden="true"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 20 20"
-                            >
-                                <path
-                                    stroke="currentColor"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-                                />
-                            </svg>
+                            <FaSearch />
                         </div>
                         <input
                             type="search"
@@ -197,12 +235,15 @@ export default function AccountTable() {
                             placeholder="Aa...."
                         />
                         <button
-
                             className="text-white absolute end-2.5 bottom-[3px] bg-black hover:opacity-80 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-1.5">
                             Search
                         </button>
                     </div>
                 </div>
+                <select value={tabActive} onChange={(e) => setTabActive(Number(e.target.value))} className="bg-gray-50 w-[300px] border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none p-2.5 ">
+                    <option value={0}>Đang hoạt động</option>
+                    <option value={2}>Cấm</option>
+                </select>
                 <div className='flex gap-2'>
                     <button onClick={() => setTabActive(0)} className={`flex items-center opacity-50 justify-center gap-2 space-y-1 text-lg font-semibold text-white bg-blue-500 rounded-lg px-4 py-2 ${tabActive === 0 && 'opacity-100'}`}>
                         <SiDatabricks size={24} />
@@ -295,6 +336,15 @@ export default function AccountTable() {
                                                     Xóa
 
                                                 </button>
+
+                                                {!acc.is_banned &&
+                                                    <button
+                                                        onClick={() => handleBanAccount(acc)}
+                                                        className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 border border-red-700 rounded"
+                                                    >
+                                                        Cấm
+                                                    </button>
+                                                }
                                             </>
                                         }
                                         {tabActive === 1
@@ -304,6 +354,15 @@ export default function AccountTable() {
                                                 className='flex items-center gap-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded'>
                                                 <CiRepeat size={30} />
                                                 Khôi phục
+                                            </button>
+                                        }
+                                        {
+                                            tabActive === 2 &&
+                                            <button
+                                                onClick={() => handleUnBanAccount(acc)}
+                                                className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 border border-red-700 rounded"
+                                            >
+                                                Bỏ cấm
                                             </button>
                                         }
                                     </div>

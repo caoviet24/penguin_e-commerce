@@ -9,8 +9,12 @@ import useDebounce from '@/hooks/useDebounce';
 import { LuUserRoundCheck } from "react-icons/lu";
 import RenderWithCondition from '../RenderWithCondition/renderwithcondition';
 import { useAppSelector } from '@/redux/store';
-import Cookie  from 'js-cookie';
+import Cookie from 'js-cookie';
 import { useRouter } from 'next/navigation';
+import { productService } from '@/services/product.service';
+import { useQuery } from '@tanstack/react-query';
+import { IProduct } from '@/types';
+import { Avatar } from '@mui/material';
 
 export default function Header() {
     const { my_account } = useAppSelector(state => state.account);
@@ -39,14 +43,33 @@ export default function Header() {
         'Khăn quàng cổ',
     ]);
 
-    const [searchValue, setSearchValue] = useState('');
-    const searchValueDebounce = useDebounce(searchValue, 500);
+    const [searchValue, setSearchValue] = useState("");
+    const [searchResult, setSearchResult] = useState<IProduct[]>([]);
+    const { isSuccess: isFetchByNameSuccess, data: ProductByNameData, refetch: refetchByName } = useQuery({
+        queryKey: ['products-by-name'],
+        queryFn: () => productService.getByDesc({
+            page_number: 1,
+            page_size: 20,
+            product_desc: searchValue
+        }),
+        enabled: searchValue !== ''
+    });
+    const searchValueDebouce = useDebounce(searchValue, 500);
+
 
     useEffect(() => {
+        if (searchValueDebouce.trim()) {
+            refetchByName();
+        }
+    }, [searchValueDebouce, refetchByName]);
 
 
+    useEffect(() => {
+        if (isFetchByNameSuccess && ProductByNameData) {
+            setSearchResult(ProductByNameData.data);
+        }
+    }, [isFetchByNameSuccess, ProductByNameData]);
 
-    }, [searchValueDebounce]);
 
     return (
         <header className="bg-purple-50 shadow-md flex items-center">
@@ -68,11 +91,22 @@ export default function Header() {
                             <span className="ml-1">Tìm kiếm</span>
                         </button>
                     </div>
-                    <RenderWithCondition condition={!!searchValueDebounce}>
-                        <div className="flex flex-col justify-between gap-2 mt-2 bg-white h-[300px] w-full shadow-xl border border-solid border-gray-300 absolute top-full left-0 z-50">
-                            {hotSearch.map((item, index) => (
-                                <Link href="/" key={index}>
-                                    <p className="text-black text-sm  hover:bg-black-01 p-2 transition">{item}</p>
+                    <RenderWithCondition condition={!!searchValue}>
+
+                        <div className="flex flex-col justify-between gap-2 mt-2 bg-white max-h-[410px] w-full shadow-xl border border-solid border-gray-300 absolute top-full left-0 z-50">
+                            <p className="text-sm py-1 px-2">Tìm kiếm sản phẩm</p>
+                            {searchResult.map((item, index) => (
+                                <Link
+                                    key={index}
+                                    className='flex items-center justify-between hover:bg-black-01 p-2 transition'
+                                    href={`product/${item.id}`}
+                                    onClick={() => {
+                                        setSearchValue("");
+                                        setSearchResult([]);
+                                    }}
+                                >
+                                    <p className="text-black text-sm  ">{item.product_desc}</p>
+                                    <Avatar className='mr-4 !h-[30px] !w-[30px]' src={item.list_product_detail[0].image} alt={item.list_product_detail[0].product_name} />
                                 </Link>
                             ))}
                         </div>
@@ -106,7 +140,7 @@ export default function Header() {
                                             key={item.id}
                                             className="flex justify-between items-center gap-2 p-2 border-b border-solid border-gray-300 last:border-none"
                                         >
-                                            <Image
+                                            <img
                                                 src={item.product_detail.image}
                                                 alt={item.product_detail.product_name}
                                                 width={50}

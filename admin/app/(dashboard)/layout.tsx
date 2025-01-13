@@ -8,6 +8,8 @@ import { HiOutlineHome } from 'react-icons/hi';
 import { CiShop } from "react-icons/ci";
 import { TbCategory } from "react-icons/tb";
 import { FaShopify } from 'react-icons/fa';
+import { FaProductHunt } from "react-icons/fa6";
+import { HiMiniTicket } from 'react-icons/hi2';
 
 export default function DashBoardLayOut({ children }: { children: ReactNode }) {
     return (
@@ -45,7 +47,7 @@ export default function DashBoardLayOut({ children }: { children: ReactNode }) {
                                     href="/shop"
                                 >
                                     <span className="inline-flex justify-center items-center ml-3.5">
-                                       <FaShopify size={24}/>
+                                        <FaShopify size={23} />
                                     </span>
                                     <span className="ml-0 lg:ml-2 text-sm tracking-wide truncate capitalize hidden lg:block">
                                         Gian hàng
@@ -56,7 +58,7 @@ export default function DashBoardLayOut({ children }: { children: ReactNode }) {
                                     href="/category"
                                 >
                                     <span className="inline-flex justify-center items-center ml-3.5">
-                                        <TbCategory size={24} />
+                                        <TbCategory size={23} />
                                     </span>
                                     <span className="ml-0 lg:ml-2 text-sm tracking-wide truncate capitalize hidden lg:block">
                                         Danh mục
@@ -64,31 +66,32 @@ export default function DashBoardLayOut({ children }: { children: ReactNode }) {
                                 </Link>
                                 <Link
                                     className="flex flex-row items-center  justify-center lg:justify-start rounded-md h-12 focus:outline-none pr-3.5  lg:pr-6 bg-primary-50 shadow-sm text-primary-400 font-bold "
-                                    href="/video"
+                                    href="/product"
                                 >
                                     <span className="inline-flex justify-center items-center ml-3.5">
-                                        <VideoIcon />
+
+                                        <FaProductHunt size={23} />
                                     </span>
                                     <span className="ml-0 lg:ml-2 text-sm tracking-wide truncate capitalize hidden lg:block">
-                                        Video
+                                        Sản phẩm
                                     </span>
                                 </Link>
                                 <Link
                                     className="flex flex-row items-center  justify-center lg:justify-start rounded-md h-12 focus:outline-none pr-3.5  lg:pr-6 bg-primary-50 shadow-sm text-primary-400 font-bold "
-                                    href="/setting"
+                                    href="/voucher"
                                 >
                                     <span className="inline-flex justify-center items-center ml-3.5">
-                                        <FcSettings size={22} />
+                                        <HiMiniTicket size={23} />
                                     </span>
                                     <span className="ml-0 lg:ml-2 text-sm tracking-wide truncate capitalize hidden lg:block">
-                                        Cài đặt
+                                        Voucher
                                     </span>
                                 </Link>
                             </div>
                             <div className="flex flex-col  space-y-1 mx-1 lg:mt-1 ">
                                 <Link
                                     className="flex flex-row items-center  justify-center lg:justify-start rounded-md h-12 focus:outline-none pr-3.5  lg:pr-6 font-semibold text-black hover:text-primary-400 cursor-pointer "
-                                    href="/app/settings"
+                                    href="/setting"
                                 >
                                     <span className="inline-flex justify-center items-center ml-3.5">
                                         <svg

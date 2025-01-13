@@ -27,6 +27,7 @@ import CreateProduct from "../../product_component/CreateProduct/CreateProduct";
 import { productService } from "@/services/product.service";
 import { TbListDetails } from "react-icons/tb";
 import Product from "../../product_component/Product/Product";
+import useHookMutation from "@/hooks/useHookMutation";
 
 interface Column {
     id: "id" | "product_desc" | "status" | "created_at";
@@ -132,12 +133,55 @@ export default function ProductsOfBooth({ booth }: { booth: IBooth }) {
             draggable: true,
             progress: undefined,
         });
+        resultProduct[tabActive].refetch();
     };
 
     const handleDeleteProduct = (product: IProduct) => {
         setProductSeleted(product);
         setOpenDelete(true);
     };
+
+    const handleDeleteProductSuccess = (data: IProduct) => {
+        toast.success("Xóa sản phẩm thành công", {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+        });
+
+        resultProduct[tabActive].refetch();
+
+        setProductSeleted(undefined);
+        setOpenDelete(false);
+    }
+
+    const restoreProductMutation = useHookMutation((id: string) => (
+        productService.restore(id)
+    ))
+
+    const handleRestoreProduct = (pro: IProduct) => {
+
+        restoreProductMutation.mutate(pro.id, {
+            onSuccess: () => {
+
+                toast.success("Khôi phục sản phẩm thành công", {
+                    position: "top-right",
+                    autoClose: 3000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                });
+                resultProduct[tabActive].refetch();
+            }
+        });
+
+
+    }
 
 
 
@@ -270,7 +314,7 @@ export default function ProductsOfBooth({ booth }: { booth: IBooth }) {
                                         )}
                                         {tabActive === 2 && (
                                             <button
-                                                // onClick={() => handleRestoreBooth(b)}
+                                                onClick={() => handleRestoreProduct(pro)}
                                                 className="flex items-center gap-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded"
                                             >
                                                 <CiRepeat size={30} />
@@ -300,8 +344,6 @@ export default function ProductsOfBooth({ booth }: { booth: IBooth }) {
                 onRowsPerPageChange={handleChangeRowsPerPage}
             />
 
-            <ToastContainer />
-
             <Modal
                 open={openEdit || openDelete || openCreateProduct}
                 onClose={() => {
@@ -320,7 +362,24 @@ export default function ProductsOfBooth({ booth }: { booth: IBooth }) {
                 <Fade in={openEdit || openDelete || openCreateProduct} timeout={{ enter: 300, exit: 200 }}>
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white">
                         {openCreateProduct && <CreateProduct booth={booth} onSuccess={handleCreateProductSuccess} />}
-                        {openEdit && productSelected && <Product mode="update" product={productSelected} onSuccess={handleUpdateProductSuccess} />}
+                        {openEdit && productSelected &&
+                            <Product mode="update" product={productSelected}
+                                onSuccess={handleUpdateProductSuccess}
+                                onClose={() => {
+                                    setOpenEdit(false);
+                                    setProductSeleted(undefined);
+                                }}
+                            />
+                        }
+                        {openDelete && productSelected &&
+                            <Product mode="delete" product={productSelected}
+                                onSuccess={handleDeleteProductSuccess}
+                                onClose={() => {
+                                    setOpenDelete(false);
+                                    setProductSeleted(undefined);
+                                }}
+                            />
+                        }
                     </div>
                 </Fade>
             </Modal>

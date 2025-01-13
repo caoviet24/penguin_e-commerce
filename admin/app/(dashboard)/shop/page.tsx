@@ -29,6 +29,8 @@ import EditBooth from '@/components/shop_component/EditBooth';
 import DeleteBooth from '@/components/shop_component/DeleteBooth';
 import { BiSearchAlt } from 'react-icons/bi';
 import useDebouce from '@/hooks/useDebouce';
+import { useAppDispatch } from '@/redux/store';
+import { setBooths } from '@/redux/slices/booth.slice';
 
 
 interface Column {
@@ -60,6 +62,7 @@ export default function BoothTable() {
     const [openDelete, setOpenDelete] = useState(false);
     const [boothSelected, setBoothSeleted] = useState<IBooth>();
     const [searchValue, setSearchValue] = useState('');
+    const dispatch = useAppDispatch();
 
     const { isSuccess: isFetchByNameSuccess, data: BoothByNameData, refetch: refetchByName } = useQuery({
         queryKey: ['booths-by-name', page, rowsPerPage],
@@ -142,6 +145,8 @@ export default function BoothTable() {
         if (resultBooth[tabActive]?.isSuccess) {
             setDataTable(resultBooth[tabActive].data);
         }
+
+        dispatch(setBooths(resultBooth[tabActive]?.data?.data || []));
 
     }, [resultBooth, tabActive]);
 

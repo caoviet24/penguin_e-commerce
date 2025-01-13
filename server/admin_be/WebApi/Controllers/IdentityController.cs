@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 namespace WebApi.Controllers
 {
-    [ApiController]
     [Route("account")]
     public class IdentityController(IMediator mediator, ILogger<IdentityController> logger) : ControllerBase
     {

@@ -27,7 +27,7 @@ export default function Header() {
 
     return (
         <header className="flex justify-between py-5 bg-white px-10 border-b border-solid border-gray-200">
-            <p className="font-extrabold text-4xl flex-1">Hippo</p>
+            <p className="font-extrabold text-4xl flex-1">Penguin</p>
             <div className={`flex items-center justify-between ${token ? 'w-[150px]' : 'w-[300px]'} pr-7`}>
                 <p className="relative flex items-center space-x-2 text-gray-800">
                     <HiOutlineBellAlert size={32} />

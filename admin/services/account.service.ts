@@ -4,6 +4,12 @@ async function getWithPagination(query: any) {
     const res = await axiosJWT.get(`${process.env.NEXT_PUBLIC_API_URL}/account/get-with-pagination`, { params: query });
     return res.data;
 }
+
+async function getBanned(query: any) {
+    const res = await axiosJWT.get(`${process.env.NEXT_PUBLIC_API_URL}/account/get-banned`, { params: query });
+    return res.data;
+}
+
 async function getDeleted(query: any) {
     const res = await axiosJWT.get(`${process.env.NEXT_PUBLIC_API_URL}/account/get-deleted`, { params: query });
     return res.data;
@@ -30,13 +36,27 @@ async function restoreById(id: string) {
     return res.data;
 }
 
+async function banById(id: string) {
+    const res = await axiosJWT.put(`${process.env.NEXT_PUBLIC_API_URL}/account/ban/${id}`);
+    return res.data;
+}
+
+
+async function unBanById(id: string) {
+    const res = await axiosJWT.put(`${process.env.NEXT_PUBLIC_API_URL}/account/unban/${id}`);
+    return res.data;
+}
+
 
 
 export const accountService = {
     getWithPagination,
+    getBanned,
     getDeleted,
     getById,
     deleteById,
     updateById,
-    restoreById
+    restoreById,
+    banById,
+    unBanById
 }

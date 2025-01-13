@@ -27,7 +27,8 @@ namespace Application.CategoryDetail.Commands.Create
                     category_detail_name = request.category_detail_name,
                     created_at = DateTime.UtcNow,
                     updated_at = DateTime.UtcNow,
-                    category_id = request.category_id
+                    category_id = request.category_id,
+                    is_deleted = false
                 }
 
             );

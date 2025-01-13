@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 using Application.Account.Commands.Ban;
 using Application.Account.Commands.Delete;
 using Application.Account.Commands.Restore;
+using Application.Account.Commands.UnBan;
 using Application.Account.Commands.Update;
-using Application.Account.Queries.GetAccountsDeleted;
+using Application.Account.Queries.GetBanned;
 using Application.Account.Queries.GetById;
+using Application.Account.Queries.GetDeleted;
 using Application.Account.Queries.GetListAccount;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -19,7 +21,7 @@ namespace WebApi.Controllers
 {
     [Authorize]
     [Route("account")]
-    public class AccountController(ILogger<AccountController> _logger, IMediator mediator) : Controller
+    public class AccountController(ILogger<AccountController> _logger, IMediator mediator) : ControllerBase
     {
         [HttpGet("get-with-pagination")]
         public async Task<IActionResult> GetAll(GetListAccountPaginationQuery request)
@@ -29,7 +31,14 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("get-deleted")]
-        public async Task<IActionResult> GetDeleted(GetAccountsDeletedQuery request)
+        public async Task<IActionResult> GetDeleted(GetAccountDeletedQuery request)
+        {
+            var data = await mediator.Send(request);
+            return Ok(data);
+        }
+
+        [HttpGet("get-banned")]
+        public async Task<IActionResult> GetBanned(GetAccountBannedQuery request)
         {
             var data = await mediator.Send(request);
             return Ok(data);
@@ -66,6 +75,13 @@ namespace WebApi.Controllers
 
         [HttpPut("ban/{acc_id}")]
         public async Task<IActionResult> Ban([FromRoute] BanAccountCommand request)
+        {
+            var data = await mediator.Send(request);
+            return Ok(data);
+        }
+
+        [HttpPut("unban/{acc_id}")]
+        public async Task<IActionResult> UnBan([FromRoute] UnBanAccountCommand request)
         {
             var data = await mediator.Send(request);
             return Ok(data);

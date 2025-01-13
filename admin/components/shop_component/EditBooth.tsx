@@ -62,7 +62,6 @@ export default function EditBooth({ booth, onUpdateSuccess }: { booth: IBooth, o
                 is_banned: dataBooth.is_banned || false,
             });
         }
-        console.log(booth);
         
     }, [isFetchBoothSuccess, reset]);
 

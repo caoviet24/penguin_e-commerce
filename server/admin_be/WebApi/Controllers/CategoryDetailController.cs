@@ -16,7 +16,6 @@ using Microsoft.Extensions.Logging;
 namespace WebApi.Controllers
 {
     [Authorize]
-    [ApiController]
     [Route("category-detail")]
     public class CategoryDetailController(ILogger<CategoryDetailController> logger, IMediator mediator) : Controller
     {

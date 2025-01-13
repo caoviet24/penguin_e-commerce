@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef } from 'react'
 import { ImFilePicture } from "react-icons/im";
-import { getUrlImage } from '@/utils/getLinkImage';
+import { getUrlImage } from '@/utils/getUrlImage';
 import Loader from '@/components/Loader/loader';
 import useHookMutation from '@/hooks/useHookMutation';
 import { boothService } from '@/services/booth.service';
@@ -11,8 +11,12 @@ import { toast, ToastContainer } from 'react-toastify';
 import handleTimeVn from '@/utils/handleTimeVn';
 import { BiCheck } from 'react-icons/bi';
 import { useQuery } from '@tanstack/react-query';
-import { useAppSelector } from '@/redux/store';
+import { useAppDispatch, useAppSelector } from '@/redux/store';
 import ProductsOfBooth from '@/components/booth_component/ProductsOfBooth/ProductsOfBooth';
+import { setBooth } from '@/redux/slices/booth.slice';
+import Link from 'next/link';
+import { FaArrowTrendUp } from 'react-icons/fa6';
+import { RiOrderPlayFill } from 'react-icons/ri';
 
 
 export default function Register() {
@@ -24,6 +28,7 @@ export default function Register() {
         booth_description: '',
         avatar: ''
     });
+    const dispatch = useAppDispatch();
 
     const { storedValue, setValue } = useLocationStorage({
         key: 'register_shop',
@@ -161,6 +166,7 @@ export default function Register() {
     useEffect(() => {
         if (isFetchGetBoothSuccess) {
             setValue(boothData)
+            dispatch(setBooth(boothData))
         }
 
         if (isisFetchGetBoothError) {
@@ -174,8 +180,8 @@ export default function Register() {
 
     return (
         <div className='container bg-white p-6 rounded-lg shadow-lg my-10'>
-            <div className='text-2xl text-gray-900 pt-3 pb-5'>
-                Trở thành người bán hàng của Penguin
+            <div className='flex justify-between items-center'>
+                <span className='text-2xl text-gray-900 pt-3 pb-5'>Trở thành người bán hàng của Penguin</span>
             </div>
             {(!storedValue?.booth_name || isEdit) &&
                 <div>
@@ -286,22 +292,35 @@ export default function Register() {
             }
 
             {storedValue && storedValue?.is_active &&
-                <div>
-
-                    <div className='flex items-center'>
-                        <Avatar src={storedValue?.booth_avatar} sx={{ width: 80, height: 80 }} />
-                        <div>
-                            <p className='text-xl capitalize'>{storedValue.booth_name}</p>
-                            <div className='flex items-center text-sm text-blue-500'>
-                                <BiCheck size={20} />
-                                <p>Đã xác nhận</p>
+                <div className='flex flex-col'>
+                    <div className='flex justify-between items-center px-3'>
+                        <div className='flex items-center'>
+                            <Avatar src={storedValue?.booth_avatar} sx={{ width: 80, height: 80 }} />
+                            <div>
+                                <p className='text-xl capitalize'>{storedValue.booth_name}</p>
+                                <div className='flex items-center text-sm text-blue-500'>
+                                    <BiCheck size={20} />
+                                    <p>Đã xác nhận</p>
+                                </div>
                             </div>
                         </div>
+
+                        <div className='flex items-center'>
+                            <Link className='bg-amber-500 flex items-center mr-4 gap-2 text-white px-5 py-2 rounded-lg font-bold' href='/shop/statistical'>
+                                <FaArrowTrendUp size={22} />
+                                Xem thống kê cửa hàng
+                            </Link>
+                            <Link className='bg-green-500 flex items-center gap-2 text-white px-5 py-2 rounded-lg font-bold' href='/shop/order'>
+                                <RiOrderPlayFill size={22} />
+                                Xem đơn hàng
+                            </Link>
+                        </div>
+
                     </div>
                     <div>
                         <ProductsOfBooth booth={storedValue} />
                     </div>
-                    <div className='flex justify-end gap-2 mt-6'>
+                    <div className='flex justify-end gap-2 mt-2'>
                         <button onClick={handleEditShop} className="bg-transparent hover:bg-purple-500 text-purple-700 font-semibold hover:text-white py-2 px-4 border border-purple-500 hover:border-transparent rounded">
                             Tạm đóng
                         </button>

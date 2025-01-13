@@ -39,16 +39,40 @@ async function getById(id: string) : Promise<IProduct> {
 }
 
 
+async function getByDesc(query: any) : Promise<ResponseData<IProduct>> {
+    const res = await axiosJWT.get(`${process.env.NEXT_PUBLIC_API_URL}/product/get-by-desc`, {
+        params: query
+    });
+    return res.data;
+}
+
+
+
 async function create(payload: any) {
     const res = await axiosJWT.post(`${process.env.NEXT_PUBLIC_API_URL}/product/create`, payload);
     return res.data;
 }
+
+async function deleteSoft(id: string) : Promise<IProduct> {
+    const res = await axiosJWT.put(`${process.env.NEXT_PUBLIC_API_URL}/product/delete-soft/${id}`);
+    return res.data;
+}
+
+async function restore(id: string) : Promise<IProduct> {
+    const res = await axiosJWT.put(`${process.env.NEXT_PUBLIC_API_URL}/product/restore/${id}`);
+    return res.data;
+}
+
+
 
 export const productService = {
     getPagination,
     getActiveByBoothId,
     getInActiveByBoothId,
     getDeletedByBoothId,
+    getByDesc,
     getById,
-    create
+    create,
+    deleteSoft,
+    restore
 }

@@ -15,24 +15,25 @@ import {
     TableRow,
 } from '@mui/material';
 
-import { IBooth, ResponseData } from '@/types';
+import { IVoucher, ResponseData } from '@/types';
 import { toast, ToastContainer } from 'react-toastify';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { boothService } from '@/services/booth.service';
+import { voucherService } from '@/services/voucher.service';
 import handleTime from '@/utils/handleTime';
 import { FaRegTrashAlt } from "react-icons/fa";
 import { SiDatabricks } from "react-icons/si";
 import { CiRepeat } from 'react-icons/ci';
 import useHookMutation from '@/hooks/useHookMutation';
 import { useDispatch } from 'react-redux';
-import EditBooth from '@/components/shop_component/EditBooth';
-import DeleteBooth from '@/components/shop_component/DeleteBooth';
-import { BiSearchAlt } from 'react-icons/bi';
+import { BiPlusCircle, BiSearchAlt } from 'react-icons/bi';
 import useDebouce from '@/hooks/useDebouce';
+import CreateVoucher from '@/components/voucher_component/CreateVoucher/CreateVoucher';
+import VoucherDetail from '@/components/voucher_component/VoucherDetail/VoucherDetail';
+import { TbListDetails } from 'react-icons/tb';
 
 
 interface Column {
-    id: 'id' | 'booth_avatar' | 'booth_name' | 'booth_desc' | 'is_active' | 'is_banned' | 'created_by' | 'created_at';
+    id: 'id' | 'voucher_type' | 'voucher_name' | 'code' | 'expiry_date' | 'quantity_remain' | 'quantity_used' | 'discount' | 'type_discount' | 'status_voucher' | 'apply_for' | 'booth_id';
     label: string;
     minWidth?: number;
     maxWidth?: number;
@@ -41,109 +42,66 @@ interface Column {
 }
 
 const columns: Column[] = [
-    { id: 'id', label: 'Mã gian hàng', minWidth: 100, maxWidth: 150 },
-    { id: 'booth_avatar', label: 'Ảnh gian hàng', minWidth: 100 },
-    { id: 'booth_name', label: 'Tên gian hàng', minWidth: 100, maxWidth: 150 },
-    { id: 'booth_desc', label: 'Mô tả', minWidth: 50, maxWidth: 150 },
-    { id: 'is_active', label: 'Xác thực', minWidth: 50 },
-    { id: 'is_banned', label: 'Cấm', minWidth: 50 },
-    { id: 'created_by', label: 'Người tạo', minWidth: 50 },
-    { id: 'created_at', label: 'Ngày tạo', minWidth: 100 }
+    { id: 'id', label: 'ID', maxWidth: 150 },
+    { id: 'voucher_type', label: 'Loại', minWidth: 100 },
+    { id: 'voucher_name', label: 'Tên', minWidth: 100 },
+    { id: 'code', label: 'Mã', minWidth: 100 },
+    { id: 'expiry_date', label: 'Ngày hết hạn', minWidth: 100 },
+    { id: 'quantity_remain', label: 'Còn lại', minWidth: 100 },
+    { id: 'quantity_used', label: 'Đã sử dụng', minWidth: 100 },
+    { id: 'discount', label: 'Giảm giá', minWidth: 100 },
+    { id: 'type_discount', label: 'Loại giảm giá', minWidth: 100 },
+    { id: 'status_voucher', label: 'Trạng thái', minWidth: 100 },
+    { id: 'apply_for', label: 'Áp dụng', minWidth: 100 },
 ];
 
-export default function BoothTable() {
+export default function VoucherData() {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [dataTable, setDataTable] = useState<ResponseData<IBooth>>();
+    const [dataTable, setDataTable] = useState<ResponseData<IVoucher>>();
     const [tabActive, setTabActive] = useState(0);
+    const [openCreate, setOpenCreate] = useState(false);
     const [openEdit, setOpenEdit] = useState(false);
     const [openDelete, setOpenDelete] = useState(false);
-    const [boothSelected, setBoothSeleted] = useState<IBooth>();
+    const [voucherSelected, setVoucherSeleted] = useState<IVoucher>();
     const [searchValue, setSearchValue] = useState('');
 
-    const { isSuccess: isFetchByNameSuccess, data: BoothByNameData, refetch: refetchByName } = useQuery({
-        queryKey: ['booths-by-name', page, rowsPerPage],
-        queryFn: () => boothService.getByName({
-            page_number: page + 1,
-            page_size: rowsPerPage,
-            booth_name: searchValue
-        }),
-        enabled: searchValue !== ''
-    });
 
-    const searchValueDebouce = useDebouce(searchValue, 500);
-
-
-    useEffect(() => {
-        if (searchValueDebouce.trim()) {
-            refetchByName();
-        }
-        if(searchValue === ''){
-            setTabActive(0);
-        }
-    }, [searchValueDebouce, refetchByName]);
-
-
-    useEffect(() => {
-        if (isFetchByNameSuccess && BoothByNameData) {
-            setDataTable(BoothByNameData);
-            setTabActive(-1);
-        }
-    }, [isFetchByNameSuccess, BoothByNameData]);
-
-
-
-    const resultBooth = useQueries({
+    const resultVoucher = useQueries({
         queries: [
             {
-                queryKey: ['booths-activing', page, rowsPerPage],
-                queryFn: () => boothService.getActiving({
+                queryKey: ['vouchers-active', page, rowsPerPage],
+                queryFn: () => voucherService.getActive({
                     page_number: page + 1,
                     page_size: rowsPerPage,
                 }),
                 enabled: tabActive === 0
             },
             {
-                queryKey: ['booths-active', page, rowsPerPage],
-                queryFn: () => boothService.getActive({
+                queryKey: ['voucher-inactive', page, rowsPerPage],
+                queryFn: () => voucherService.getInActive({
                     page_number: page + 1,
                     page_size: rowsPerPage,
                 }),
                 enabled: tabActive === 1
             },
             {
-                queryKey: ['booth-inactive', page, rowsPerPage],
-                queryFn: () => boothService.getInActive({
+                queryKey: ['voucher-deleted', page, rowsPerPage],
+                queryFn: () => voucherService.getDeleted({
                     page_number: page + 1,
                     page_size: rowsPerPage,
                 }),
                 enabled: tabActive === 2
-            },
-            {
-                queryKey: ['booth-banned', page, rowsPerPage],
-                queryFn: () => boothService.getBanned({
-                    page_number: page + 1,
-                    page_size: rowsPerPage,
-                }),
-                enabled: tabActive === 3
-            },
-            {
-                queryKey: ['booth-deleted', page, rowsPerPage],
-                queryFn: () => boothService.getDeleted({
-                    page_number: page + 1,
-                    page_size: rowsPerPage,
-                }),
-                enabled: tabActive === 4
             }
         ]
     })
 
     useEffect(() => {
-        if (resultBooth[tabActive]?.isSuccess) {
-            setDataTable(resultBooth[tabActive].data);
+        if (resultVoucher[tabActive]?.isSuccess) {
+            setDataTable(resultVoucher[tabActive].data);
         }
 
-    }, [resultBooth, tabActive]);
+    }, [resultVoucher, tabActive]);
 
 
 
@@ -156,15 +114,30 @@ export default function BoothTable() {
         setPage(0);
     };
 
+    const handleCreateVoucherSuccess = () => {
+        toast.success('Tạo phiếu giảm giá thành công', {
+            position: 'top-right',
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: false,
+            draggable: false,
+            progress: undefined,
+            theme: 'light'
+        });
+        setOpenCreate(false);
+        resultVoucher[tabActive].refetch();
+    }
 
 
-    const handleDeleteBooth = (booth: IBooth) => {
+
+    const handleDeleteVoucher = (voucher: IVoucher) => {
         setOpenDelete(true);
-        setBoothSeleted(booth);
+        setVoucherSeleted(voucher);
     };
 
-    const handleDeleteBoothSuccess = () => {
-        toast.success('Xóa gian hàng thành công', {
+    const handleDeleteVoucherSuccess = () => {
+        toast.success('Xóa phiếu gỉảm giá thành công', {
             position: 'top-right',
             autoClose: 3000,
             hideProgressBar: false,
@@ -175,16 +148,16 @@ export default function BoothTable() {
             theme: 'light'
         });
         setOpenDelete(false);
-        resultBooth[tabActive].refetch();
+        resultVoucher[tabActive].refetch();
     };
 
-    const handleUpdateBooth = (booth: IBooth) => {
+    const handleUpdateVoucher = (voucher: IVoucher) => {
         setOpenEdit(true);
-        setBoothSeleted(booth);
+        setVoucherSeleted(voucher);
     };
 
-    const handleUpdateBoothSuccess = () => {
-        toast.success('Cập nhật gian hàng thành công', {
+    const handleUpdateVoucherSuccess = () => {
+        toast.success('Cập nhật phiếu gỉảm giá thành công', {
             position: 'top-right',
             autoClose: 3000,
             hideProgressBar: false,
@@ -195,17 +168,17 @@ export default function BoothTable() {
             theme: 'light'
         });
         setOpenEdit(false);
-        resultBooth[tabActive].refetch();
+        resultVoucher[tabActive].refetch();
     };
 
-    const activeBoothMutation = useHookMutation((id: string) => {
-        return boothService.active(id);
+    const activeVoucherMutation = useHookMutation((id: string) => {
+        return voucherService.active(id);
     })
 
-    const handleActiveBooth = (b: IBooth) => {
-        activeBoothMutation.mutate(b.id, {
-            onSuccess: (data: IBooth) => {
-                toast.success(`Xác thực gian hàng thành công ${data.booth_name}`, {
+    const handleActiveVoucher = (b: IVoucher) => {
+        activeVoucherMutation.mutate(b.id, {
+            onSuccess: (data: IVoucher) => {
+                toast.success(`Xác thực phiếu gỉảm giá thành công ${data.voucher_name}`, {
                     position: 'top-right',
                     autoClose: 3000,
                     hideProgressBar: false,
@@ -215,19 +188,19 @@ export default function BoothTable() {
                     progress: undefined,
                     theme: 'light'
                 });
-                resultBooth[tabActive].refetch();
+                resultVoucher[tabActive].refetch();
             }
         });
     }
 
-    const unbanBoothMutation = useHookMutation((id: string) => {
-        return boothService.unban(id);
+    const inActiveVoucherMutation = useHookMutation((id: string) => {
+        return voucherService.inActive(id);
     })
 
-    const handleUnBanBooth = (b: IBooth) => {
-        unbanBoothMutation.mutate(b.id, {
-            onSuccess: (data: IBooth) => {
-                toast.success(`Bỏ cấm gian hàng thành công ${data.booth_name}`, {
+    const handleInActiveVoucher = (b: IVoucher) => {
+        inActiveVoucherMutation.mutate(b.id, {
+            onSuccess: (data: IVoucher) => {
+                toast.success(`Xác thực phiếu gỉảm giá thành công ${data.voucher_name}`, {
                     position: 'top-right',
                     autoClose: 3000,
                     hideProgressBar: false,
@@ -237,20 +210,21 @@ export default function BoothTable() {
                     progress: undefined,
                     theme: 'light'
                 });
-                resultBooth[tabActive].refetch();
+                resultVoucher[tabActive].refetch();
             }
         });
     }
 
-    const restoreBoothMutation = useHookMutation((id: string) => {
-        return boothService.restore(id);
+
+    const restoreVoucherMutation = useHookMutation((id: string) => {
+        return voucherService.restore(id);
     });
 
 
-    const handleRestoreBooth = (b: IBooth) => {
-        restoreBoothMutation.mutate(b.id, {
+    const handleRestoreVoucher = (b: IVoucher) => {
+        restoreVoucherMutation.mutate(b.id, {
             onSuccess: (data) => {
-                toast.success(`Khôi phục gian hàng thành công ${data.booth_name}`, {
+                toast.success(`Khôi phục phiếu gỉảm giá thành công ${data.voucher_name}`, {
                     position: 'top-right',
                     autoClose: 3000,
                     hideProgressBar: false,
@@ -260,7 +234,7 @@ export default function BoothTable() {
                     progress: undefined,
                     theme: 'light'
                 });
-                resultBooth[tabActive].refetch();
+                resultVoucher[tabActive].refetch();
             }
         });
     }
@@ -288,23 +262,29 @@ export default function BoothTable() {
                         </div>
                     </div>
                     <select value={tabActive} onChange={(e) => setTabActive(Number(e.target.value))} className="bg-gray-50 w-[300px] border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none p-2.5 ">
-                        <option value={0}>Đang hoạt động</option>
-                        <option value={1}>Đã xác thực</option>
-                        <option value={2}>Chưa xác thực</option>
-                        <option value={3}>Cấm</option>
+                        <option value={0}>Đã xác thực</option>
+                        <option value={1}>Chưa xác thực</option>
                     </select>
                 </div>
                 <div className='flex gap-2'>
                     <button
                         onClick={() => setTabActive(0)}
                         className={`flex items-center justify-center gap-2 text-lg font-semibold text-white bg-blue-500 rounded-lg px-4 py-2 
-                            ${(tabActive === 0 || tabActive === 1 || tabActive === 2 || tabActive === 3) ? 'opacity-100' : 'opacity-50'}`}
+                            ${(tabActive === 0 || tabActive === 1) ? 'opacity-100' : 'opacity-50'}`}
                     >
                         <SiDatabricks size={24} />
                         Hiện tại
                     </button>
 
-                    <button onClick={() => setTabActive(4)} className={`flex items-center opacity-50 justify-center gap-2 space-y-1 text-lg font-semibold text-white bg-red-500 rounded-lg px-4 py-2 ${tabActive === 4 && 'opacity-100'}`}>
+                    <button
+                        onClick={() => setOpenCreate(true)}
+                        className={`flex items-center opacity-100 justify-center gap-2 space-y-1 text-base font-semibold text-white bg-orange-500 rounded-lg px-4 py-2`}
+                    >
+                        <BiPlusCircle size={24} />
+                        Thêm phiếu gỉảm giá
+                    </button>
+
+                    <button onClick={() => setTabActive(2)} className={`flex items-center opacity-50 justify-center gap-2 space-y-1 text-lg font-semibold text-white bg-red-500 rounded-lg px-4 py-2 ${tabActive === 4 && 'opacity-100'}`}>
                         <FaRegTrashAlt />
                         Thùng rác
                     </button>
@@ -351,13 +331,17 @@ export default function BoothTable() {
                                 {columns.map((column) => {
                                     const formattedRow = {
                                         id: b.id,
-                                        booth_avatar: <Avatar src={b.booth_avatar} alt={b.booth_name} />,
-                                        booth_name: b.booth_name,
-                                        booth_desc: b.booth_description,
-                                        is_active: b.is_active,
-                                        is_banned: b.is_banned,
-                                        created_by: b.created_by,
-                                        created_at: handleTime(b.created_at),
+                                        voucher_type: b.voucher_type,
+                                        voucher_name: b.voucher_name,
+                                        code: b.voucher_code,
+                                        expiry_date: handleTime(b.expiry_date),
+                                        quantity_remain: b.quantity_remain,
+                                        quantity_used: b.quantity_used,
+                                        discount: b.discount,
+                                        type_discount: b.type_discount,
+                                        status_voucher: b.status_voucher,
+                                        apply_for: b.apply_for,
+                                        booth_id: b.boot_id,
                                     };
 
                                     return (
@@ -376,49 +360,40 @@ export default function BoothTable() {
                                 })}
                                 <TableCell align="center">
                                     <div className="flex justify-center space-x-2">
-                                        {tabActive !== 4 &&
+                                        {tabActive !== 2 &&
                                             <>
-
-                                                {(tabActive === 0 || tabActive === 1) &&
-                                                    <button
-                                                        onClick={() => handleUpdateBooth(b)}
-                                                        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 border border-green-700 rounded"
-                                                    >
-                                                        Sửa
-                                                    </button>
-                                                }
-
-                                                {tabActive === 2 &&
-                                                    <button
-                                                        onClick={() => handleActiveBooth(b)}
-                                                        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 border border-green-700 rounded"
-                                                    >
-                                                        Xác nhận
-                                                    </button>
-                                                }
-
-                                                {tabActive === 3 &&
-                                                    <button
-                                                        onClick={() => handleUnBanBooth(b)}
-                                                        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 border border-green-700 rounded"
-                                                    >
-                                                        Bỏ cấm
-                                                    </button>
-
-                                                }
-
                                                 <button
-                                                    onClick={() => handleDeleteBooth(b)}
+                                                    onClick={() => handleUpdateVoucher(b)}
+                                                    className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 border border-green-700 rounded"
+                                                >
+                                                    Sửa
+                                                </button>
+                                                {tabActive !== 1 &&
+                                                    <button onClick={() => handleInActiveVoucher(b)} className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 border border-yellow-700 rounded">
+                                                        Gỡ bỏ
+                                                    </button>
+                                                }
+
+                                            
+                                                <button
+                                                    onClick={() => handleDeleteVoucher(b)}
                                                     className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 border border-red-700 rounded"
                                                 >
                                                     Xóa
                                                 </button>
+
+                                                {tabActive === 1 && (
+                                                    <button onClick={() => handleActiveVoucher(b)} className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 border border-yellow-700 rounded">
+                                                        Kích hoạt
+                                                    </button>
+                                                )}
+
                                             </>
                                         }
-                                        {tabActive === 4
+                                        {tabActive === 2
                                             &&
                                             <button
-                                                onClick={() => handleRestoreBooth(b)}
+                                                onClick={() => handleRestoreVoucher(b)}
                                                 className='flex items-center gap-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded'>
                                                 <CiRepeat size={30} />
                                                 Khôi phục
@@ -445,8 +420,9 @@ export default function BoothTable() {
             <ToastContainer />
 
             <Modal
-                open={openEdit || openDelete}
+                open={openEdit || openDelete || openCreate}
                 onClose={() => {
+                    setOpenCreate(false);
                     setOpenDelete(false);
                     setOpenEdit(false);
                 }}
@@ -458,13 +434,24 @@ export default function BoothTable() {
                     },
                 }}
             >
-                <Fade in={openEdit || openDelete} timeout={{ enter: 300, exit: 200 }}>
+                <Fade in={openEdit || openDelete || openCreate} timeout={{ enter: 300, exit: 200 }}>
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white">
-                        {openEdit ? (
-                            boothSelected && <EditBooth booth={boothSelected} onUpdateSuccess={handleUpdateBoothSuccess} />
-                        ) : (
-                            boothSelected && <DeleteBooth booth={boothSelected} onDeleteSuccess={handleDeleteBoothSuccess} />
-                        )}
+                        {openCreate && <CreateVoucher onClose={() => setOpenCreate(false)} onSuccess={handleCreateVoucherSuccess} />}
+                        {openEdit && voucherSelected &&
+                            <VoucherDetail
+                                mode='edit'
+                                voucher={voucherSelected}
+                                onClose={() => setOpenEdit(false)}
+                                onSuccess={handleUpdateVoucherSuccess}
+                            />}
+                        {openDelete && voucherSelected &&
+                            <VoucherDetail
+                                mode='delete'
+                                voucher={voucherSelected}
+                                onClose={() => setOpenEdit(false)}
+                                onSuccess={handleDeleteVoucherSuccess}
+                            />
+                        }
                     </div>
                 </Fade>
             </Modal>

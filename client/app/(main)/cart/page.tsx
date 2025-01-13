@@ -72,8 +72,6 @@ export default function Cart() {
 
     const handleChooseListVoucher = () => {
         setOpenVoucher(false)
-        console.log(voucherSelected);
-
     }
 
     const deleteOrderItemMutation = useHookMutation((id: string) => {
@@ -100,10 +98,8 @@ export default function Cart() {
 
 
     const handleBuyOrder = () => {
-        console.log(orderSelected);
-        console.log(voucherSelected);
 
-        if(orderSelected.length === 0) {
+        if (orderSelected.length === 0) {
             toast.error('Vui lòng chọn sản phẩm', {
                 position: "top-right",
                 autoClose: 3000,
@@ -133,15 +129,18 @@ export default function Cart() {
 
     useEffect(() => {
         setValue(null);
-        setTotalBill(orderSelected.reduce((total, item) => total + item.quantity * (item.product_detail.sale_price - item.product_detail.promotional_price), 0));
+        setTotalBill(orderSelected.reduce((total, item) => total + item.quantity * (item.product_detail.promotional_price > 0 ? item.product_detail.promotional_price : item.product_detail.sale_price), 0));
         setTotalQuantity(orderSelected.length);
 
         if (voucherSelected) {
-            let totalDefault = orderSelected.reduce((total, item) => total + item.quantity * (item.product_detail.sale_price - item.product_detail.promotional_price), 0);
+           
+            
+            let totalDefault = orderSelected.reduce((total, item) => total + item.quantity * (item.product_detail.promotional_price > 0 ? item.product_detail.promotional_price : item.product_detail.sale_price), 0);
+            console.log(totalDefault);
             voucherSelected.forEach(voucher => {
                 if (voucher.voucher_type !== 'freeship') {
                     if (voucher.type_discount === 'percent') {
-                        setTotalBill(totalDefault - totalDefault * voucher.discount);
+                        setTotalBill(totalDefault - (totalDefault * (voucher.discount / 100)));
                     } else {
                         setTotalBill(totalDefault - voucher.discount > 0 ? totalDefault - voucher.discount : 0);
                     }
@@ -207,11 +206,11 @@ export default function Cart() {
                                     <p className="line-through">{item.product_detail.sale_price.toLocaleString()}đ</p>
                                     {
                                         item.product_detail.promotional_price > 0 &&
-                                        <p className='text-red-500'>{(item.product_detail.sale_price - item.product_detail.promotional_price).toLocaleString()}đ</p>
+                                        <p className='text-red-500'>{(item.product_detail.promotional_price).toLocaleString()}đ</p>
                                     }
                                 </div>
                                 <p>{item.quantity}</p>
-                                <p>{(item.quantity * (item.product_detail.sale_price - item.product_detail.promotional_price)).toLocaleString()}đ</p>
+                                <p>{(item.quantity * (item.product_detail.promotional_price > 0 ? item.product_detail.promotional_price : item.product_detail.sale_price)).toLocaleString()}đ</p>
                                 <button onClick={() => handleDeleteOrder(item)} className='text-red-500 hover:underline hover:cursor-pointer'>Xóa</button>
                             </div>
                         </div>
@@ -231,14 +230,18 @@ export default function Cart() {
                 {voucherSelected && voucherSelected.length > 0 &&
                     <div className='flex flex-col text-end py-1 text-lg'>
                         <p>Giá gốc:
-                            <span className="opacity-85 line-through text-red-500"> {orderSelected.reduce((total, item) => total + item.quantity * (item.product_detail.sale_price - item.product_detail.promotional_price), 0).toLocaleString()}đ</span>
+                            <span className="opacity-85 line-through text-red-500"> {orderSelected.reduce((total, item) =>
+                                total + item.quantity * (item.product_detail.promotional_price > 0 ?
+                                    item.product_detail.promotional_price : item.product_detail.sale_price),
+                                0).toLocaleString()}đ
+                            </span>
                         </p>
                         {voucherSelected.map(voucher => (
                             <div key={voucher.id}>
                                 {voucher.voucher_type === 'freeship' ?
                                     voucher.type_discount === 'percent' ?
                                         <p>Giảm tiền giao hàng :
-                                            <span className="opacity-85 text-red-500"> {voucher.discount * 100}%</span>
+                                            <span className="opacity-85 text-red-500"> {voucher.discount}%</span>
                                         </p>
                                         :
                                         <p>Giảm tiền giao hàng:
@@ -247,7 +250,7 @@ export default function Cart() {
                                     :
                                     voucher.type_discount === 'percent' ?
                                         <p>Giảm giá đơn hàng:
-                                            <span className="opacity-85 text-red-500"> {voucher.discount * 100}%</span>
+                                            <span className="opacity-85 text-red-500"> {voucher.discount}%</span>
                                         </p>
                                         :
                                         <p>Giảm giá đơn hàng:

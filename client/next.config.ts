@@ -3,7 +3,19 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
     reactStrictMode: true,
     images: {
-        domains: ['i.ibb.co'],
+        remotePatterns: [
+            {
+                protocol: "https",
+                hostname: "**"
+            }, 
+            {
+                protocol: "http",
+                hostname: "**"
+            }
+        ]
+    },
+    eslint: {
+        ignoreDuringBuilds: true,
     },
 };
 

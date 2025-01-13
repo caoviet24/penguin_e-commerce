@@ -125,7 +125,7 @@ export default function CategoryDetail({ category, mode, onSuccess }: CategoryPr
                     name='category_name'
                     className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" />
             </div>
-            <div>
+            <div className="flex justify-between items-center mt-5 flex-col gap-2">
                 {!imagePreview && !formData.image && <AiOutlinePicture size={120} className='text-gray-500' />}
                 {imagePreview &&
                     <div className='relative w-[140px] h-[140px] '>
@@ -175,7 +175,7 @@ export default function CategoryDetail({ category, mode, onSuccess }: CategoryPr
                     <div className='mt-2 max-h-[100px] overflow-y-auto'>
                         {formData.list_category_detail && formData.list_category_detail.map((cgd, index) => (
                             <div key={index} className='flex justify-between items-center gap-5 mt-2'>
-                                <p>Chi tiết danh mục {index + 1}: {cgd.catogory_detail_name}</p>
+                                <p>Chi tiết danh mục {index + 1}: {cgd.category_detail_name}</p>
                                 {mode === 'edit' && !cgd.is_deleted &&
                                     <button
                                         onClick={() => handleSoftDeleteCgDetail(cgd)}

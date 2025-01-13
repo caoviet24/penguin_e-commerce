@@ -3,9 +3,13 @@ import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { useDispatch, TypedUseSelectorHook, useSelector } from "react-redux";
 import { accountReducer } from "./slices/account.slice";
+import { boothReducer } from "./slices/booth.slice";
+import { categoryReducer } from "./slices/category.slice";
 
 const rootReducer = combineReducers({
     account: accountReducer,
+    booth: boothReducer,
+    category: categoryReducer,
 });
 
 const persistConfig = {

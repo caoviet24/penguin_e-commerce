@@ -20,7 +20,6 @@ using Microsoft.Extensions.Logging;
 namespace WebApi.Controllers
 {
     [Authorize]
-    [ApiController]
     [Route("category")]
     public class CategoryController(ILogger<CategoryController> logger, IMediator mediator) : ControllerBase
     {
