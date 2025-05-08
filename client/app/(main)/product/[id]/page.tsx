@@ -1,10 +1,11 @@
+/* eslint-disable @next/next/no-img-element */
 "use client"
 import { IBooth, IProduct, IProductDetail, IProductReview } from '@/types';
 import { useQuery } from '@tanstack/react-query';
 import React, { useMemo, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { FaFacebookMessenger, FaStar } from "react-icons/fa";
-import { Avatar, bottomNavigationActionClasses, Divider } from '@mui/material';
+import { Avatar, Divider } from '@mui/material';
 import { BiCart, BiMinus, BiPlus } from 'react-icons/bi';
 import { productService } from '@/services/product.service';
 import { boothService } from '@/services/booth.service';
@@ -15,7 +16,6 @@ import { orderItemService } from '@/services/orderItem.service';
 import { useAppDispatch } from '@/redux/store';
 import { setAddToCart } from '@/redux/slices/cart.slice';
 import { productReviewService } from '@/services/productReview.service';
-import handleTimeVn from '@/utils/handleTimeVn';
 import handleTime from '@/utils/handleTime';
 
 export default function AccountId({ params }: { params: Promise<{ id: string }> }) {
@@ -78,7 +78,7 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
 
     const { data: boothData } = useQuery<IBooth>({
         queryKey: ['booth', productData?.booth_id],
-        queryFn: () => boothService.getById(productData?.booth_id!),
+        queryFn: () => boothService.getById(productData?.booth_id || ''),
         enabled: !!slug && !!productData?.booth_id
     });
 
@@ -128,7 +128,7 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
         if (productData?.list_product_detail) {
             const randomDays = Math.floor(Math.random() * 5) + 1;
             const date = new Date(Date.now() + randomDays * 24 * 60 * 60 * 1000);
-            setDeliveryDate(date.toLocaleDateString("vi-VN").slice(0, 3))
+            setDeliveryDate(date.toLocaleDateString("vi-VN"))
         }
     }, [productData, isSuccess]);
 
@@ -145,8 +145,9 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
                 <div className='w-2/5 flex flex-col'>
                     {productDetailActive?.image ? (
                         <img
+                            alt="product"
                             className='border border-solid border-gray-100 shadow-sm !w-[500px] !h-[485px]'
-                            src={productDetailActive.image} alt="product"
+                            src={productDetailActive.image}
                         />
                     ) : (
                         <p>....</p>
@@ -243,6 +244,7 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
                                     {s}
                                     {sizeActive === s
                                         &&
+            
                                         <img className='absolute right-0 bottom-0 z-10 !h-[16px] !w-[16px]' src="/images/check.webp" alt="check" />
                                     }
                                 </button>
@@ -319,7 +321,7 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
                 <h2 className='text-xl'>Đánh giá sản phẩm</h2>
                 <Divider />
                 <div className='min-h-56'>
-                    {!reviewsData ?
+                    {!reviewsData && reviewsData?.length === 0 ?
                         <div className='h-full w-full flex flex-col items-center justify-center'>
                             <Image src="/images/no-rating.png" alt="1" width={100} height={100} />
                             <span>

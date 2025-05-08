@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  gateway:
+    build:
+      context: ./server/gateway
+      dockerfile: Dockerfile
+    ports:
+      - "5000:80"
+    depends_on:
+      - user-api
+      - admin-api
+    networks:
+      - penguin-network
+
+  user-api:
+    build:
+      context: ./server/user_be
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=db;Database=PenguinDB;User=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
+    depends_on:
+      - db
+    networks:
+      - penguin-network
+
+  admin-api:
+    build:
+      context: ./server/admin_be
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=db;Database=PenguinDB;User=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
+    depends_on:
+      - db
+    networks:
+      - penguin-network
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://gateway:80
+    depends_on:
+      - gateway
+    networks:
+      - penguin-network
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://gateway:80
+    depends_on:
+      - gateway
+    networks:
+      - penguin-network
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong@Passw0rd
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+    networks:
+      - penguin-network
+
+volumes:
+  mssql-data:
+
+networks:
+  penguin-network:
+    driver: bridge

@@ -1,44 +1,8 @@
 'use client';
-
-import { BiSearchAlt2 } from 'react-icons/bi';
 import Image from 'next/image';
 import Link from 'next/link';
-import { RiShoppingCartLine } from 'react-icons/ri';
-import { useEffect, useState } from 'react';
-import useDebounce from '@/hooks/useDebounce';
-import { LuUserRoundCheck } from "react-icons/lu";
-import RenderWithCondition from '../RenderWithCondition/renderwithcondition';
-import { useAppSelector } from '@/redux/store';
 
 export default function Header2({ title }: { title: string }) {
-    const { my_account } = useAppSelector(state => state.account);
-    const { cart } = useAppSelector(state => state.cart);
-
-
-
-    const [hotSearch, setHotSearch] = useState([
-        'Quần bò ống đứng',
-        'Áo thun',
-        'Áo khoác',
-        'iphone 15 pro max',
-        'macbook pro 2022',
-        'Giày thể thao',
-        'tất cổ ngắn',
-        'Quần lửng',
-        'Quần short',
-        'Ốp điện thoại',
-        'Balo du lịch',
-        'Khăn quàng cổ',
-    ]);
-
-    const [searchValue, setSearchValue] = useState('');
-    const searchValueDebounce = useDebounce(searchValue, 500);
-
-    useEffect(() => {
-
-
-
-    }, [searchValueDebounce]);
 
     return (
         <header className="bg-purple-50 shadow-md flex items-center">

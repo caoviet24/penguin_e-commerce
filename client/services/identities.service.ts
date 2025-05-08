@@ -2,6 +2,7 @@ import { IAccount } from "@/types";
 import axiosJWT from "@/utils/axios.interceptor";
 import delay from "@/utils/delay";
 import axios from "axios";
+import Cookies from "js-cookie";
 
 
 async function authMe() : Promise<IAccount> {
@@ -29,10 +30,17 @@ async function register(username: string, password: string) {
     return res.data;
 }
 
+async function logout() {
+    localStorage.clear();
+    Cookies.remove("access_token");
+    Cookies.remove("refresh_token");
+}
+
 export const identityService = {
     login,
     register,
-    authMe
+    authMe,
+    logout
 }
 
 

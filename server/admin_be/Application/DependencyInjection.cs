@@ -6,6 +6,7 @@ using FluentValidation;
 using Application.Common.Interfaces;
 using Application.Auth;
 using Application.TokenData;
+using Application.Common.Mapping;
 
 namespace Application
 {
@@ -15,6 +16,7 @@ namespace Application
         {
             service.AddScoped<IAuthService, AuthService>();
             service.AddScoped<ITokenData, TokenData.TokenData>();
+            service.AddAutoMapper(typeof(MapperProfile).Assembly);
 
             service.AddMediatR(cfg =>
             {

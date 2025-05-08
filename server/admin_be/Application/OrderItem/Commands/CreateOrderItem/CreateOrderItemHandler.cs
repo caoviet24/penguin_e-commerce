@@ -48,15 +48,15 @@ namespace Application.OrderItem.Commands.CreateOrderItem
             Dictionary<string, OrderItemDto> orderDic = new Dictionary<string, OrderItemDto>();
 
             orderData.Read<OrderItemDto, ProductDetailDto, OrderItemDto>(
-                (ord, prod) => 
+                (ord, prod) =>
                 {
-                    if(!orderDic.TryGetValue(ord.Id, out var entry))
+                    if (!orderDic.TryGetValue(ord.Id, out var entry))
                     {
                         entry = ord;
                         orderDic.Add(entry.Id, entry);
                     }
 
-                    if(prod.product_name != null)
+                    if (prod.product_name != null)
                     {
                         entry.product_detail = prod;
                     }

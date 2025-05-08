@@ -5,7 +5,7 @@ import { useAppSelector } from "@/redux/store";
 import { billService } from "@/services/bill.service";
 import { ISaleBill, ResponseData } from "@/types";
 import { Divider, Modal } from "@mui/material";
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQueries} from "@tanstack/react-query";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect } from "react";

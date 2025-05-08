@@ -60,7 +60,7 @@ export default function Cart() {
         const selectedVoucher = voucherData?.data.find((voucher) => voucher.id === id);
         if (selectedVoucher) {
             setVoucherSelected((prev: IVoucher[] | null) => {
-                let idx = prev?.findIndex(vch => vch.voucher_type === selectedVoucher.voucher_type);
+                const idx = prev?.findIndex(vch => vch.voucher_type === selectedVoucher.voucher_type);
                 if (idx !== undefined && idx !== -1) {
                     prev?.splice(idx, 1);
                 }
@@ -98,7 +98,6 @@ export default function Cart() {
 
 
     const handleBuyOrder = () => {
-
         if (orderSelected.length === 0) {
             toast.error('Vui lòng chọn sản phẩm', {
                 position: "top-right",
@@ -135,7 +134,7 @@ export default function Cart() {
         if (voucherSelected) {
            
             
-            let totalDefault = orderSelected.reduce((total, item) => total + item.quantity * (item.product_detail.promotional_price > 0 ? item.product_detail.promotional_price : item.product_detail.sale_price), 0);
+            const totalDefault = orderSelected.reduce((total, item) => total + item.quantity * (item.product_detail.promotional_price > 0 ? item.product_detail.promotional_price : item.product_detail.sale_price), 0);
             console.log(totalDefault);
             voucherSelected.forEach(voucher => {
                 if (voucher.voucher_type !== 'freeship') {
@@ -187,7 +186,7 @@ export default function Cart() {
                             <div className='w-2/5 flex items-center justify-between px-5 gap-2'>
                                 <div className='flex items-center gap-2'>
                                     <input
-                                        onChange={(e) => handleOrderSelected(item)}
+                                        onChange={() => handleOrderSelected(item)}
                                         className='p-2 h-4 w-4'
                                         type='checkbox'
                                         checked={orderSelected.some(order => order.id === item.id)}

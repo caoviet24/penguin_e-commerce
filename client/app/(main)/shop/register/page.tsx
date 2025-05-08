@@ -10,13 +10,14 @@ import useLocationStorage from '@/hooks/useLocationStorage';
 import { toast, ToastContainer } from 'react-toastify';
 import handleTimeVn from '@/utils/handleTimeVn';
 import { BiCheck } from 'react-icons/bi';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAppDispatch, useAppSelector } from '@/redux/store';
 import ProductsOfBooth from '@/components/booth_component/ProductsOfBooth/ProductsOfBooth';
 import { setBooth } from '@/redux/slices/booth.slice';
 import Link from 'next/link';
 import { FaArrowTrendUp } from 'react-icons/fa6';
 import { RiOrderPlayFill } from 'react-icons/ri';
+import { uploadService } from '@/services/upload.service';
 
 
 export default function Register() {
@@ -50,6 +51,11 @@ export default function Register() {
         }
     }
 
+    const uploadMutation = useMutation({
+        mutationKey: ["upload"],
+        mutationFn: (file: File) => uploadService.uploadImage(file),
+    });
+
     const handleGetImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         setFormData({
@@ -58,14 +64,15 @@ export default function Register() {
         })
         if (file) {
             setImagePreview(URL.createObjectURL(file));
-            const url = await getUrlImage(file);
-            if (url) {
-                setImagePreview(undefined);
-                setFormData({
-                    ...formData,
-                    avatar: url
-                });
-            }
+            uploadMutation.mutate(file, {
+                onSuccess: (data) => {
+                    setImagePreview(undefined);
+                    setFormData({
+                        ...formData,
+                        avatar: data.url
+                    });
+                }
+            })
         }
     }
 
@@ -89,7 +96,7 @@ export default function Register() {
                     progress: undefined,
                 });
             },
-            onError: (error) => {
+            onError: () => {
                 toast.error('Gửi yêu cầu đăng ký thất bại do tên cửa hàng đã được ai đó sử dụng', {
                     position: "top-right",
                     autoClose: 3000,
@@ -138,7 +145,7 @@ export default function Register() {
                     progress: undefined,
                 });
             },
-            onError: (error) => {
+            onError: () => {
                 toast.error('Cập nhật thông tin cửa hàng thất bại', {
                     position: "top-right",
                     autoClose: 3000,

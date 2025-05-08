@@ -1,8 +1,9 @@
+using Application.Common.Interfaces;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext : DbContext, IApplicationDbContext
 {
 
         private readonly IConfiguration _configuration;
@@ -20,6 +21,8 @@ public class ApplicationDbContext : DbContext
 
                 optionsBuilder.UseSqlServer("Server=localhost,1433;Database=penguin;User Id=sa;Password=Test@123;Encrypt=False;TrustServerCertificate=True;");
         }
+
+        public DbSet<UserEntity> Users { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

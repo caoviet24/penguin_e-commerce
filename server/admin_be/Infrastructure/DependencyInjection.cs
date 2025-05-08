@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Data;
+using Application.Common.Interfaces;
 using Application.Identities;
 using Infrastructure.data.Interceptor;
+using Infrastructure.ExternalService;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -23,6 +26,12 @@ public static class Infrastructure
             var connectionString = configuration.GetConnectionString("DefaultConnection");
             options.UseSqlServer(connectionString);
         });
+
+        // Configure VnPay
+        service.Configure<Configration.VnPayConfigration>(configuration.GetSection("Vnpay"));
+        
+        // Configure PayOS
+        service.Configure<Configurations.PaymentConfiguration>(configuration.GetSection("PayOS"));
 
 
         service.AddAuthentication(opt =>
@@ -45,16 +54,20 @@ public static class Infrastructure
             };
         });
 
-    
-
         service.AddScoped<IJwtService, JwtService>();
+        service.AddScoped<IVnPayService, VnPayService>();
+        service.AddScoped<IPaymentService, PaymentService>();
         service.AddScoped<ISaveChangesInterceptor, EntityInterceptor>();
+        service.AddScoped<IApplicationDbContext, ApplicationDbContext>();
         service.AddScoped<IDbHelper, DbHepler>();
         service.AddScoped<IDbConnection>(provider =>
         {
             var connectionString = configuration.GetConnectionString("DefaultConnection");
             return new SqlConnection(connectionString);
         });
+
+        service.AddScoped<HttpContextAccessor>();
+
 
         return service;
     }

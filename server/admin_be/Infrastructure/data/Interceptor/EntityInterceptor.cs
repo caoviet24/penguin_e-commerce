@@ -39,6 +39,7 @@ namespace Infrastructure.data.Interceptor
                         case EntityState.Modified:
                             baseEntity.last_updated = DateTime.UtcNow;
                             baseEntity.updated_by = user;
+                            baseEntity.last_updated = DateTime.UtcNow;
                             break;
                     }
                 }

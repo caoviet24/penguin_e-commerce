@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import {
-    Avatar,
     Backdrop,
     Fade,
     Modal,
@@ -22,7 +21,7 @@ import handleTime from "@/utils/handleTime";
 import { FaRegTrashAlt } from "react-icons/fa";
 import { SiDatabricks } from "react-icons/si";
 import { CiRepeat } from "react-icons/ci";
-import { BiPlusCircle, BiSearchAlt } from "react-icons/bi";
+import { BiPlusCircle } from "react-icons/bi";
 import CreateProduct from "../../product_component/CreateProduct/CreateProduct";
 import { productService } from "@/services/product.service";
 import { TbListDetails } from "react-icons/tb";

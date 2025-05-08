@@ -8,9 +8,10 @@ using Application.Common.Dtos.ResponData;
 using Dapper;
 using MediatR;
 
-namespace Application.MyBooth .Queries.GetActiving
+namespace Application.MyBooth.Queries.GetActiving
 {
-     public class GetBoothActivingQuery : IRequest<ResponDataDto>
+
+    public class GetBoothActivingQuery : IRequest<ResponDataDto>
     {
         public int page_number { get; set; }
         public int page_size { get; set; }

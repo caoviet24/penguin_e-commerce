@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 // import Carousel from 'react-material-ui-carousel';
@@ -7,51 +7,46 @@ import { useQuery } from '@tanstack/react-query';
 import Cookie from 'js-cookie';
 import { identityService } from '@/services/identities.service';
 import { useAppDispatch, useAppSelector } from '@/redux/store';
-import { useDispatch } from 'react-redux';
 import { setMyAcount } from '@/redux/slices/account.slice';
 import { productService } from '@/services/product.service';
 import CardProduct from '@/components/CardProduct/CardProduct';
 import { Divider } from '@mui/material';
 import Link from 'next/link';
-import "react-responsive-carousel/lib/styles/carousel.min.css"; // requires a loader
+import 'react-responsive-carousel/lib/styles/carousel.min.css';
 import { Carousel } from 'react-responsive-carousel';
 import { orderItemService } from '@/services/orderItem.service';
-import { setAddToCart, setCarts } from '@/redux/slices/cart.slice';
+import { setCarts } from '@/redux/slices/cart.slice';
 
 export default function Home() {
-    const { my_account } = useAppSelector(state => state.account);
+    const { my_account } = useAppSelector((state) => state.account);
     const dispatch = useAppDispatch();
 
-
-    const [a, setA] = useState([
+    const [a] = useState([
         '/images/slider/1.avif',
         '/images/slider/2.avif',
         '/images/slider/3.avif',
         '/images/slider/4.avif',
-        '/images/slider/5.avif'
+        '/images/slider/5.avif',
     ]);
 
     const { data: authData, isSuccess: isFetchAuthSuccess } = useQuery({
-        queryKey: ["auth-me"],
+        queryKey: ['auth-me'],
         queryFn: identityService.authMe,
-        enabled: !!Cookie.get('access_token')
+        enabled: !!Cookie.get('access_token'),
     });
 
-    const { data: productData, isSuccess: isFetchProductSuccess } = useQuery({
-        queryKey: ["products"],
-        queryFn: () => productService.getPagination(1, 70)
+    const { data: productData } = useQuery({
+        queryKey: ['products'],
+        queryFn: () => productService.getPagination(1, 70),
     });
-
 
     const { data: orderItemData, isSuccess: isFetchOrderItemSuccess } = useQuery({
-        queryKey: ["order-items", my_account?.id],
+        queryKey: ['order-items', my_account?.id],
         queryFn: () => orderItemService.getOrderItemByUserId(my_account?.id),
-        enabled: !!my_account?.id
-
-    })
+        enabled: !!my_account?.id,
+    });
 
     useEffect(() => {
-
         if (isFetchAuthSuccess) {
             dispatch(setMyAcount(authData));
         }
@@ -59,9 +54,6 @@ export default function Home() {
         if (isFetchOrderItemSuccess) {
             dispatch(setCarts(orderItemData));
         }
-
-
-
     }, [isFetchAuthSuccess, isFetchOrderItemSuccess]);
 
     return (
@@ -69,11 +61,10 @@ export default function Home() {
             <div className="flex w-full flex-1 gap-2 bg-white p-5">
                 <Carousel>
                     {a.map((slider, index) => (
-                        <div key={index} className='h-[390px] w-full'>
-                            <img src={slider} className='h-full w-full' />
+                        <div key={index} className="h-[390px] w-full">
+                            <img src={slider} className="h-full w-full" />
                         </div>
                     ))}
-
                 </Carousel>
 
                 <div className="flex flex-col h-full w-[350px]">
@@ -82,10 +73,12 @@ export default function Home() {
                         <span className="text-2xl font-bold text-purple-800 mt-4">TRY PENGUIN APP</span>
                     </div>
                     <div className="relative w-full flex-1">
-                        <img
+                        <Image
                             className="absolute top-0 left-0 right-0 bottom-0 -z-10"
                             src="/images/frame.png"
                             alt="logo-main"
+                            fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         />
                         <p className="flex mt-2 ml-2 items-center gap-2">
                             <FaStar color="yellow" />
@@ -123,20 +116,18 @@ export default function Home() {
                     </div>
                 </div>
             </div>
-            <div className='flex justify-between bg-white mt-2 p-5'>
-                <div className='flex items-center flex-col justify-center text-center'>
+            <div className="flex justify-between bg-white mt-2 p-5">
+                <div className="flex items-center flex-col justify-center text-center">
                     <Image src="/images/choice.png" alt="1" width={40} height={40} />
                     <span>
                         Hàng chọn <br /> Giá hời
                     </span>
                 </div>
-                <div className='flex items-center flex-col justify-center text-center'>
+                <div className="flex items-center flex-col justify-center text-center">
                     <Image src="/images/vnd.png" alt="1" width={40} height={40} />
-                    <span>
-                        Mã giảm giá
-                    </span>
+                    <span>Mã giảm giá</span>
                 </div>
-                <div className='flex items-center flex-col justify-center text-center'>
+                <div className="flex items-center flex-col justify-center text-center">
                     <Image src="/images/freeship.avif" alt="1" width={40} height={40} />
                     <span>
                         Giao hàng
@@ -144,25 +135,23 @@ export default function Home() {
                         Miễn phí
                     </span>
                 </div>
-                <div className='flex items-center flex-col justify-center text-center'>
+                <div className="flex items-center flex-col justify-center text-center">
                     <Image src="/images/voucher.avif" alt="1" width={40} height={40} />
                     <span>
                         Voucher giảm giá <br /> siêu lớn
                     </span>
                 </div>
-                <div className='flex items-center flex-col justify-center text-center'>
+                <div className="flex items-center flex-col justify-center text-center">
                     <Image src="/images/hours.png" alt="1" width={40} height={40} />
                     <span>
                         Khung giờ <br /> Săn sale
                     </span>
                 </div>
-                <div className='flex items-center flex-col justify-center text-center'>
+                <div className="flex items-center flex-col justify-center text-center">
                     <Image src="/images/global.png" alt="1" width={40} height={40} />
-                    <span>
-                        Hãng quốc tế
-                    </span>
+                    <span>Hãng quốc tế</span>
                 </div>
-                <div className='flex items-center flex-col justify-center text-center'>
+                <div className="flex items-center flex-col justify-center text-center">
                     <Image src="/images/global.png" alt="1" width={40} height={40} />
                     <span>
                         Nạp thẻ, Dịch vụ <br /> - Xem phim
@@ -170,16 +159,19 @@ export default function Home() {
                 </div>
             </div>
 
-            <div className='flex flex-col mt-10 p-5 bg-white'>
-                <h2 className='text-xl py-2'>Dành cho bạn</h2>
+            <div className="flex flex-col mt-10 p-5 bg-white">
+                <h2 className="text-xl py-2">Dành cho bạn</h2>
                 <Divider />
-                <div className='grid grid-cols-6 gap-2 mt-4'>
-                    {productData && productData.data.map(pro => (
-                        <CardProduct product={pro} key={pro.id} />
-                    ))}
+                <div className="grid grid-cols-6 gap-2 mt-4">
+                    {productData && productData.data.map((pro) => <CardProduct product={pro} key={pro.id} />)}
                 </div>
             </div>
-            <Link className='block w-48 text-center px-10 py-2 bg-gray-200 mx-auto mt-5 transition-all hover:scale-105' href='/product'>Xem tất cả</Link>
+            <Link
+                className="block w-48 text-center px-10 py-2 bg-gray-200 mx-auto mt-5 transition-all hover:scale-105"
+                href="/product"
+            >
+                Xem tất cả
+            </Link>
         </div>
     );
 }

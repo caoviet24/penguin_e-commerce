@@ -52,6 +52,7 @@ export interface IUser {
     nick_name: string;
     birth: Date;
     avatar: string;
+    gender: string;
     address: string;
     phone: string;
     acc_id: string;
