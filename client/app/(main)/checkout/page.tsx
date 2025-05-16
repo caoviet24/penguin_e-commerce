@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useTransition } from 'react';
 import { useAppSelector } from '@/redux/store';
 import { FaLocationDot } from 'react-icons/fa6';
 import { Divider, Modal } from '@mui/material';
@@ -16,8 +16,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import { orderItemService } from '@/services/orderItem.service';
 import { useDispatch } from 'react-redux';
 import { setDeleteToCart } from '@/redux/slices/cart.slice';
-import { PaymentPayLoad, paymentService } from '@/services/payment.service';
-import { useMutation } from '@tanstack/react-query';
+import { createPayment, IFormPaymetData } from './action';
 
 export default function CheckOut() {
     const { my_account } = useAppSelector((state) => state.account);
@@ -34,14 +33,12 @@ export default function CheckOut() {
         method: 'Thanh toán khi nhận hàng',
     });
 
+
+
     const [openAddressModal, setOpenAddressModal] = React.useState(false);
     const [openNewAddressModal, setOpenNewAddressModal] = React.useState(false);
     const [idxAddress, setIdxAddress] = React.useState(0);
 
-    const createPaymentMutation = useMutation({
-        mutationKey: ['createPayment'],
-        mutationFn: (data: PaymentPayLoad) => paymentService.create(data),
-    });
 
     const router = useRouter();
     const dispatch = useDispatch();
@@ -277,21 +274,57 @@ export default function CheckOut() {
         );
     };
 
+
+    const [isGetUrlPayPending, startPaymentTransition] = useTransition();
+
+
+
     const handlePayBank = async () => {
         setValueInfoShipping(info);
-        createPaymentMutation.mutate(
-            {
-                amount: totalBill,
-                description: `Thanh toán đơn hàng ${Math.floor(Math.random() * 100000000)}`,
-            },
-            {
-                onSuccess: (data: { paymentUrl?: string }) => {
-                    if (data?.paymentUrl) {
-                        window.open(data.paymentUrl);
+
+        const formData: IFormPaymetData = {
+            amount: 2000,
+            description: `Hóa đơn ${Math.floor(Math.random() * 100000)}`,
+            items: storedValueTempBill.list_bill_detail.map((item: IOrderItem) => ({
+                name: item.product_detail.product_name,
+                price: item.product_detail.promotional_price > 0 ? item.product_detail.promotional_price : item.product_detail.sale_price,
+                quantity: item.quantity,
+            })),
+            returnUrl: process.env.NEXT_PUBLIC_RETURN_PAYMENT_URL || '',
+            cancelUrl: process.env.NEXT_PUBLIC_CANCEL_PAYMENT_URL || '',
+        }
+        console.log(formData);
+
+        startPaymentTransition(async () => {
+            try {
+                if (formData) {
+
+                    const result = await createPayment(formData);
+                    if (result) {
+                        const { checkoutUrl } = result;
+                        if (checkoutUrl) {
+                            window.open(checkoutUrl);
+                        }
                     }
-                },
-            },
-        );
+                }
+            } catch (error) {
+                console.error('Error creating payment:', error);
+            }
+        });
+
+        // createPaymentMutation.mutate(
+        //     {
+        //         amount: totalBill,
+        //         description: `Thanh toán đơn hàng ${Math.floor(Math.random() * 100000000)}`,
+        //     },
+        //     {
+        //         onSuccess: (data: { paymentUrl?: string }) => {
+        //             if (data?.paymentUrl) {
+        //                 window.open(data.paymentUrl);
+        //             }
+        //         },
+        //     },
+        // );
     };
 
     return (
@@ -418,11 +451,10 @@ export default function CheckOut() {
                             {['Thanh toán khi nhận hàng', 'Thanh toán qua ngân hàng', 'Pengin Wallet'].map((p, idx) => (
                                 <button
                                     key={idx}
-                                    className={`flex items-center justify-center gap-2 border border-solid px-4 py-3 rounded-md relative transition-all ${
-                                        payActive.idx === idx
-                                            ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
-                                            : 'border-gray-300 text-gray-700 hover:border-purple-300 hover:bg-purple-50/30'
-                                    }`}
+                                    className={`flex items-center justify-center gap-2 border border-solid px-4 py-3 rounded-md relative transition-all ${payActive.idx === idx
+                                        ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
+                                        : 'border-gray-300 text-gray-700 hover:border-purple-300 hover:bg-purple-50/30'
+                                        }`}
                                     onClick={() => setPayActive({ idx: idx, method: p })}
                                 >
                                     <span className="font-medium">{p}</span>
@@ -457,9 +489,9 @@ export default function CheckOut() {
                                             (total: number, item: IOrderItem) =>
                                                 total +
                                                 item.quantity *
-                                                    (item.product_detail.promotional_price > 0
-                                                        ? item.product_detail.promotional_price
-                                                        : item.product_detail.sale_price),
+                                                (item.product_detail.promotional_price > 0
+                                                    ? item.product_detail.promotional_price
+                                                    : item.product_detail.sale_price),
                                             0,
                                         )
                                         .toLocaleString()}
@@ -539,11 +571,10 @@ export default function CheckOut() {
                                 {storedValueLocation.map((address: IAddress, index: number) => (
                                     <div
                                         key={index}
-                                        className={`flex items-start gap-3 p-3 border rounded-lg transition-colors ${
-                                            idxAddress === index
-                                                ? 'border-purple-500 bg-purple-50'
-                                                : 'border-gray-200 hover:bg-gray-50'
-                                        }`}
+                                        className={`flex items-start gap-3 p-3 border rounded-lg transition-colors ${idxAddress === index
+                                            ? 'border-purple-500 bg-purple-50'
+                                            : 'border-gray-200 hover:bg-gray-50'
+                                            }`}
                                         onClick={() => setIdxAddress(index)}
                                     >
                                         <input
@@ -776,7 +807,7 @@ export default function CheckOut() {
                                 onClick={handlePayBank}
                                 className="px-6 py-2 rounded-lg border bg-blue-500 text-white border-gray-300  hover:bg-blue-300 transition-colors"
                             >
-                                Xác nhận
+                                {isGetUrlPayPending ? 'Đang xử lý...' : 'Xác nhận'}
                             </button>
                             <button
                                 onClick={() => setOpenAlert(false)}

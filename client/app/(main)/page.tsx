@@ -39,6 +39,7 @@ export default function Home() {
         queryKey: ['products'],
         queryFn: () => productService.getPagination(1, 70),
     });
+    
 
     const { data: orderItemData, isSuccess: isFetchOrderItemSuccess } = useQuery({
         queryKey: ['order-items', my_account?.id],

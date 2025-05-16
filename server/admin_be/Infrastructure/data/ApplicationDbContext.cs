@@ -23,6 +23,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
         }
 
         public DbSet<UserEntity> Users { get; set; } = null!;
+        public DbSet<ProductEntity> Products { get; set; } = null!;
+        public DbSet<ProductDetailEntity> ProductDetails { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

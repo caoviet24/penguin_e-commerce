@@ -1,0 +1,59 @@
+@startuml
+skinparam handwritten false
+
+title Quy Trình Xử Lý Yêu Cầu Hỗ Trợ Kỹ Thuật
+
+|Khách hàng|
+start
+:Gặp sự cố kỹ thuật;
+#lightblue:Chọn phương thức liên hệ;
+if (Phương thức?) then (Email)
+  :Gửi email yêu cầu hỗ trợ;
+else (Hotline)
+  :Gọi đến hotline hỗ trợ;
+endif
+
+|Nhân viên hỗ trợ|
+:Tiếp nhận yêu cầu;
+:Xác nhận thông tin khách hàng;
+:Ghi nhận chi tiết sự cố;
+:Nhập thông tin vào hệ thống;
+
+|Hệ thống|
+:Phân loại mức độ ưu tiên;
+if (Loại yêu cầu?) then (Khẩn cấp)
+  :Đánh dấu yêu cầu khẩn cấp;
+else (Không khẩn cấp)
+  :Xếp vào hàng đợi thường;
+endif
+
+|Nhân viên hỗ trợ|
+:Đánh giá vấn đề;
+:Xử lý vấn đề;
+:Thông báo kết quả cho khách hàng;
+
+|Khách hàng|
+:Nhận thông báo kết quả;
+:Gửi phản hồi;
+
+|Nhân viên hỗ trợ|
+if (Vấn đề đã giải quyết?) then (Có)
+  :Đóng yêu cầu hỗ trợ;
+else (Không)
+  :Mở lại yêu cầu;
+  :Đánh giá lại vấn đề;
+  note right
+    Quay lại quy trình
+    xử lý vấn đề
+  end note
+endif
+
+|Hệ thống|
+:Cập nhật cơ sở dữ liệu;
+:Gửi khảo sát đánh giá;
+
+|Khách hàng|
+:Hoàn thành khảo sát (tùy chọn);
+stop
+
+@enduml

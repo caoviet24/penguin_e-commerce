@@ -29,8 +29,8 @@ namespace WebApi.Controllers
             return Ok(result);
         }
 
-        [HttpGet("get-payment-link-info/{orderCode}")]
-        public async Task<IActionResult> getPaymentLinkInfo([FromRoute] int orderCode)
+        [HttpGet("get-info")]
+        public async Task<IActionResult> getPaymentLinkInfo([FromQuery] int orderCode)
         {
             var result = await paymentService.GetPaymentLinkInformation(orderCode);
             if (result == null)
