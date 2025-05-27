@@ -1,25 +1,17 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 // import Carousel from 'react-material-ui-carousel';
 import { FaStar } from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
-import Cookie from 'js-cookie';
-import { identityService } from '@/services/identities.service';
-import { useAppDispatch, useAppSelector } from '@/redux/store';
-import { setMyAcount } from '@/redux/slices/account.slice';
 import { productService } from '@/services/product.service';
 import CardProduct from '@/components/CardProduct/CardProduct';
 import { Divider } from '@mui/material';
 import Link from 'next/link';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
 import { Carousel } from 'react-responsive-carousel';
-import { orderItemService } from '@/services/orderItem.service';
-import { setCarts } from '@/redux/slices/cart.slice';
 
 export default function Home() {
-    const { my_account } = useAppSelector((state) => state.account);
-    const dispatch = useAppDispatch();
 
     const [a] = useState([
         '/images/slider/1.avif',
@@ -29,33 +21,16 @@ export default function Home() {
         '/images/slider/5.avif',
     ]);
 
-    const { data: authData, isSuccess: isFetchAuthSuccess } = useQuery({
-        queryKey: ['auth-me'],
-        queryFn: identityService.authMe,
-        enabled: !!Cookie.get('access_token'),
-    });
-
     const { data: productData } = useQuery({
         queryKey: ['products'],
-        queryFn: () => productService.getPagination(1, 70),
-    });
-    
-
-    const { data: orderItemData, isSuccess: isFetchOrderItemSuccess } = useQuery({
-        queryKey: ['order-items', my_account?.id],
-        queryFn: () => orderItemService.getOrderItemByUserId(my_account?.id),
-        enabled: !!my_account?.id,
+        queryFn: () => productService.getAll({
+            page_number: 1,
+            page_size: 40,
+        }),
     });
 
-    useEffect(() => {
-        if (isFetchAuthSuccess) {
-            dispatch(setMyAcount(authData));
-        }
 
-        if (isFetchOrderItemSuccess) {
-            dispatch(setCarts(orderItemData));
-        }
-    }, [isFetchAuthSuccess, isFetchOrderItemSuccess]);
+
 
     return (
         <div className="container flex flex-col justify-between mx-auto mt-5 mb-10">
@@ -163,7 +138,7 @@ export default function Home() {
             <div className="flex flex-col mt-10 p-5 bg-white">
                 <h2 className="text-xl py-2">Dành cho bạn</h2>
                 <Divider />
-                <div className="grid grid-cols-6 gap-2 mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-5">
                     {productData && productData.data.map((pro) => <CardProduct product={pro} key={pro.id} />)}
                 </div>
             </div>

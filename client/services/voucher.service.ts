@@ -1,15 +1,11 @@
+import { IVoucher } from "@/types";
 import axiosJWT from "@/utils/axios.interceptor";
 
-async function getAllActive(page_number: number, page_size: number) {
-    const res = await axiosJWT.get(`${process.env.NEXT_PUBLIC_API_URL}/voucher/get-active`, {
-        params: {
-            page_number,
-            page_size
-        }
-    });
+async function getAll() : Promise<IVoucher[]> {
+    const res = await axiosJWT.get(`/voucher/get-all`);
     return res.data;
 }
 
 export const voucherService = {
-    getAllActive
+    getAll,
 }

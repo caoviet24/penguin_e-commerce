@@ -12,3 +12,10 @@ export enum PaymentStatus {
     SUCCESS = "PAID",
     EXPIRED = "EXPIRED"
 }
+
+export enum ProductStatus {
+    AVAILABLE = "AVAILABLE",
+    UNAVAILABLE = "UNAVAILABLE",
+    SOLD_OUT = "SOLD_OUT",
+    COMING_SOON = "COMING_SOON",
+}

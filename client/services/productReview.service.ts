@@ -1,17 +1,49 @@
-import axiosJWT from "@/utils/axios.interceptor";
+import { IProductReview, ResponseData } from '@/types';
+import axiosJWT from '@/utils/axios.interceptor';
 
-
-async function getByProductId(id: string) {
-    const res = await axiosJWT.get(`${process.env.NEXT_PUBLIC_API_URL}/product-review/get-by-product-id/${id}`);
+async function getByProductId({
+    product_id,
+    page_size,
+    page_number,
+}: {
+    product_id: string;
+    page_size?: number;
+    page_number?: number;
+}): Promise<ResponseData<IProductReview>> {
+    const res = await axiosJWT.get(`/product-review/get-by-product-id`, {
+        params: {
+            product_id,
+            page_size,
+            page_number,
+        },
+    });
     return res.data;
 }
 
-async function create(data: any) {
-    const res = await axiosJWT.post(`${process.env.NEXT_PUBLIC_API_URL}/product-review/create`, data);
+export interface ICreateProductReviewPayload {
+    commet: string;
+    rate: number;
+    product_id: string;
+    list_review_media: ICreateReviewMedia[];
+}
+
+export interface ICreateReviewMedia {
+    media_type: string; // 'image' | 'video'
+    media_url: string;
+}
+
+async function create(data: ICreateProductReviewPayload) {
+    const res = await axiosJWT.post(`/product-review/create`, data);
+    return res.data;
+}
+
+async function deleteReview(id: string) {
+    const res = await axiosJWT.delete(`/product-review/delete/${id}`);
     return res.data;
 }
 
 export const productReviewService = {
     getByProductId,
-    create
-}
+    create,
+    deleteReview,
+};

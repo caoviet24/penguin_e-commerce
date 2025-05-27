@@ -1,42 +1,7 @@
 version: '3.8'
 
 services:
-  gateway:
-    build:
-      context: ./server/gateway
-      dockerfile: Dockerfile
-    ports:
-      - "5000:80"
-    depends_on:
-      - user-api
-      - admin-api
-    networks:
-      - penguin-network
-
-  user-api:
-    build:
-      context: ./server/user_be
-      dockerfile: Dockerfile
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=db;Database=PenguinDB;User=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
-    depends_on:
-      - db
-    networks:
-      - penguin-network
-
-  admin-api:
-    build:
-      context: ./server/admin_be
-      dockerfile: Dockerfile
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=db;Database=PenguinDB;User=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
-    depends_on:
-      - db
-    networks:
-      - penguin-network
-
+  # Next.js client application
   client:
     build:
       context: ./client
@@ -44,39 +9,67 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://gateway:80
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:5000
+      - NEXT_PUBLIC_FILE_SERVER_URL=http://localhost:8000
     depends_on:
-      - gateway
+      - aspnet-api
+      - express-api
     networks:
       - penguin-network
+    restart: unless-stopped
 
-  admin:
+  # ASP.NET API
+  aspnet-api:
     build:
-      context: ./admin
+      context: ./server/AspNet
       dockerfile: Dockerfile
     ports:
-      - "3001:3001"
+      - "5000:80"
     environment:
-      - NEXT_PUBLIC_API_URL=http://gateway:80
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=db;Database=PenguinDB;User=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
     depends_on:
-      - gateway
+      - db
     networks:
       - penguin-network
+    restart: unless-stopped
 
+  # Express.js file server
+  express-api:
+    build:
+      context: ./server/expressjs_sv
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=production
+      - PORT=8000
+      - CORS_ORIGIN=http://localhost:3000
+    volumes:
+      - file-uploads:/app/uploads
+    networks:
+      - penguin-network
+    restart: unless-stopped
+
+  # SQL Server database
   db:
     image: mcr.microsoft.com/mssql/server:2019-latest
     environment:
       - ACCEPT_EULA=Y
       - SA_PASSWORD=YourStrong@Passw0rd
+      - MSSQL_PID=Express
     ports:
       - "1433:1433"
     volumes:
       - mssql-data:/var/opt/mssql
     networks:
       - penguin-network
+    restart: unless-stopped
 
 volumes:
   mssql-data:
+  file-uploads:
 
 networks:
   penguin-network:

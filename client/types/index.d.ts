@@ -1,17 +1,15 @@
-
 export interface StatisticalData2 {
     total: number,
     rate: number,
 }
 
-export interface Statistical {
-    date: string;
-    total: number;
-    products_sold: number;
+export interface StatisticalData {
+    day: string;
+    num: number;
 }
 
 export interface ChartData {
-    data: Statistical[];
+    data: StatisticalData[];
     title: string;
     lable: string;
     lineColor: string;
@@ -24,6 +22,14 @@ export interface CardData {
     title: string;
     icon: JSX.Element;
 }
+
+export interface Statistical {
+    date: string;
+    total: number;
+    products_sold: number;
+}
+
+
 
 export interface ResponseData<T> {
     page_number: number;
@@ -39,15 +45,6 @@ export interface IAccount {
     password: string;
     role: string;
     is_banned: boolean;
-    created_at: Date;
-    updated_at: Date;
-    is_detele: boolean;
-    user: IUser;
-}
-
-
-export interface IUser {
-    user_id: string;
     full_name: string;
     nick_name: string;
     birth: Date;
@@ -55,15 +52,17 @@ export interface IUser {
     gender: string;
     address: string;
     phone: string;
-    acc_id: string;
+    created_at: Date;
+    updated_at: Date;
     is_detele: boolean;
 }
 
+
 export interface IBooth {
     id: string;
-    booth_name: string;
-    booth_description: string;
-    booth_avatar: string;
+    name: string;
+    description: string;
+    avatar: string;
     is_active: boolean;
     is_banned: boolean;
     created_at: Date;
@@ -75,19 +74,20 @@ export interface IBooth {
 
 export interface ICategory {
     id: string;
-    category_name: string;
+    name: string;
     image: string;
     created_at: Date;
     created_by: string;
-    updated_at: Date;
+    last_updated?: Date; // Field in JSON response
+    updated_at?: Date;   // Field in interface
     updated_by: string;
-    is_detele: boolean;
+    is_deleted: boolean;
     list_category_detail: ICategoryDetail[];
 }
 
 export interface ICategoryDetail {
     id: string;
-    category_detail_name: string;
+    name: string;
     category_id: string;
     created_at: Date;
     updated_at: Date;
@@ -97,7 +97,8 @@ export interface ICategoryDetail {
 export interface IProduct {
     id: string;
     product_desc: string;
-    status: boolean;
+    status: string;
+    is_active: boolean;
     created_at: Date;
     booth_id: string;
     updated_at: Date;
@@ -125,16 +126,22 @@ export interface IProductDetail {
 
 export interface IProductReview {
     id: string;
-    product_detail_id: string;
+    product_id: string;
     rating: number;
-    content: string;
-    created_at: Date;
-    updated_at: Date;
+    comment: string;
     created_at: string;
-    product_detail: IProductDetail;
-    user: IUser;
+    created_by: string;
+    account: IAccount;
+    review_medias: IReviewMedia[];
 }
 
+export interface IReviewMedia {
+    id: string;
+    review_id: string;
+    created_at: Date;
+    media_type: string;
+    media_url: string;
+}
 
 export interface IOrderItem {
     id: string;
@@ -142,7 +149,7 @@ export interface IOrderItem {
     quantity: number;
     size: string;
     color: string;
-    seller_id: string;
+    booth_id: string;
     created_at: Date;
     buyer_id: string;
     updated_by: string;
@@ -161,11 +168,10 @@ export interface IVoucher {
     quantity_used: number;
     discount: number;
     type_discount: string;
-    status_voucher: number;
+    status: number;
     apply_for: string;
     created_by: string;
-    boot_id: string;
-    is_detele: boolean;
+    is_deleted: boolean;
 }
 
 

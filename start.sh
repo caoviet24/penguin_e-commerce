@@ -6,11 +6,11 @@ gnome-terminal --tab --title="Admin Backend" -- bash -c "cd server/admin_be/WebA
 
 # Start client
 echo "Starting client..."
-gnome-terminal --tab --title="Client" -- bash -c "cd client && npm start; exec bash"
+gnome-terminal --tab --title="Client" -- bash -c "cd client && npm run dev; exec bash"
 
 # Start admin
 echo "Starting admin..."
-gnome-terminal --tab --title="Admin" -- bash -c "cd admin && npm start; exec bash"
+gnome-terminal --tab --title="Admin" -- bash -c "cd admin && npm run dev; exec bash"
 
 # Start server/uploads
 echo "Starting server/uploads..."

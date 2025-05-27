@@ -1,22 +1,21 @@
 /* eslint-disable @next/next/no-img-element */
-"use client"
-import { IBooth, IProduct, IProductDetail, IProductReview } from '@/types';
-import { useQuery } from '@tanstack/react-query';
+'use client';
+import { IBooth, IProduct, IProductDetail, IProductReview, ResponseData } from '@/types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useMemo, useState, useEffect } from 'react';
 import Image from 'next/image';
-import { FaFacebookMessenger, FaStar } from "react-icons/fa";
+import { FaFacebookMessenger, FaStar } from 'react-icons/fa';
 import { Avatar, Divider } from '@mui/material';
 import { BiCart, BiMinus, BiPlus } from 'react-icons/bi';
 import { productService } from '@/services/product.service';
 import { boothService } from '@/services/booth.service';
-import { CiShop } from "react-icons/ci";
+import { CiShop } from 'react-icons/ci';
 import { ToastContainer, toast } from 'react-toastify';
-import useHookMutation from '@/hooks/useHookMutation';
-import { orderItemService } from '@/services/orderItem.service';
-import { useAppDispatch } from '@/redux/store';
-import { setAddToCart } from '@/redux/slices/cart.slice';
+import { ICreateOrderItemPayload, orderItemService } from '@/services/orderItem.service';
 import { productReviewService } from '@/services/productReview.service';
 import handleTime from '@/utils/handleTime';
+import { useUser } from '@/hooks/useAuth';
+import { Trash2 } from 'lucide-react';
 
 export default function AccountId({ params }: { params: Promise<{ id: string }> }) {
     const { id: slug } = React.use(params);
@@ -25,14 +24,14 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
     const [productDetailActive, setProductDetailActive] = useState<IProductDetail>();
     const [colorActive, setColorActive] = useState<string | null>(null);
     const [sizeActive, setSizeActive] = useState<string | null>(null);
-    const [formData, setFormData] = useState({
-        seller_id: '',
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [formData, setFormData] = useState<ICreateOrderItemPayload>({
+        booth_id: '',
         product_detail_id: '',
         quantity: 0,
         size: '',
-        color: ''
+        color: '',
     });
-    const dispatch = useAppDispatch();
 
     const handleOnChangeColor = (prod: IProductDetail) => {
         setColorActive(prod.id);
@@ -41,9 +40,9 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
         setFormData({
             ...formData,
             product_detail_id: prod.id,
-            color: prod.color
-        })
-    }
+            color: prod.color,
+        });
+    };
 
     const handleOnChangeQuantity = (value: number, type: string) => {
         if (type === 'plus') {
@@ -51,84 +50,145 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
         }
         if (type == 'minus') {
             setQuantity(value - 1);
-
         }
         if (type == 'input') {
             setQuantity(value);
         }
         setFormData({
             ...formData,
-            quantity: value
-        })
-    }
+            quantity: value,
+        });
+    };
 
     const handleOnChangeSize = (size: string) => {
         setSizeActive(size);
         setFormData({
             ...formData,
-            size: size
-        })
-    }
+            size: size,
+        });
+    };
 
     const { data: productData, isSuccess } = useQuery<IProduct>({
         queryKey: ['product', slug],
         queryFn: () => productService.getById(slug),
-        enabled: !!slug
+        enabled: !!slug,
     });
 
     const { data: boothData } = useQuery<IBooth>({
         queryKey: ['booth', productData?.booth_id],
         queryFn: () => boothService.getById(productData?.booth_id || ''),
-        enabled: !!slug && !!productData?.booth_id
+        enabled: !!slug && !!productData?.booth_id,
     });
 
-    const { data: reviewsData } = useQuery({
-        queryKey: ['product-reviews', slug],
-        queryFn: () => productReviewService.getByProductId(slug),
-        enabled: !!slug
+    const { data: reviewsData } = useQuery<ResponseData<IProductReview>>({
+        queryKey: ['product-reviews', slug, currentPage],
+        queryFn: () =>
+            productReviewService.getByProductId({
+                product_id: slug,
+                page_size: 5,
+                page_number: currentPage,
+            }),
+        enabled: !!slug,
+    });
+
+    const queryClient = useQueryClient();
+    const { user } = useUser();
+
+    const addToCartMutaion = useMutation({
+        mutationKey: ['add-to-cart'],
+        mutationFn: (data: ICreateOrderItemPayload) => orderItemService.addToCart(data),
     })
 
-    const addToCartMutaion = useHookMutation(data => {
-        return orderItemService.addToCart(data);
-    })
+    const deleteReviewMutation = useMutation({
+        mutationKey: ['delete-review'],
+        mutationFn: (reviewId: string) => productReviewService.deleteReview(reviewId),
+    });
 
-
-    const handleAddToCart = () => {
-        addToCartMutaion.mutate(formData, {
-            onSuccess: (data) => {
-                toast.success('Thêm sản phẩm thành công!', {
-                    position: "top-right",
+    const handleDeleteReview = (reviewId: string) => {
+        deleteReviewMutation.mutate(reviewId, {
+            onSuccess: () => {
+                toast.success('Xóa đánh giá thành công!', {
+                    position: 'top-right',
                     autoClose: 3000,
                     hideProgressBar: false,
                     closeOnClick: true,
                     pauseOnHover: false,
                     draggable: false,
                     progress: undefined,
-                    theme: "light"
+                    theme: 'light',
+                });
+                // Refetch reviews after successful deletion
+                queryClient.invalidateQueries({ queryKey: ['product-reviews', slug, currentPage] });
+            },
+            onError: () => {
+                toast.error('Có lỗi xảy ra khi xóa đánh giá!', {
+                    position: 'top-right',
+                    autoClose: 3000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: false,
+                    draggable: false,
+                    progress: undefined,
+                    theme: 'light',
+                });
+            },
+        });
+    };
+
+    const renderStars = (rating: number) => {
+        return Array.from({ length: 5 }, (_, index) => (
+            <FaStar key={index} color={index < rating ? '#ffd700' : '#e4e5e9'} size={16} />
+        ));
+    };
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
+    const totalPages = Math.ceil((reviewsData?.total_record || 0) / 5);
+
+    const handleAddToCart = () => {
+        addToCartMutaion.mutate(formData, {
+            onSuccess: () => {
+                toast.success('Thêm sản phẩm thành công!', {
+                    position: 'top-right',
+                    autoClose: 3000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: false,
+                    draggable: false,
+                    progress: undefined,
+                    theme: 'light',
                 });
 
-                dispatch(setAddToCart(data));
+                queryClient.invalidateQueries({
+                    queryKey: ["order-items"]
+                })
 
-            }
+                setFormData({
+                    ...formData,
+                    quantity: 1,
+                    product_detail_id: '',
+                    size: '',
+                    color: '',
+                })
+            },
         });
-
-    }
-
-
+    };
 
     useEffect(() => {
         if (isSuccess) {
             setProductDetailActive(productData?.list_product_detail[0]);
             setFormData({
                 ...formData,
-                seller_id: productData.booth_id
-            })
+                booth_id: productData.booth_id,
+            });
         }
 
         if (productData?.list_product_detail) {
             const randomDays = Math.floor(Math.random() * 5) + 1;
             const date = new Date(Date.now() + randomDays * 24 * 60 * 60 * 1000);
-            setDeliveryDate(date.toLocaleDateString("vi-VN"))
+            setDeliveryDate(date.toLocaleDateString('vi-VN'));
         }
     }, [productData, isSuccess]);
 
@@ -137,246 +197,301 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
         return productData.list_product_detail.reduce((prev, prod) => prev + prod.sale_quantity, 0);
     }, [productData?.list_product_detail]);
 
-
-
     return (
-        <div className='container mx-auto mt-10 mb-10 p-4 flex flex-col gap-4'>
+        <div className="container mx-auto mt-10 mb-10 p-4 flex flex-col gap-4">
             <div className="flex gap-4 bg-white w-full p-4">
-                <div className='w-2/5 flex flex-col'>
+                <div className="w-2/5 flex flex-col">
                     {productDetailActive?.image ? (
                         <img
                             alt="product"
-                            className='border border-solid border-gray-100 shadow-sm !w-[500px] !h-[485px]'
+                            className="border border-solid border-gray-100 shadow-sm !w-[500px] !h-[485px]"
                             src={productDetailActive.image}
                         />
                     ) : (
                         <p>....</p>
                     )}
 
-                    <div className='flex gap-2 mt-5 border border-solid border-gray-100 p-2'>
+                    <div className="flex gap-2 mt-5 border border-solid border-gray-100 p-2">
                         {productData?.list_product_detail.map((prod) => (
                             <Image
                                 key={prod.id}
                                 onMouseMove={() => setProductDetailActive(prod)}
-                                className='hover:border-2 hover:border-red-500 hover:border-solid cursor-pointer'
+                                className="hover:border-2 hover:border-red-500 hover:border-solid cursor-pointer"
                                 src={prod.image}
-                                alt="product" width={100} height={100}
+                                alt="product"
+                                width={100}
+                                height={100}
                             />
                         ))}
                     </div>
                 </div>
-                <div className='flex flex-col flex-1 gap-4'>
-                    <div className='flex flex-row gap-2'>
-                        <p className='bg-red-500 text-nowrap h-6 text-white text-xs p-1 font-semibold'>Yêu Thích</p>
-                        <p className='uppercase text-lg'>{productData?.product_desc}</p>
+                <div className="flex flex-col flex-1 gap-4">
+                    <div className="flex flex-row gap-2">
+                        <p className="bg-red-500 text-nowrap h-6 text-white text-xs p-1 font-semibold">Yêu Thích</p>
+                        <p className="uppercase text-lg">{productData?.product_desc}</p>
                     </div>
-                    <div className='flex gap-2 items-center'>
+                    <div className="flex gap-2 items-center">
                         <p className="underline">4.0</p>
-                        <div className='flex items-center'>
-                            <FaStar color='yellow' />
-                            <FaStar color='yellow' />
-                            <FaStar color='yellow' />
-                            <FaStar color='yellow' />
-                            <FaStar color='gray' />
+                        <div className="flex items-center">
+                            <FaStar color="yellow" />
+                            <FaStar color="yellow" />
+                            <FaStar color="yellow" />
+                            <FaStar color="yellow" />
+                            <FaStar color="gray" />
                         </div>
                         <div>|</div>
-                        <div className='flex gap-2 items-center'>
+                        <div className="flex gap-2 items-center">
                             <p className="underline">{totalSale}</p>
                             <p>lượt bán</p>
                         </div>
                     </div>
 
-                    {
-                        productDetailActive &&
-                            productDetailActive?.promotional_price > 0 ?
-                            <div className='flex flex-row gap-2 items-center'>
-                                <p className='text-3xl line-through opacity-75 font-light'>{productDetailActive?.sale_price.toLocaleString()}đ</p>
-                                <p className='text-red-500 text-4xl'>{(productDetailActive?.promotional_price).toLocaleString()}đ</p>
-                            </div>
-                            :
-                            <p className='text-red-500 text-4xl'>{productDetailActive?.sale_price.toLocaleString()}đ</p>
-                    }
-                    <div className='flex items-center'>
-                        <p className='w-1/5 opacity-60 capitalize'>Vận chuyển</p>
-                        <div className='flex items-center flex-1 gap-2'>
+                    {productDetailActive && productDetailActive?.promotional_price > 0 ? (
+                        <div className="flex flex-row gap-2 items-center">
+                            <p className="text-3xl line-through opacity-75 font-light">
+                                {productDetailActive?.sale_price.toLocaleString()}đ
+                            </p>
+                            <p className="text-red-500 text-4xl">
+                                {(productDetailActive?.promotional_price).toLocaleString()}đ
+                            </p>
+                        </div>
+                    ) : (
+                        <p className="text-red-500 text-4xl">{productDetailActive?.sale_price.toLocaleString()}đ</p>
+                    )}
+                    <div className="flex items-center">
+                        <p className="w-1/5 opacity-60 capitalize">Vận chuyển</p>
+                        <div className="flex items-center flex-1 gap-2">
                             <Image src="/images/freeship.avif" alt="freeship" width={30} height={30} />
                             <p>Dự kiển vận chuyển trong ngày</p>
-                            <p>{deliveryDate || "Đang tính toán..."}</p>
+                            <p>{deliveryDate || 'Đang tính toán...'}</p>
                         </div>
                     </div>
 
-                    <div className='flex items-center'>
-                        <p className='w-1/5 opacity-60 capitalize'>An tâm mua sắm cùng Penguin</p>
-                        <div className='flex items-center flex-1 gap-2'>
+                    <div className="flex items-center">
+                        <p className="w-1/5 opacity-60 capitalize">An tâm mua sắm cùng Penguin</p>
+                        <div className="flex items-center flex-1 gap-2">
                             <Image src="/images/shield.svg" alt="secure" width={30} height={30} />
                             <p>Đổi trả hàng trong 15 ngày</p>
                         </div>
                     </div>
 
-                    <div className='flex items-center'>
-                        <p className='w-1/5 opacity-60 capitalize'>Màu sắc</p>
-                        <div className='flex items-center flex-1 gap-2'>
+                    <div className="flex items-center">
+                        <p className="w-1/5 opacity-60 capitalize">Màu sắc</p>
+                        <div className="flex items-center flex-1 gap-2">
                             {productData?.list_product_detail.map((prod) => (
                                 <button
                                     key={prod.id}
-                                    className={`flex items-center gap-2 border border-solid border-gray-100 px-4 py-2 relative ${colorActive === prod.id && 'border-red-500'}`}
+                                    className={`flex items-center gap-2 border border-solid border-gray-100 px-4 py-2 relative ${
+                                        colorActive === prod.id && 'border-red-500'
+                                    }`}
                                     onClick={() => handleOnChangeColor(prod)}
                                 >
-                                    <img src={prod.image} className='!h-6 !w-6' alt="product" />
-                                    <span>
-                                        {prod.color}
-                                    </span>
-                                    {colorActive === prod.id
-                                        &&
-                                        <Image className='absolute right-0 bottom-0 z-10' src="/images/check.webp" alt="check" width={16} height={16} />
-                                    }
+                                    <img src={prod.image} className="!h-6 !w-6" alt="product" />
+                                    <span>{prod.color}</span>
+                                    {colorActive === prod.id && (
+                                        <Image
+                                            className="absolute right-0 bottom-0 z-10"
+                                            src="/images/check.webp"
+                                            alt="check"
+                                            width={16}
+                                            height={16}
+                                        />
+                                    )}
                                 </button>
                             ))}
                         </div>
                     </div>
-                    <div className='flex items-center'>
-                        <p className='w-1/5 opacity-60 capitalize'>Size</p>
-                        <div className='flex gap-4'>
-                            {productDetailActive && productDetailActive.size.split(',').map((s, idx) => (
-                                <button key={idx}
-                                    className={`border border-solid px-4 py-2 border-gray-100 relative ${sizeActive === s && 'border-red-500'}`}
-                                    onClick={() => handleOnChangeSize(s)}>
-                                    {s}
-                                    {sizeActive === s
-                                        &&
-            
-                                        <img className='absolute right-0 bottom-0 z-10 !h-[16px] !w-[16px]' src="/images/check.webp" alt="check" />
-                                    }
-                                </button>
-                            ))}
+                    <div className="flex items-center">
+                        <p className="w-1/5 opacity-60 capitalize">Size</p>
+                        <div className="flex gap-4">
+                            {productDetailActive &&
+                                productDetailActive.size.split(',').map((s, idx) => (
+                                    <button
+                                        key={idx}
+                                        className={`border border-solid px-4 py-2 border-gray-100 relative ${
+                                            sizeActive === s && 'border-red-500'
+                                        }`}
+                                        onClick={() => handleOnChangeSize(s)}
+                                    >
+                                        {s}
+                                        {sizeActive === s && (
+                                            <img
+                                                className="absolute right-0 bottom-0 z-10 !h-[16px] !w-[16px]"
+                                                src="/images/check.webp"
+                                                alt="check"
+                                            />
+                                        )}
+                                    </button>
+                                ))}
                         </div>
                     </div>
 
-                    <div className='flex items-center'>
-                        <p className='w-1/5 opacity-60 capitalize'>Số lượng</p>
-                        <div className='flex border border-solid border-gray-200 items-center'>
-                            <button className='p-2 w-9' onClick={() => handleOnChangeQuantity(quantity, 'minus')}>
+                    <div className="flex items-center">
+                        <p className="w-1/5 opacity-60 capitalize">Số lượng</p>
+                        <div className="flex border border-solid border-gray-200 items-center">
+                            <button className="p-2 w-9" onClick={() => handleOnChangeQuantity(quantity, 'minus')}>
                                 <BiMinus />
                             </button>
                             <input
                                 type="text"
-                                className='w-9 p-2 text-center border-l border-r border-solid border-gray-200'
+                                className="w-9 p-2 text-center border-l border-r border-solid border-gray-200"
                                 onChange={(e) => handleOnChangeQuantity(Number(e.target.value), 'input')}
                                 value={quantity}
                             />
-                            <button className='p-2 w-9' onClick={() => quantity > 0 && handleOnChangeQuantity(quantity, 'plus')}>
+                            <button
+                                className="p-2 w-9"
+                                onClick={() => quantity > 0 && handleOnChangeQuantity(quantity, 'plus')}
+                            >
                                 <BiPlus />
                             </button>
                         </div>
                     </div>
 
-                    <div className='flex gap-4'>
-                        <button onClick={handleAddToCart} className='bg-orange-200 text-orange-500 border border-solid border-orange-500 p-2 flex items-center gap-2'>
+                    <div className="flex gap-4">
+                        <button
+                            onClick={handleAddToCart}
+                            className="bg-orange-200 text-orange-500 border border-solid border-orange-500 p-2 flex items-center gap-2"
+                        >
                             <BiCart size={30} />
                             <span>Thêm vào giỏ hàng</span>
                         </button>
-                        <button className='bg-red-500 text-white p-2 min-w-56'>
-                            Mua ngay
-                        </button>
-
+                        <button className="bg-red-500 text-white p-2 min-w-56">Mua ngay</button>
                     </div>
-
                 </div>
-
-
             </div>
             <div className="flex gap-4 bg-white w-full p-4">
-                <div className='flex gap-5'>
+                <div className="flex gap-5">
                     <Avatar src={boothData?.booth_avatar} alt="booth" sx={{ width: 100, height: 100 }} />
-                    <div className='flex flex-col gap-1 justify-center'>
+                    <div className="flex flex-col gap-1 justify-center">
                         <p className="capitalize">{boothData?.booth_name}</p>
-                        <p className='text-sm opacity-70'>Hoạt động 1 giờ trước</p>
-                        <div className='flex gap-2'>
-                            <button className='bg-orange-200 text-orange-500 border border-solid border-orange-500 py-1 px-2 flex items-center gap-2'>
+                        <p className="text-sm opacity-70">Hoạt động 1 giờ trước</p>
+                        <div className="flex gap-2">
+                            <button className="bg-orange-200 text-orange-500 border border-solid border-orange-500 py-1 px-2 flex items-center gap-2">
                                 <FaFacebookMessenger size={20} />
                                 <span>Chat ngay</span>
                             </button>
-                            <button className='flex items-center gap-2 border border-solid border-gray-200 py-1 px-2'>
+                            <button className="flex items-center gap-2 border border-solid border-gray-200 py-1 px-2">
                                 <CiShop size={20} />
                                 <span>Xem shop</span>
                             </button>
                         </div>
                     </div>
                 </div>
-                <div className='h-11 w-[2px] bg-black'></div>
+                <div className="h-11 w-[2px] bg-black"></div>
                 <div>
-                    <div className='flex items-center gap-4'>
-                        <p className='w-20'>Ngày tạo:</p>
-                        <p className='text-orange-500'>{boothData && new Date(boothData?.created_at)?.toLocaleDateString("vi-VN")}</p>
+                    <div className="flex items-center gap-4">
+                        <p className="w-20">Ngày tạo:</p>
+                        <p className="text-orange-500">
+                            {boothData && new Date(boothData?.created_at)?.toLocaleDateString('vi-VN')}
+                        </p>
                     </div>
-                    <div className='flex items-center gap-4'>
-                        <p className='w-20'>Sản phẩm:</p>
-                        <p className='text-orange-500'>100 sản phẩm</p>
+                    <div className="flex items-center gap-4">
+                        <p className="w-20">Sản phẩm:</p>
+                        <p className="text-orange-500">100 sản phẩm</p>
                     </div>
-
                 </div>
-
             </div>
             <div className="flex flex-col gap-4 bg-white w-full p-4">
-                <h2 className='text-xl'>Đánh giá sản phẩm</h2>
+                <h2 className="text-xl">Đánh giá sản phẩm</h2>
                 <Divider />
-                <div className='min-h-56'>
-                    {!reviewsData && reviewsData?.length === 0 ?
-                        <div className='h-full w-full flex flex-col items-center justify-center'>
+                <div className="min-h-56">
+                    {!reviewsData || reviewsData?.data?.length === 0 ? (
+                        <div className="h-full w-full flex flex-col items-center justify-center">
                             <Image src="/images/no-rating.png" alt="1" width={100} height={100} />
-                            <span>
-                                Chưa có đánh giá sản phẩm
-                            </span>
+                            <span>Chưa có đánh giá sản phẩm</span>
                         </div>
-                        :
-                        <div className='flex flex-col gap-5'>
-                            {reviewsData?.map((review: IProductReview) => (
-                                <div key={review.id} className='flex gap-4'>
-                                    <div className='flex flex-col gap-2'>
-                                        <div className='flex flex-row items-center gap-2'>
-                                            <Avatar src={review.user.avatar ? review.user.avatar : '/images/white-avatar.jpeg'} alt="user" sx={{ width: 40, height: 40 }} />
-                                            <div className='flex flex-col'>
-                                                <div className='flex flex-row items-center gap-2'>
-                                                    <p>{review.user.full_name}</p>
-                                                    <div className='flex flex-row gap-1'>
-                                                        {[1, 2, 3, 4, 5].map((rate) => (
-                                                            <FaStar size={12} key={rate} color={review.rating > rate ? 'yellow' : ''} />
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                                <p className='text-sm opacity-65'>{handleTime(review.created_at)}</p>
+                    ) : (
+                        <div className="flex flex-col gap-5">
+                            {reviewsData?.data?.map((review) => (
+                                <div key={review.id} className="border border-gray-200 rounded-lg p-4">
+                                    <div className="flex items-start justify-between mb-3">
+                                        <div className="flex gap-3">
+                                            <Avatar
+                                                src={review.account.avatar}
+                                                alt={review.account.full_name}
+                                                sx={{ width: 40, height: 40 }}
+                                            />
+                                            <div className="flex flex-col">
+                                                <span className="font-medium text-sm">{review.account.full_name}</span>
+                                                <div className="flex gap-1">{renderStars(review.rating)}</div>
+                                                <span className="text-xs text-gray-500">
+                                                    {handleTime(review.created_at)}
+                                                </span>
                                             </div>
                                         </div>
-                                        <div className='flex gap-2'>
-                                            <Image src={review.product_detail.image} alt="product" height={75} width={75} />
-                                            <Image src={review.product_detail.image} alt="product" height={75} width={75} />
-                                            <Image src={review.product_detail.image} alt="product" height={75} width={75} />
-                                            <Image src={review.product_detail.image} alt="product" height={75} width={75} />
-                                            <Image src={review.product_detail.image} alt="product" height={75} width={75} />
-                                        </div>
-                                        <div>
-                                            <p className='text-base'>
-                                                <span className='opacity-60'>Đánh giá: </span>
-                                                <span className='!opacity-100'>{review.content}</span>
-                                            </p>
-                                            <p className='text-base'>
-                                                <span className='opacity-60'>Sản phẩm:</span>
-                                                <span className='!opacity-100'>{review.product_detail.product_name}</span>
-                                            </p>
-                                            <p className='text-base'>
-                                                <span className='opacity-60'>Phân loại:</span>
-                                                <span className='!opacity-100'>{review.product_detail.color} - {review.product_detail.size.split(',')[0]}</span>
-                                            </p>
-                                        </div>
+                                        {user?.id === review.created_by && (
+                                            <button
+                                                onClick={() => handleDeleteReview(review.id)}
+                                                className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors duration-200"
+                                                title="Xóa đánh giá"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
                                     </div>
+
+                                    <p className="text-gray-700 mb-3">{review.comment}</p>
+
+                                    {review.review_medias && review.review_medias.length > 0 && (
+                                        <div className="flex gap-2 flex-wrap">
+                                            {review.review_medias.map((media) => (
+                                                <div key={media.id} className="relative">
+                                                    {media.media_type === 'image' && (
+                                                        <img
+                                                            src={media.media_url}
+                                                            alt="Review media"
+                                                            className="w-20 h-20 object-cover rounded border border-gray-200"
+                                                        />
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
+
+                            {/* Pagination Controls */}
+                            {totalPages > 1 && (
+                                <div className="flex justify-center items-center gap-2 mt-6">
+                                    <button
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                        className="px-3 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                                    >
+                                        Trước
+                                    </button>
+
+                                    {Array.from({ length: totalPages }, (_, index) => {
+                                        const page = index + 1;
+                                        return (
+                                            <button
+                                                key={page}
+                                                onClick={() => handlePageChange(page)}
+                                                className={`px-3 py-2 border rounded-md ${
+                                                    currentPage === page
+                                                        ? 'bg-blue-500 text-white border-blue-500'
+                                                        : 'border-gray-300 hover:bg-gray-50'
+                                                }`}
+                                            >
+                                                {page}
+                                            </button>
+                                        );
+                                    })}
+
+                                    <button
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                        className="px-3 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                                    >
+                                        Sau
+                                    </button>
+                                </div>
+                            )}
                         </div>
-                    }
+                    )}
                 </div>
             </div>
             <ToastContainer />
-
         </div>
     );
 }

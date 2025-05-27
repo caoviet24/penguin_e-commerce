@@ -8,18 +8,20 @@ import { useEffect, useState } from 'react';
 import useDebounce from '@/hooks/useDebounce';
 import { LuUserRoundCheck } from 'react-icons/lu';
 import RenderWithCondition from '../RenderWithCondition/renderwithcondition';
-import { useAppSelector } from '@/redux/store';
 import Cookie from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import { productService } from '@/services/product.service';
 import { useQuery } from '@tanstack/react-query';
-import { IProduct } from '@/types';
+import { IOrderItem, IProduct } from '@/types';
 import { Avatar } from '@mui/material';
 import { useUser } from '@/hooks/useAuth';
+import { IoNotificationsOutline } from 'react-icons/io5';
+import NotifyDrawer from '../common/NotifyDrawer';
+import { orderItemService } from '@/services/orderItem.service';
 
 export default function Header() {
     const { user } = useUser();
-    const { cart } = useAppSelector((state) => state.cart);
+    const [isNotifyDrawerOpen, setIsNotifyDrawerOpen] = useState(false);
     const router = useRouter();
 
     const handleLogout = () => {
@@ -38,10 +40,11 @@ export default function Header() {
     } = useQuery({
         queryKey: ['products-by-name'],
         queryFn: () =>
-            productService.getByDesc({
+            productService.getAll({
                 page_number: 1,
                 page_size: 20,
-                product_desc: searchValue,
+                search: searchValue,
+                status: 1,
             }),
         enabled: searchValue !== '',
     });
@@ -52,6 +55,12 @@ export default function Header() {
             refetchByName();
         }
     }, [searchValueDebouce, refetchByName]);
+
+    const { data: orderItemData } = useQuery({
+        queryKey: ['order-items', user?.id],
+        queryFn: () => orderItemService.getByUserId(user?.id || ''),
+        enabled: !!user?.id,
+    });
 
     useEffect(() => {
         if (isFetchByNameSuccess && ProductByNameData) {
@@ -133,30 +142,38 @@ export default function Header() {
                             <RiShoppingCartLine size={30} />
                         </Link>
                         <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
-                            {cart.length}
+                            {orderItemData?.length || 0}
                         </span>
                         <div className="absolute right-0 top-full text-sm text-gray-600 bg-white min-w-[400px] p-2 max-h-96  rounded shadow  hidden  z-40 group-hover:block">
                             <p className="text-sm py-2 font-bold text-gray-800 border-b border-gray-300">Giỏ hàng</p>
                             <div className="overflow-y-auto max-h-72">
-                                {cart.length > 0 ? (
-                                    cart.map((item) => (
+                                {orderItemData && orderItemData.length > 0 ? (
+                                    orderItemData.map((item: IOrderItem) => (
                                         <div
                                             key={item.id}
                                             className="flex justify-between items-center gap-2 p-2 border-b border-solid border-gray-300 last:border-none"
                                         >
                                             <Image
-                                                src={item.product_detail.image}
-                                                alt={item.product_detail.product_name}
+                                                src={item.product_detail?.image}
+                                                alt={item.product_detail?.product_name}
                                                 width={50}
                                                 height={50}
                                                 className="rounded"
                                             />
-                                            <p className="flex-1 text-gray-700 truncate">
-                                                {item.product_detail.product_name}
-                                            </p>
-                                            <p className="text-red-500">
-                                                {item.product_detail.sale_price.toLocaleString()}đ
-                                            </p>
+                                            <div className='flex flex-col gap-1 w-full'>
+                                                <p className="flex-1 text-gray-700 truncate text-sm">
+                                                    {item.product_detail?.product_name}
+                                                </p>
+                                                <div className="flex flex-col">
+                                                    <p className="text-red-500">
+                                                        {item.product_detail?.sale_price.toLocaleString()}đ
+                                                    </p>
+                                                    <p className="text-gray-500">
+                                                        Số lượng: {item.quantity} - Màu: {item.color} - Size:{' '}
+                                                        {item.size}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
                                     ))
                                 ) : (
@@ -179,6 +196,10 @@ export default function Header() {
                             </Link>
                         </div>
                     </div>
+
+                    <button onClick={() => setIsNotifyDrawerOpen(true)}>
+                        <IoNotificationsOutline size={30} />
+                    </button>
 
                     {user ? (
                         <div className="relative group z-50">
@@ -216,6 +237,7 @@ export default function Header() {
                     )}
                 </div>
             </div>
+            <NotifyDrawer isOpen={isNotifyDrawerOpen} onClose={() => setIsNotifyDrawerOpen(false)} />
         </header>
     );
 }

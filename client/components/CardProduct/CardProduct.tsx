@@ -8,8 +8,8 @@ import { FaStar } from 'react-icons/fa';
 
 export default function CardProduct({ product }: { product: IProduct }) {
     const percent = useMemo(() => {
-        const priceSale = product.list_product_detail[0].sale_price;
-        const promotionalPrice = product.list_product_detail[0].promotional_price;
+        const priceSale = product.list_product_detail[0]?.sale_price;
+        const promotionalPrice = product.list_product_detail[0]?.promotional_price;
         if (priceSale === 0) return 0;
         return Math.ceil(((priceSale - promotionalPrice) / priceSale) * 100);
     }, [product]);

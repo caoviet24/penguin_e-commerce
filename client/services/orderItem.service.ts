@@ -1,16 +1,21 @@
+import { IOrderItem } from "@/types";
 import axiosJWT from "@/utils/axios.interceptor";
 
-async function getOrderItemByUserId(userId: string) {
-    const res = await axiosJWT.get(`${process.env.NEXT_PUBLIC_API_URL}/order-item/get-by-buyer-id`, {
-        params: {
-            buyer_id: userId
-        }
-    });
+async function getByUserId(userId: string) : Promise<IOrderItem[]> {
+    const res = await axiosJWT.get(`${process.env.NEXT_PUBLIC_API_URL}/order-item/get-by-user-id/${userId}`);
     return res.data; 
 }
 
-async function addToCart(data: any) {
-    const res = await axiosJWT.post(`${process.env.NEXT_PUBLIC_API_URL}/order-item/create`, data);
+export interface ICreateOrderItemPayload {
+    booth_id: string;
+    product_detail_id: string;
+    quantity: number;
+    size: string;
+    color: string;
+}
+
+async function addToCart(data: ICreateOrderItemPayload) {
+    const res = await axiosJWT.post(`/order-item/create`, data);
     return res.data; 
 }
 
@@ -21,7 +26,7 @@ async function deleteOrderItem(orderItemId: string) {
 
 
 export const orderItemService = {
-    getOrderItemByUserId,
+    getByUserId,
     addToCart,
     deleteOrderItem
 }

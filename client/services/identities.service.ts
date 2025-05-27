@@ -6,13 +6,13 @@ import Cookies from "js-cookie";
 
 
 async function authMe() : Promise<IAccount> {
-    const res = await axiosJWT.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`);
+    const res = await axiosJWT.get(`/auth/me`);
     return res.data;
 }
 
 async function login(username: string, password: string) {
     await delay(2000);
-    const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/account/login`, {
+    const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
         username,
         password
     });
@@ -23,7 +23,7 @@ async function login(username: string, password: string) {
 
 async function register(username: string, password: string) {
     await delay(2000);
-    const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/account/register`, {
+    const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
         username,
         password
     });

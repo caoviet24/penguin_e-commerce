@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { paymentService } from '@/services/payment.service';
+import { paymentService } from '@/services/vnpay.service';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { billService } from '@/services/bill.service';
 import useLocationStorage from '@/hooks/useLocationStorage';

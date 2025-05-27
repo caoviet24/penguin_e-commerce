@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useTransition } from 'react';
-import { useAppSelector } from '@/redux/store';
+import React, { useEffect, useMemo } from 'react';
 import { FaLocationDot } from 'react-icons/fa6';
 import { Divider, Modal } from '@mui/material';
 import useLocationStorage from '@/hooks/useLocationStorage';
@@ -16,10 +15,10 @@ import { toast, ToastContainer } from 'react-toastify';
 import { orderItemService } from '@/services/orderItem.service';
 import { useDispatch } from 'react-redux';
 import { setDeleteToCart } from '@/redux/slices/cart.slice';
-import { createPayment, IFormPaymetData } from './action';
+import { useMutation } from '@tanstack/react-query';
+import { IFormPaymentData, paymentService } from '@/services/payment.service';
 
 export default function CheckOut() {
-    const { my_account } = useAppSelector((state) => state.account);
     const [info, setInfo] = React.useState({
         full_name: '',
         phone: '',
@@ -33,12 +32,9 @@ export default function CheckOut() {
         method: 'Thanh toán khi nhận hàng',
     });
 
-
-
     const [openAddressModal, setOpenAddressModal] = React.useState(false);
     const [openNewAddressModal, setOpenNewAddressModal] = React.useState(false);
     const [idxAddress, setIdxAddress] = React.useState(0);
-
 
     const router = useRouter();
     const dispatch = useDispatch();
@@ -86,7 +82,7 @@ export default function CheckOut() {
         const city = cities.find((city) => city.code == cityId);
         setInfo({
             ...info,
-            address: `${city?.name}-`,
+            address: `${city?.name}, `,
         });
 
         const data = await locationVNService.getDistricts();
@@ -102,7 +98,7 @@ export default function CheckOut() {
             const district = districts.find((district) => district.code == e.target.value);
             setInfo({
                 ...info,
-                address: `${info.address} ${district?.name}-`,
+                address: `${info.address} ${district?.name}, `,
             });
         }
     };
@@ -111,7 +107,7 @@ export default function CheckOut() {
         const ward = wards.find((ward) => ward.code == e.target.value);
         setInfo({
             ...info,
-            address: `${info.address} ${ward?.name}-`,
+            address: `${info.address} ${ward?.name}, `,
         });
     };
 
@@ -121,6 +117,23 @@ export default function CheckOut() {
                 ...prev,
                 [e.target.name]: e.target.value,
             };
+        });
+    };
+
+    const handleGetCurrentLocation = async () => {
+        const response = await locationVNService.getCurrentLocation();
+        const { county, state, suburb } = response as {
+            county: string;
+            state: string;
+            suburb: string;
+            townm?: string;
+            city?: string;
+        };
+
+        setInfo({
+            full_name: '',
+            phone: '',
+            address: `${state || ''}, ${county || ''}, ${suburb || ''}`,
         });
     };
 
@@ -149,14 +162,6 @@ export default function CheckOut() {
         setOpenAddressModal(false);
     };
 
-    useEffect(() => {
-        setInfo({
-            full_name: my_account.user.full_name,
-            phone: my_account?.user.phone,
-            address: my_account?.user.address,
-        });
-    }, [my_account]);
-
     const totalBill = useMemo(() => {
         return storedValueTempBill.list_voucher?.reduce((total: number, voucher: IVoucher) => {
             if (voucher.voucher_type === 'freeship') {
@@ -177,6 +182,14 @@ export default function CheckOut() {
     const deleteOrderItemMutation = useHookMutation((id: string) => {
         return orderItemService.deleteOrderItem(id);
     });
+
+
+    const paymentMutation = useMutation({
+        mutationKey: ['createPayment'],
+        mutationFn: (data: IFormPaymentData) => paymentService.create(data),
+    })
+
+
     const handleCreateBill = () => {
         if (!info) {
             toast.error('Vui lòng chọn địa chỉ giao hàng!', {
@@ -275,56 +288,54 @@ export default function CheckOut() {
     };
 
 
-    const [isGetUrlPayPending, startPaymentTransition] = useTransition();
-
-
-
     const handlePayBank = async () => {
         setValueInfoShipping(info);
 
         const formData: IFormPaymetData = {
-            amount: 2000,
+            amount: parseInt(totalBill) || 0,
             description: `Hóa đơn ${Math.floor(Math.random() * 100000)}`,
             items: storedValueTempBill.list_bill_detail.map((item: IOrderItem) => ({
                 name: item.product_detail.product_name,
-                price: item.product_detail.promotional_price > 0 ? item.product_detail.promotional_price : item.product_detail.sale_price,
+                // price:
+                //     item.product_detail.promotional_price > 0
+                //         ? parseInt(item.product_detail.promotional_price.toString())
+                //         : parseInt(item.product_detail.sale_price.toString()),
+                price: 100000,
                 quantity: item.quantity,
             })),
             returnUrl: process.env.NEXT_PUBLIC_RETURN_PAYMENT_URL || '',
             cancelUrl: process.env.NEXT_PUBLIC_CANCEL_PAYMENT_URL || '',
-        }
-        console.log(formData);
+        };
 
-        startPaymentTransition(async () => {
-            try {
-                if (formData) {
-
-                    const result = await createPayment(formData);
-                    if (result) {
-                        const { checkoutUrl } = result;
-                        if (checkoutUrl) {
-                            window.open(checkoutUrl);
-                        }
-                    }
+        paymentMutation.mutate(formData, {
+            onSuccess: (data) => {
+                if (data) {
+                    router.push(data.checkoutUrl);
+                } else {
+                    toast.error('Không thể tạo liên kết thanh toán!', {
+                        position: 'top-right',
+                        autoClose: 3000,
+                        hideProgressBar: false,
+                        closeOnClick: true,
+                        pauseOnHover: true,
+                        draggable: true,
+                        progress: 0,
+                    });
                 }
-            } catch (error) {
-                console.error('Error creating payment:', error);
-            }
-        });
+            },
+            onError: () => {
+                toast.error('Đã có lỗi xảy ra khi tạo liên kết thanh toán!', {
+                    position: 'top-right',
+                    autoClose: 3000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: 0,
+                });
+            },
+        })
 
-        // createPaymentMutation.mutate(
-        //     {
-        //         amount: totalBill,
-        //         description: `Thanh toán đơn hàng ${Math.floor(Math.random() * 100000000)}`,
-        //     },
-        //     {
-        //         onSuccess: (data: { paymentUrl?: string }) => {
-        //             if (data?.paymentUrl) {
-        //                 window.open(data.paymentUrl);
-        //             }
-        //         },
-        //     },
-        // );
     };
 
     return (
@@ -451,10 +462,11 @@ export default function CheckOut() {
                             {['Thanh toán khi nhận hàng', 'Thanh toán qua ngân hàng', 'Pengin Wallet'].map((p, idx) => (
                                 <button
                                     key={idx}
-                                    className={`flex items-center justify-center gap-2 border border-solid px-4 py-3 rounded-md relative transition-all ${payActive.idx === idx
-                                        ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
-                                        : 'border-gray-300 text-gray-700 hover:border-purple-300 hover:bg-purple-50/30'
-                                        }`}
+                                    className={`flex items-center justify-center gap-2 border border-solid px-4 py-3 rounded-md relative transition-all ${
+                                        payActive.idx === idx
+                                            ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
+                                            : 'border-gray-300 text-gray-700 hover:border-purple-300 hover:bg-purple-50/30'
+                                    }`}
                                     onClick={() => setPayActive({ idx: idx, method: p })}
                                 >
                                     <span className="font-medium">{p}</span>
@@ -489,9 +501,9 @@ export default function CheckOut() {
                                             (total: number, item: IOrderItem) =>
                                                 total +
                                                 item.quantity *
-                                                (item.product_detail.promotional_price > 0
-                                                    ? item.product_detail.promotional_price
-                                                    : item.product_detail.sale_price),
+                                                    (item.product_detail.promotional_price > 0
+                                                        ? item.product_detail.promotional_price
+                                                        : item.product_detail.sale_price),
                                             0,
                                         )
                                         .toLocaleString()}
@@ -571,10 +583,11 @@ export default function CheckOut() {
                                 {storedValueLocation.map((address: IAddress, index: number) => (
                                     <div
                                         key={index}
-                                        className={`flex items-start gap-3 p-3 border rounded-lg transition-colors ${idxAddress === index
-                                            ? 'border-purple-500 bg-purple-50'
-                                            : 'border-gray-200 hover:bg-gray-50'
-                                            }`}
+                                        className={`flex items-start gap-3 p-3 border rounded-lg transition-colors ${
+                                            idxAddress === index
+                                                ? 'border-purple-500 bg-purple-50'
+                                                : 'border-gray-200 hover:bg-gray-50'
+                                        }`}
                                         onClick={() => setIdxAddress(index)}
                                     >
                                         <input
@@ -748,7 +761,10 @@ export default function CheckOut() {
                         </div>
                     </div>
 
-                    <button className="flex items-center gap-2 mt-4 border border-gray-300 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    <button
+                        onClick={handleGetCurrentLocation}
+                        className="flex items-center gap-2 mt-4 border border-gray-300 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
                         <FaLocationDot size={18} className="text-purple-600" />
                         <span>Lấy vị trí hiện tại của tôi</span>
                     </button>

@@ -23,7 +23,9 @@ function fetchRefreshToken(token: string): Promise<RefreshTokenResponse> {
 }
 
 function createAxiosJwtInstance() {
-    const axiosJWT = axios.create();
+    const axiosJWT = axios.create({
+        baseURL: process.env.NEXT_PUBLIC_API_URL,
+    });
     axiosJWT.interceptors.request.use(
         async (config) => {
             const accessToken = Cookies.get('access_token');

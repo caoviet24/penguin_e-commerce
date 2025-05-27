@@ -10,14 +10,14 @@ import { UserProvider } from './AuthProvider';
 const queryClient = new QueryClient();
 export default function AppProvider({ children }: { children: React.ReactNode }) {
     return (
-        <SocketProvider>
-            <Provider store={store}>
-                <PersistGate loading={null} persistor={persistor}>
-                    <QueryClientProvider client={queryClient}>
-                        <UserProvider>{children}</UserProvider>
-                    </QueryClientProvider>
-                </PersistGate>
-            </Provider>
-        </SocketProvider>
+        <Provider store={store}>
+            <PersistGate loading={null} persistor={persistor}>
+                <QueryClientProvider client={queryClient}>
+                    <UserProvider>
+                        <SocketProvider>{children}</SocketProvider>
+                    </UserProvider>
+                </QueryClientProvider>
+            </PersistGate>
+        </Provider>
     );
 }

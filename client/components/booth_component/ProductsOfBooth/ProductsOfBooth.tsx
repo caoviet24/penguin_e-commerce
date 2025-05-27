@@ -186,9 +186,9 @@ export default function ProductsOfBooth({ booth }: { booth: IBooth }) {
 
     return (
         <Paper sx={{ width: "95%", overflow: "hidden" }} className="mx-auto mt-10 px-2 py-5 shadow-lg">
-            <div className="flex items-center justify-between h-10">
-                <div className="flex items-center gap-5">
-                    <div className="w-[400px]">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 flex-wrap">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 flex-wrap w-full lg:w-auto">
+                    <div className="w-full sm:w-[400px]">
                         <div className="relative">
                             <input
                                 type="search"
@@ -202,20 +202,22 @@ export default function ProductsOfBooth({ booth }: { booth: IBooth }) {
                             </button>
                         </div>
                     </div>
+
                     <select
                         value={tabActive}
                         onChange={(e) => setTabActive(Number(e.target.value))}
-                        className="bg-gray-50 border border-gray-300 text-gray-900 outline-none text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-[250px] p-2"
+                        className="bg-gray-50 border border-gray-300 text-gray-900 outline-none text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full sm:w-[250px] p-2"
                     >
                         <option value={0}>Đã xác thực</option>
                         <option value={1}>Chưa xác thực</option>
                     </select>
                 </div>
-                <div className="flex gap-2 h-10">
+
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <button
                         onClick={() => setTabActive(1)}
-                        className={`flex items-center justify-center gap-2 text-base font-semibold text-white bg-blue-500 rounded-lg px-4 py-2
-                            ${tabActive === 0 || tabActive === 1 ? "opacity-100" : "opacity-50"}`}
+                        className={`flex items-center justify-center gap-2 text-base font-semibold text-white bg-blue-500 rounded-lg px-4 py-2 ${tabActive === 0 || tabActive === 1 ? "opacity-100" : "opacity-50"
+                            }`}
                     >
                         <SiDatabricks size={22} />
                         Hiện tại
@@ -223,7 +225,7 @@ export default function ProductsOfBooth({ booth }: { booth: IBooth }) {
 
                     <button
                         onClick={() => setOpenCreateProduct(true)}
-                        className={`flex items-center opacity-100 justify-center gap-2 space-y-1 text-lg font-semibold text-white bg-orange-500 rounded-lg px-4 py-2`}
+                        className="flex items-center justify-center gap-2 text-lg font-semibold text-white bg-orange-500 rounded-lg px-4 py-2"
                     >
                         <BiPlusCircle size={24} />
                         Thêm sản phẩm
@@ -231,13 +233,15 @@ export default function ProductsOfBooth({ booth }: { booth: IBooth }) {
 
                     <button
                         onClick={() => setTabActive(2)}
-                        className={`flex items-center opacity-50 justify-center gap-2 space-y-1 text-lg font-semibold text-white bg-red-500 rounded-lg px-4 py-2 ${tabActive === 1 && "opacity-100"}`}
+                        className={`flex items-center justify-center gap-2 text-lg font-semibold text-white bg-red-500 rounded-lg px-4 py-2 ${tabActive === 1 ? "opacity-100" : "opacity-50"
+                            }`}
                     >
                         <FaRegTrashAlt />
                         Thùng rác
                     </button>
                 </div>
             </div>
+
 
             <TableContainer>
                 <Table stickyHeader aria-label="sticky table">
