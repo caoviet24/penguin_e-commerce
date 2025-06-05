@@ -13,7 +13,7 @@ namespace Domain.Entities
         public string? video { get; set; } = null!;
         public string? image { get; set; }
         public string booth_id { get; set; } = null!;
-        public string reply_content { get; set; } = null!;
+        public string? reply_content { get; set; } = null!;
         public string? reply_image { get; set; }
         public string? reply_video { get; set; }
         public virtual SaleBillEntity SaleBill { get; set; } = null!;

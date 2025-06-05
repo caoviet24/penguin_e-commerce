@@ -2,13 +2,11 @@ import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { useDispatch, TypedUseSelectorHook, useSelector } from "react-redux";
-import { accountReducer } from "./slices/account.slice";
 import { cartReducer } from "./slices/cart.slice";
 import { billReducer } from "./slices/bill.slide";
 import { boothReducer } from "./slices/booth.slice";
 
 const rootReducer = combineReducers({
-    account: accountReducer,
     cart: cartReducer,
     bill: billReducer,
     booth: boothReducer,

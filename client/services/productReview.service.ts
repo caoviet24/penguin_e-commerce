@@ -21,10 +21,11 @@ async function getByProductId({
 }
 
 export interface ICreateProductReviewPayload {
-    commet: string;
-    rate: number;
+    bill_id: string; 
+    comment: string;
+    rating: number;
     product_id: string;
-    list_review_media: ICreateReviewMedia[];
+    review_medias: ICreateReviewMedia[];
 }
 
 export interface ICreateReviewMedia {

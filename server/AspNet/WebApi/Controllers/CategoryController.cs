@@ -9,6 +9,7 @@ using Application.Category.Commands.Restore;
 using Application.Category.Commands.Update;
 using Application.Category.Queries.GetAll;
 using Application.Category.Queries.GetCategoryById;
+using Application.Category.Queries.GetWithPagination;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -22,7 +23,14 @@ namespace WebApi.Controllers
     public class CategoryController(ILogger<CategoryController> logger, IMediator mediator) : ControllerBase
     {
         [HttpGet("get-all")]
-        public async Task<IActionResult> getWithPagination([FromQuery] GetAllCategoryQuery request)
+        public async Task<IActionResult> getAll([FromQuery] GetAllCategoryQuery request)
+        {
+            logger.LogInformation("Get category all");
+            return Ok(await mediator.Send(request));
+        }
+
+        [HttpGet("get-with-pagination")]
+        public async Task<IActionResult> getWithPagination([FromQuery] GetCategoryWithPaginationQuery request)
         {
             logger.LogInformation("Get category with pagination");
             return Ok(await mediator.Send(request));

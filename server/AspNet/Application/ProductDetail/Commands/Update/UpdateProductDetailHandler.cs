@@ -14,7 +14,7 @@ namespace Application.ProductDetail.Commands.Update
 {
     public class UpdateProductDetailCommand : IRequest<ProductDetailDto>
     {
-        public string product_detail_id { get; set; } = null!;
+        public string Id { get; set; } = null!;
         public string product_name { get; set; } = null!;
         public string image { get; set; } = null!;
         public double sale_price { get; set; }
@@ -28,19 +28,20 @@ namespace Application.ProductDetail.Commands.Update
     {
         public async Task<ProductDetailDto> Handle(UpdateProductDetailCommand request, CancellationToken cancellationToken)
         {
-             var checkExitProductDetail = await context.ProductDetails
-                .FirstOrDefaultAsync(x => x.Id == request.product_detail_id, cancellationToken);
-            if (checkExitProductDetail == null)
+            var existingProductDetail = await context.ProductDetails.FindAsync(request.Id, cancellationToken);
+            if (existingProductDetail == null)
             {
-                throw new BadRequestException("Product detail already exists.");
+                throw new BadRequestException("Product detail not found.");
             }
-            string _sizes = string.Join(",", request.sizes);
-
-            var newProductDetail = mapper.Map<ProductDetailEntity>(request);
-            newProductDetail.size = _sizes;
-
-            context.ProductDetails.Update(newProductDetail);
-            return mapper.Map<ProductDetailDto>(newProductDetail);
+            
+            mapper.Map(request, existingProductDetail);
+        
+            existingProductDetail.size = string.Join(",", request.sizes);
+            existingProductDetail.updated_at = DateTime.UtcNow;
+            
+            await context.SaveChangesAsync(cancellationToken);
+            
+            return mapper.Map<ProductDetailDto>(existingProductDetail);
         }
     }
 }

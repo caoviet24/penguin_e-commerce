@@ -20,6 +20,7 @@ namespace Application.Dtos.Account
         public string avatar { get; set; } = null!;
         public string address { get; set; } = null!;
         public string phone { get; set; } = null!;
+        public string email { get; set; } = null!;
         public DateTime created_at { get; set; }
         public DateTime updated_at { get; set; }
         public bool is_deleted { get; set; }

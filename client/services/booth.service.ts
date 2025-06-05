@@ -1,6 +1,5 @@
-import { IBooth, ResponseData } from "@/types";
-import axiosJWT from "@/utils/axios.interceptor";
-import delay from "@/utils/delay";
+import { IBooth, ResponseData } from '@/types';
+import axiosJWT from '@/utils/axios.interceptor';
 
 async function getAll({
     page_number,
@@ -30,10 +29,8 @@ async function getAll({
     return res.data;
 }
 
-
-
-async function getByAccId(id: string) : Promise<IBooth> {
-    const res = await axiosJWT.get(`/booth/get-by-acc-id/${id}`);
+async function getByAccId(id: string): Promise<IBooth> {
+    const res = await axiosJWT.get(`/booth/get-by-user-id/${id}`);
     return res.data;
 }
 
@@ -50,12 +47,47 @@ export interface ICreateBoothPayload {
 
 async function create(data: ICreateBoothPayload): Promise<IBooth> {
     const res = await axiosJWT.post(`/booth/create`, data);
-    return res.data;   
+    return res.data;
 }
 
-async function update(id: string, data: Partial<IBooth>): Promise<IBooth> {
-    await delay(2000);
-    const res = await axiosJWT.put(`/booth/update/${id}`, data);
+export interface IUpdateBoothPayload {
+    id: string;
+    name?: string;
+    description?: string;
+    avatar?: string;
+}
+async function update(data: IUpdateBoothPayload): Promise<IBooth> {
+    const res = await axiosJWT.put(`/booth/update`, data);
+    return res.data;
+}
+
+async function active(id: string): Promise<IBooth> {
+    const res = await axiosJWT.put(`/booth/active/${id}`);
+    return res.data;
+}
+
+async function inactive(id: string): Promise<IBooth> {
+    const res = await axiosJWT.put(`/booth/inactive/${id}`);
+    return res.data;
+}
+
+async function ban(id: string): Promise<IBooth> {
+    const res = await axiosJWT.put(`/booth/ban/${id}`);
+    return res.data;
+}
+
+async function unban(id: string): Promise<IBooth> {
+    const res = await axiosJWT.put(`/booth/unban/${id}`);
+    return res.data;
+}
+
+async function deleteSoft(id: string): Promise<IBooth> {
+    const res = await axiosJWT.put(`/booth/delete/${id}`);
+    return res.data;
+}
+
+async function restore(id: string): Promise<IBooth> {
+    const res = await axiosJWT.put(`/booth/restore/${id}`);
     return res.data;
 }
 
@@ -64,5 +96,11 @@ export const boothService = {
     getByAccId,
     getById,
     create,
-    update
-}
+    update,
+    active,
+    inactive,
+    ban,
+    unban,
+    deleteSoft,
+    restore,
+};

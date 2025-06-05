@@ -1,18 +1,15 @@
 'use client';
 import React, { useState } from 'react';
 import Image from 'next/image';
-// import Carousel from 'react-material-ui-carousel';
 import { FaStar } from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
 import { productService } from '@/services/product.service';
 import CardProduct from '@/components/CardProduct/CardProduct';
-import { Divider } from '@mui/material';
 import Link from 'next/link';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
 import { Carousel } from 'react-responsive-carousel';
 
 export default function Home() {
-
     const [a] = useState([
         '/images/slider/1.avif',
         '/images/slider/2.avif',
@@ -23,26 +20,32 @@ export default function Home() {
 
     const { data: productData } = useQuery({
         queryKey: ['products'],
-        queryFn: () => productService.getAll({
-            page_number: 1,
-            page_size: 40,
-        }),
+        queryFn: () =>
+            productService.getAll({
+                page_number: 1,
+                page_size: 40,
+                is_active: true,
+            }),
     });
-
-
-
 
     return (
         <div className="container flex flex-col justify-between mx-auto mt-5 mb-10">
-            <div className="flex w-full flex-1 gap-2 bg-white p-5">
-                <Carousel>
-                    {a.map((slider, index) => (
-                        <div key={index} className="h-[390px] w-full">
-                            <img src={slider} className="h-full w-full" />
-                        </div>
-                    ))}
-                </Carousel>
-
+            <div className="flex gap-2 bg-white p-5">
+                <div className="flex-1">
+                    <Carousel>
+                        {a.map((slider, index) => (
+                            <div key={index} className="h-[390px] w-full">
+                                <Image
+                                    src={slider}
+                                    alt={`Slider image ${index + 1}`}
+                                    className="h-full w-full"
+                                    fill 
+                                    priority={index === 0}
+                                />
+                            </div>
+                        ))}
+                    </Carousel>
+                </div>
                 <div className="flex flex-col h-full w-[350px]">
                     <div className="flex flex-row">
                         <Image src="/images/penguin.png" alt="logo-main" width={50} height={50} />
@@ -92,7 +95,7 @@ export default function Home() {
                     </div>
                 </div>
             </div>
-            <div className="flex justify-between bg-white mt-2 p-5">
+            <div className="grid lg:grid-cols-7 md:grid-cols-3 grid-cols-2 gap-2 bg-white mt-2 p-5">
                 <div className="flex items-center flex-col justify-center text-center">
                     <Image src="/images/choice.png" alt="1" width={40} height={40} />
                     <span>
@@ -137,7 +140,6 @@ export default function Home() {
 
             <div className="flex flex-col mt-10 p-5 bg-white">
                 <h2 className="text-xl py-2">Dành cho bạn</h2>
-                <Divider />
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-5">
                     {productData && productData.data.map((pro) => <CardProduct product={pro} key={pro.id} />)}
                 </div>

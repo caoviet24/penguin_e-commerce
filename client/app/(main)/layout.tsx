@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import Footer from '@/components/layout/footer';
 import { usePathname } from 'next/navigation';
 import Header2 from '@/components/layout/header2';
+import { ToastContainer } from 'react-toastify';
 
 export default function MainLayOut({ children }: { children: ReactNode }) {
     const [title, setTitle] = useState<string | null>(null);
@@ -28,6 +29,7 @@ export default function MainLayOut({ children }: { children: ReactNode }) {
                 {children}
             </div>
             <Footer />
+            <ToastContainer />
         </div>
     );
 }

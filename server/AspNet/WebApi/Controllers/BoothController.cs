@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Application.Booth.Commands.Close;
+using Application.Booth.Commands.InActive;
 using Application.Booth.Commands.Open;
 using Application.Booth.Queries.GetByUserId;
 using Application.MyBooth.Commands.Active;
@@ -101,6 +102,14 @@ namespace WebApi.Controllers
         {
             logger.LogInformation("Activate booth with id: {booth_id}", booth_id);
             var data = await mediator.Send(new ActiveBoothCommand { booth_id = booth_id });
+            return Ok(data);
+        }
+
+        [HttpPut("inactive/{booth_id}")]
+        public async Task<IActionResult> InActive([FromRoute] string booth_id)
+        {
+            logger.LogInformation("InActivate booth with id: {booth_id}", booth_id);
+            var data = await mediator.Send(new InActiveBoothCommand { booth_id = booth_id });
             return Ok(data);
         }
 

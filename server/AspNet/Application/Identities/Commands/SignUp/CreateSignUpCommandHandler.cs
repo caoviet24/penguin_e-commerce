@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Application.Common.Dtos;
 using Application.Dtos.Account;
 using Application.Common.Interfaces;
+using Application.Common.Events;
 using AutoMapper;
 using BCrypt.Net;
 using Dapper;
@@ -22,10 +23,10 @@ namespace Application.Identities.Commands.SignUp
     {
         public string username { get; set; } = null!;
         public string password { get; set; } = null!;
+        public string email { get; set; } = null!;
     }
-    public class CreateSignUpHandler(IApplicationDbContext context, IMapper mapper) : IRequestHandler<CreateSignUpCommand, AccountDto>
+    public class CreateSignUpHandler(IApplicationDbContext context, IMapper mapper, IMediator mediator) : IRequestHandler<CreateSignUpCommand, AccountDto>
     {
-
         public async Task<AccountDto> Handle(CreateSignUpCommand request, CancellationToken cancellationToken)
         {
             var checkExitAccount = await context.Accounts.FirstOrDefaultAsync(a => a.username == request.username, cancellationToken);
@@ -40,14 +41,30 @@ namespace Application.Identities.Commands.SignUp
                 password = BCrypt.Net.BCrypt.HashPassword(request.password),
                 role = Role.User.ToString(),
                 username = request.username,
+                email = request.email != null ? request.email : request.username,
                 is_banned = false,
                 is_deleted = false,
                 created_at = DateTime.UtcNow,
-                updated_at = DateTime.UtcNow
+                updated_at = DateTime.UtcNow,
+                full_name = request.username,
+                nick_name = request.username,
+                address = "",
+                avatar = "",
+                birth = DateTime.UtcNow,
+                gender = "",
+                phone = "",
             };
          
 
-            var data = await context.Accounts.AddAsync(newAccount, cancellationToken);
+            var data = await context.Accounts.AddAsync(newAccount);
+            await context.SaveChangesAsync(cancellationToken);
+
+            var userRegisteredEvent = new UserRegisteredEvent(
+                data.Entity.Id,
+                data.Entity.username,
+                data.Entity.email ?? data.Entity.username
+            );
+            await mediator.Publish(userRegisteredEvent, cancellationToken);
 
             return mapper.Map<AccountDto>(data.Entity);
 

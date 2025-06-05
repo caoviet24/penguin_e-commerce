@@ -16,11 +16,10 @@ export default function CategoryManagementPage() {
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [showDeleted, setShowDeleted] = useState<boolean | undefined>(undefined);
     
-    // Dialog state
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-    // Debounced search function
+
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     
     useEffect(() => {
@@ -40,7 +39,7 @@ export default function CategoryManagementPage() {
     } = useQuery<ResponseData<ICategory[]>>({
         queryKey: ['categories', pageNumber, pageSize, debouncedSearchTerm, showDeleted],
         queryFn: () =>
-            categoryService.getAll({
+            categoryService.getWithPagination({
                 page_number: pageNumber,
                 page_size: pageSize,
                 search: debouncedSearchTerm || undefined,
@@ -48,7 +47,6 @@ export default function CategoryManagementPage() {
             }),
     });
 
-    // Calculate total pages
     const totalPages = categoriesData ? Math.ceil(categoriesData.total_record / pageSize) : 0;
 
     // Handle page navigation

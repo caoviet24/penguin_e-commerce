@@ -5,7 +5,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useMemo, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { FaFacebookMessenger, FaStar } from 'react-icons/fa';
-import { Avatar, Divider } from '@mui/material';
 import { BiCart, BiMinus, BiPlus } from 'react-icons/bi';
 import { productService } from '@/services/product.service';
 import { boothService } from '@/services/booth.service';
@@ -16,8 +15,10 @@ import { productReviewService } from '@/services/productReview.service';
 import handleTime from '@/utils/handleTime';
 import { useUser } from '@/hooks/useAuth';
 import { Trash2 } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 
-export default function AccountId({ params }: { params: Promise<{ id: string }> }) {
+export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id: slug } = React.use(params);
     const [quantity, setQuantity] = useState<number>(1);
     const [deliveryDate, setDeliveryDate] = useState<string | null>(null);
@@ -148,6 +149,35 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
     const totalPages = Math.ceil((reviewsData?.total_record || 0) / 5);
 
     const handleAddToCart = () => {
+
+        if(formData.quantity <= 0) {
+            toast.error('Số lượng sản phẩm phải lớn hơn 0!', {
+                position: 'top-right',
+                autoClose: 3000,    
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: false,
+                draggable: false,
+                progress: undefined,
+                theme: 'light',
+            });
+            return;
+        }
+
+        if (!formData.product_detail_id || !formData.size || !formData.color) {
+            toast.error('Vui lòng chọn đầy đủ thông tin sản phẩm!', {
+                position: 'top-right',
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: false,
+                draggable: false,
+                progress: undefined,
+                theme: 'light',
+            });
+            return;
+        }
+
         addToCartMutaion.mutate(formData, {
             onSuccess: () => {
                 toast.success('Thêm sản phẩm thành công!', {
@@ -190,7 +220,7 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
             const date = new Date(Date.now() + randomDays * 24 * 60 * 60 * 1000);
             setDeliveryDate(date.toLocaleDateString('vi-VN'));
         }
-    }, [productData, isSuccess]);
+    }, [productData, isSuccess, formData]);
 
     const totalSale = useMemo(() => {
         if (!productData?.list_product_detail) return 0;
@@ -361,9 +391,14 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
             </div>
             <div className="flex gap-4 bg-white w-full p-4">
                 <div className="flex gap-5">
-                    <Avatar src={boothData?.booth_avatar} alt="booth" sx={{ width: 100, height: 100 }} />
+                    <Avatar>
+                        <AvatarImage src={boothData?.avatar} alt="booth" />
+                        <AvatarFallback>
+                            {boothData?.name?.charAt(0).toUpperCase() || 'B'}
+                        </AvatarFallback>
+                    </Avatar>
                     <div className="flex flex-col gap-1 justify-center">
-                        <p className="capitalize">{boothData?.booth_name}</p>
+                        <p className="capitalize">{boothData?.name}</p>
                         <p className="text-sm opacity-70">Hoạt động 1 giờ trước</p>
                         <div className="flex gap-2">
                             <button className="bg-orange-200 text-orange-500 border border-solid border-orange-500 py-1 px-2 flex items-center gap-2">
@@ -393,7 +428,7 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
             </div>
             <div className="flex flex-col gap-4 bg-white w-full p-4">
                 <h2 className="text-xl">Đánh giá sản phẩm</h2>
-                <Divider />
+                <Separator className="my-2" />
                 <div className="min-h-56">
                     {!reviewsData || reviewsData?.data?.length === 0 ? (
                         <div className="h-full w-full flex flex-col items-center justify-center">
@@ -406,11 +441,12 @@ export default function AccountId({ params }: { params: Promise<{ id: string }> 
                                 <div key={review.id} className="border border-gray-200 rounded-lg p-4">
                                     <div className="flex items-start justify-between mb-3">
                                         <div className="flex gap-3">
-                                            <Avatar
-                                                src={review.account.avatar}
-                                                alt={review.account.full_name}
-                                                sx={{ width: 40, height: 40 }}
-                                            />
+                                            <Avatar>
+                                                <AvatarImage src={review.account.avatar} alt="avatar" />
+                                                <AvatarFallback>
+                                                    {review.account.full_name?.charAt(0).toUpperCase() || 'A'}
+                                                </AvatarFallback>
+                                            </Avatar>
                                             <div className="flex flex-col">
                                                 <span className="font-medium text-sm">{review.account.full_name}</span>
                                                 <div className="flex gap-1">{renderStars(review.rating)}</div>

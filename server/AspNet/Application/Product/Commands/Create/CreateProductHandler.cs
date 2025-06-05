@@ -40,20 +40,41 @@ namespace Application.Product.Create
 
             if (checkExitProduct != null)
             {
-                throw new BadRequestException("Product already exists.");
+                throw new BadRequestException("Sản phẩm đã tồn tại.");
+            }
+    
+            var checkExitBooth = await context.Booths
+                .FirstOrDefaultAsync(x => x.Id == request.booth_id && x.is_active == true, cancellationToken);
+
+            if (checkExitBooth == null)
+            {
+                throw new BadRequestException("Cửa hàng không tồn tại hoặc không hoạt động.");
             }
 
             using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
             try
             {
                 var newProduct = mapper.Map<ProductEntity>(request);
-                await context.Products.AddAsync(newProduct, cancellationToken);
+                newProduct.Id = Guid.NewGuid().ToString();
+                newProduct.created_by = request.booth_id;
+                newProduct.created_at = DateTime.UtcNow;
+                newProduct.is_active = false;
+
+                var result = await context.Products.AddAsync(newProduct, cancellationToken);
+                await context.SaveChangesAsync(cancellationToken);
                 foreach (var item in request.list_product_detail)
                 {
                     var productDetail = mapper.Map<ProductDetailEntity>(item);
-                    await context.ProductDetails.AddAsync(productDetail, cancellationToken);
-                    newProduct.ListProductDetail.Add(productDetail);
+
+                    productDetail.Id = Guid.NewGuid().ToString();
+                    productDetail.product_id = result.Entity.Id;
+                    productDetail.size = string.Join(",", item.sizes);
+
+                    var resultDetail = await context.ProductDetails.AddAsync(productDetail, cancellationToken);
+                    await context.SaveChangesAsync(cancellationToken);
+                    newProduct.ListProductDetail.Add(resultDetail.Entity);
                     
+
                 }
                 await transaction.CommitAsync(cancellationToken);
 

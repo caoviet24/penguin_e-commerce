@@ -41,6 +41,13 @@ namespace WebApi.Controllers
             return mediator.Send(query);
         }
 
+        [HttpGet("get-by-id/{id}")]
+        public Task<VoucherDto> getById([FromRoute] string id)
+        {
+            logger.LogInformation("Get voucher by id: {id}", id);
+            return mediator.Send(new GetVoucherByIdQuery { voucher_id = id });
+        }
+
         [HttpPost("create")]
         public Task<VoucherDto> create([FromBody] CreateVoucherCommand command)
         {

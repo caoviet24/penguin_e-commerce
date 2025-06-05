@@ -1,12 +1,12 @@
+/* eslint-disable @next/next/no-img-element */
 "use client"
 import React from 'react'
 import { useRouter } from 'next/navigation';
 import Loader from '@/components/Loader/loader'
-import useHookMutation from '@/hooks/useHookMutation'
 import { identityService } from '@/services/identities.service'
-import Cookie from 'js-cookie'
 import { toast, ToastContainer } from 'react-toastify';
 import Link from 'next/link';
+import { useMutation } from '@tanstack/react-query';
 
 export default function SignUp() {
 
@@ -26,8 +26,10 @@ export default function SignUp() {
 		setFormData({ ...formData, [name]: value })
 	}
 
-	const registerMutation = useHookMutation<any, { username: string; password: string }>(({ username, password }) => {
-		return identityService.register(username, password)
+	const registerMutation = useMutation({
+		mutationFn: (data: { username: string; password: string }) => {
+			return identityService.register(data.username, data.password);
+		}
 	});
 
 	const { isPending } = registerMutation;
@@ -37,7 +39,7 @@ export default function SignUp() {
 			username: formData.username,
 			password: formData.password
 		}, {
-			onSuccess: (data) => {
+			onSuccess: () => {
 				toast.success('Đăng kí thành công, hệ thống chuyển hướng đăng nhập sau 3s',{
                     position: "top-right",
                     autoClose: 3000,

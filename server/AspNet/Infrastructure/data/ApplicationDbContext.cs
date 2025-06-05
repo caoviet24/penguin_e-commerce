@@ -263,8 +263,9 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
                         entity.HasKey(e => e.Id);
 
                         entity.HasOne(e => e.SaleBill)
-                                        .WithMany(e => e.ListBackBill)
-                                        .HasForeignKey(e => e.bill_id);
+                                       .WithOne(e => e.BackBill)
+                                        .HasForeignKey<BackBillEntity>(e => e.bill_id)
+                                        .OnDelete(DeleteBehavior.Cascade);
 
                         entity.HasOne(e => e.Buyer)
                                         .WithMany(e => e.ListBackBill)

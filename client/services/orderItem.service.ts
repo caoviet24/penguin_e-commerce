@@ -19,7 +19,7 @@ async function addToCart(data: ICreateOrderItemPayload) {
     return res.data; 
 }
 
-async function deleteOrderItem(orderItemId: string) {
+async function remove(orderItemId: string) {
     const res = await axiosJWT.delete(`${process.env.NEXT_PUBLIC_API_URL}/order-item/delete/${orderItemId}`);
     return res.data; 
 }
@@ -28,5 +28,5 @@ async function deleteOrderItem(orderItemId: string) {
 export const orderItemService = {
     getByUserId,
     addToCart,
-    deleteOrderItem
+    remove
 }

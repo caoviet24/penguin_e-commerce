@@ -36,10 +36,12 @@ namespace Application.ProductDetail.Commands.Create
             string _sizes = string.Join(",", request.sizes);
 
             var newProductDetail = mapper.Map<ProductDetailEntity>(request);
+            newProductDetail.Id = Guid.NewGuid().ToString();
             newProductDetail.size = _sizes;
 
-            await context.ProductDetails.AddAsync(newProductDetail, cancellationToken);
-            return mapper.Map<ProductDetailDto>(newProductDetail);
+            var data = await context.ProductDetails.AddAsync(newProductDetail, cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
+            return mapper.Map<ProductDetailDto>(data.Entity);
         }
     }
 }

@@ -1,7 +1,7 @@
 import axiosJWT from "@/utils/axios.interceptor";
 
 export interface ICreateProductDetailPayload {
-    product_id: string;
+    product_id?: string;
     product_name: string;
     image: string;
     sale_price: number;
@@ -17,7 +17,7 @@ async function create(data: ICreateProductDetailPayload) {
 }
 
 export interface IUpdateProductDetailPayload {
-    product_detail_id: string,
+    id: string,
     product_name: string,
     image: string,
     sale_price: number,
@@ -26,7 +26,6 @@ export interface IUpdateProductDetailPayload {
     color: string,
     sizes: string[]
 }
-
 async function update(data: IUpdateProductDetailPayload) {
     const res = await axiosJWT.put(`/product-detail/update`, data);
     return res.data;

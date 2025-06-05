@@ -26,6 +26,8 @@ namespace Application.MyBooth.Commands.Restore
 
             findBooth.is_deleted = false;
             var data = context.Booths.Update(findBooth);
+            await context.SaveChangesAsync(cancellationToken);
+
             return mapper.Map<BoothDto>(data.Entity);
         }
     }

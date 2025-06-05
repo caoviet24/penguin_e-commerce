@@ -47,10 +47,7 @@ namespace Infrastructure.data.Interceptor
                     {
                         if (entry.State == EntityState.Added)
                         {
-                            if (string.IsNullOrEmpty(baseEntity.Id))
-                            {
-                                baseEntity.Id = Guid.NewGuid().ToString();
-                            }
+                            baseEntity.Id = Guid.NewGuid().ToString();
                             baseEntity.created_by = _user.getCurrentUser();
                             baseEntity.created_at = DateTime.UtcNow;
                         }
@@ -65,11 +62,7 @@ namespace Infrastructure.data.Interceptor
                 {
                     if (entry.State == EntityState.Added)
                     {
-                        // Generate Id if it's null or empty
-                        if (string.IsNullOrEmpty(entry.Entity.Id))
-                        {
-                            entry.Entity.Id = Guid.NewGuid().ToString();
-                        }
+                        entry.Entity.Id = Guid.NewGuid().ToString();
                         entry.Entity.created_by = _user.getCurrentUser();
                         entry.Entity.created_at = DateTime.UtcNow;
                     }

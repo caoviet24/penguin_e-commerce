@@ -1,4 +1,5 @@
-import { Button } from '@mui/material';
+
+import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 export default function NotFound() {
@@ -11,8 +12,10 @@ export default function NotFound() {
                     The page you are looking for doesn&apos;t exist or has been moved.
                 </p>
             </div>
-            <Button>
-                <Link href="/">Go Back Home</Link>
+            <Button asChild variant="outline" className="w-fit">
+                <Link href="/" passHref>
+                    Go Back Home
+                </Link>
             </Button>
         </div>
     );

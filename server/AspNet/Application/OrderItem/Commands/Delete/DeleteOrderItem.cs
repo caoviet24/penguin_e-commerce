@@ -31,6 +31,7 @@ namespace Application.OrderItem.Commands.Delete
             }
 
             context.OrderItems.Remove(orderItem);
+            await context.SaveChangesAsync(cancellationToken);
 
             return mapper.Map<OrderItemDto>(orderItem);
         }

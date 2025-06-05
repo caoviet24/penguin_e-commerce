@@ -1,4 +1,6 @@
+"use client";
 import React, { useEffect, useState } from "react";
+
 
 export default function AnimatedNumber({ count }: { count: number }) {
     const [_count, setCount] = useState(count); // Đồng bộ ban đầu

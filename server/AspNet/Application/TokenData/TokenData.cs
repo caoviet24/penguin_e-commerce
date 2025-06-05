@@ -33,9 +33,7 @@ namespace Application.TokenData
                     created_by = account.Id,
                     last_updated = DateTime.UtcNow,
                     updated_by = account.Id
-                }
-            );
-            // await context.SaveChangesAsync(cancellationToken: default);
+                }, cancellationToken: default);
             
 
             return new TokenDto()

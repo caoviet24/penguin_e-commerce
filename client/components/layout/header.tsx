@@ -1,5 +1,4 @@
 'use client';
-
 import { BiSearchAlt2 } from 'react-icons/bi';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -13,7 +12,6 @@ import { useRouter } from 'next/navigation';
 import { productService } from '@/services/product.service';
 import { useQuery } from '@tanstack/react-query';
 import { IOrderItem, IProduct } from '@/types';
-import { Avatar } from '@mui/material';
 import { useUser } from '@/hooks/useAuth';
 import { IoNotificationsOutline } from 'react-icons/io5';
 import NotifyDrawer from '../common/NotifyDrawer';
@@ -38,13 +36,14 @@ export default function Header() {
         data: ProductByNameData,
         refetch: refetchByName,
     } = useQuery({
-        queryKey: ['products-by-name'],
+        queryKey: ['products-by-name', searchValue],
         queryFn: () =>
             productService.getAll({
                 page_number: 1,
                 page_size: 20,
                 search: searchValue,
-                status: 1,
+                is_deleted: false,
+                is_active: true,
             }),
         enabled: searchValue !== '',
     });
@@ -102,10 +101,12 @@ export default function Header() {
                                     }}
                                 >
                                     <p className="text-black text-sm  ">{item.product_desc}</p>
-                                    <Avatar
-                                        className="mr-4 !h-[30px] !w-[30px]"
-                                        src={item.list_product_detail[0].image}
-                                        alt={item.list_product_detail[0].product_name}
+                                    <Image
+                                        src={item.list_product_detail[0]?.image || '/images/no-image.png'}
+                                        alt={item.product_desc}
+                                        width={50}
+                                        height={50}
+                                        className="rounded"
                                     />
                                 </Link>
                             ))}

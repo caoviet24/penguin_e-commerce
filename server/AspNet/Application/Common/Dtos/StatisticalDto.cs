@@ -7,8 +7,8 @@ namespace Application.Common.Dtos
 {
     public class StatisticalDto
     {
-        public DateTime date { get; set; }
-        public double total { get; set; }
-        public int products_sold { get; set; }
+        public string previous { get; set; } = null!;
+        public double amount { get; set; }
+        public int product_sold { get; set; }
     }
 }

@@ -27,7 +27,10 @@ namespace Application.Product.Commands.Active
             }
 
             checkProduct.is_active = true;
-            return mapper.Map<ProductDto>(checkProduct);
+
+            var result = context.Products.Update(checkProduct);
+            await context.SaveChangesAsync(cancellationToken);
+            return mapper.Map<ProductDto>(result.Entity);
         }
     }
 }

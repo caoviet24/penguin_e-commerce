@@ -26,7 +26,7 @@ namespace Application.Booth .Commands.Open
 
             var result = context.Booths.Update(findBooth);
             await context.SaveChangesAsync(cancellationToken);
-
+            
             return mapper.Map<BoothDto>(result.Entity);
         }
     }

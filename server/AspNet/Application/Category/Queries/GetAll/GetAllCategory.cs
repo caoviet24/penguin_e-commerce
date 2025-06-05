@@ -9,17 +9,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Category.Queries.GetAll
 {
-    public class GetAllCategoryQuery : IRequest<ResponDataDto<List<CategoryDto>>>
+    public class GetAllCategoryQuery : IRequest<List<CategoryDto>>
     {
-        public int page_number { get; set; } = 1;
-        public int page_size { get; set; } = 10;
         public string? search { get; set; } = null;
         public bool? is_deleted { get; set; } = false;
     }
 
-    public class GetAllCategoryQueryHandler(IApplicationDbContext context, IMapper mapper) : IRequestHandler<GetAllCategoryQuery, ResponDataDto<List<CategoryDto>>>
+    public class GetAllCategoryQueryHandler(IApplicationDbContext context, IMapper mapper) : IRequestHandler<GetAllCategoryQuery, List<CategoryDto>>
     {
-        public async Task<ResponDataDto<List<CategoryDto>>> Handle(GetAllCategoryQuery request, CancellationToken cancellationToken)
+        public async Task<List<CategoryDto>> Handle(GetAllCategoryQuery request, CancellationToken cancellationToken)
         {
             var query = context.Categories.Include(c => c.ListCategoryDetail).AsQueryable();
 
@@ -35,8 +33,6 @@ namespace Application.Category.Queries.GetAll
 
             var totalRecord = await query.CountAsync(cancellationToken);
             var categories = await query
-                .Skip((request.page_number - 1) * request.page_size)
-                .Take(request.page_size)
                 .ToListAsync(cancellationToken);
 
             var categoryDtos = mapper.Map<List<CategoryDto>>(categories);
@@ -47,13 +43,7 @@ namespace Application.Category.Queries.GetAll
                     categories.FirstOrDefault(c => c.Id == category.Id)?.ListCategoryDetail);
             }
 
-            return new ResponDataDto<List<CategoryDto>>
-            {
-                total_record = totalRecord,
-                page_number = request.page_number,
-                page_size = request.page_size,
-                data = categoryDtos
-            };
+            return categoryDtos;
         }   
     }
 }

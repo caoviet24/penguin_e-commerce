@@ -1,56 +1,44 @@
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { FaLocationDot } from 'react-icons/fa6';
-import { Divider, Modal } from '@mui/material';
 import useLocationStorage from '@/hooks/useLocationStorage';
-import { BiCart, BiPlus } from 'react-icons/bi';
-import { locationVNService } from '@/services/locationVN.service';
+import { BiCart } from 'react-icons/bi';
 import { IOrderItem, IVoucher } from '@/types';
 import Image from 'next/image';
-import useHookMutation from '@/hooks/useHookMutation';
-import { billService } from '@/services/bill.service';
+import { billService, ICreateBillPayload } from '@/services/bill.service';
 import { useRouter } from 'next/navigation';
-import { toast, ToastContainer } from 'react-toastify';
-import { orderItemService } from '@/services/orderItem.service';
-import { useDispatch } from 'react-redux';
-import { setDeleteToCart } from '@/redux/slices/cart.slice';
+import { toast } from 'react-toastify';
 import { useMutation } from '@tanstack/react-query';
 import { IFormPaymentData, paymentService } from '@/services/payment.service';
+import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import DeliveryAddressTableDialog from './DeliveryAddressTableDialog';
+import { useUser } from '@/hooks/useAuth';
+import { Check } from 'lucide-react';
 
 export default function CheckOut() {
+    const { user } = useUser();
     const [info, setInfo] = React.useState({
-        full_name: '',
-        phone: '',
-        address: '',
+        full_name: user?.full_name || '',
+        phone: user?.phone || '',
+        address: user?.address || '',
     });
     const [openAlert, setOpenAlert] = React.useState(false);
 
     const shipFee = React.useState(Math.floor(Math.random() * (50 - 25 + 1) + 25) * 1000)[0];
     const [payActive, setPayActive] = React.useState({
         idx: 0,
-        method: 'Thanh toán khi nhận hàng',
+        method: 'COD',
     });
 
-    const [openAddressModal, setOpenAddressModal] = React.useState(false);
-    const [openNewAddressModal, setOpenNewAddressModal] = React.useState(false);
-    const [idxAddress, setIdxAddress] = React.useState(0);
+    const [openAddressDialog, setOpenAddressDialog] = React.useState(false);
 
     const router = useRouter();
-    const dispatch = useDispatch();
-
-    const {
-        storedValue: storedValueLocation,
-        setValue: setValueLocation,
-        // removeValue is omitted as it's not used
-    } = useLocationStorage({
-        key: 'location',
-        initialValue: [],
-    });
 
     const {
         storedValue: storedValueTempBill,
-        // setValue is omitted as it's not used
+        setValue: setValueTempBill,
         removeValue: removeValueTempBill,
     } = useLocationStorage({
         key: 'temp-bill',
@@ -61,106 +49,6 @@ export default function CheckOut() {
         key: 'info-shipping',
         initialValue: info,
     });
-
-    const [cities, setCities] = React.useState<{ code: string; name: string }[]>([]);
-    const [districts, setDistricts] = React.useState<{ province_code: string; code: string; name: string }[]>([]);
-    const [wards, setWards] = React.useState<{ district_code: string; code: string; name: string }[]>([]);
-
-    useEffect(() => {
-        async function a() {
-            const data = await locationVNService.getCities();
-            if (data) {
-                setCities(data);
-            }
-        }
-        a();
-    }, []);
-
-    const handleOnChangeCity = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const cityId = e.target.value;
-
-        const city = cities.find((city) => city.code == cityId);
-        setInfo({
-            ...info,
-            address: `${city?.name}, `,
-        });
-
-        const data = await locationVNService.getDistricts();
-        if (data) {
-            setDistricts(data.filter((district: { province_code: string }) => district.province_code == cityId));
-        }
-    };
-
-    const handleOnChangeDistrict = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const data = await locationVNService.getWards();
-        if (data) {
-            setWards(data.filter((ward: { district_code: string }) => ward.district_code == e.target.value));
-            const district = districts.find((district) => district.code == e.target.value);
-            setInfo({
-                ...info,
-                address: `${info.address} ${district?.name}, `,
-            });
-        }
-    };
-
-    const handleOnChangeWard = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const ward = wards.find((ward) => ward.code == e.target.value);
-        setInfo({
-            ...info,
-            address: `${info.address} ${ward?.name}, `,
-        });
-    };
-
-    const handleOnChangeNewAddress = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        setInfo((prev) => {
-            return {
-                ...prev,
-                [e.target.name]: e.target.value,
-            };
-        });
-    };
-
-    const handleGetCurrentLocation = async () => {
-        const response = await locationVNService.getCurrentLocation();
-        const { county, state, suburb } = response as {
-            county: string;
-            state: string;
-            suburb: string;
-            townm?: string;
-            city?: string;
-        };
-
-        setInfo({
-            full_name: '',
-            phone: '',
-            address: `${state || ''}, ${county || ''}, ${suburb || ''}`,
-        });
-    };
-
-    interface IAddress {
-        full_name: string;
-        phone: string;
-        address: string;
-    }
-
-    const handleDeleteAddress = (address: IAddress) => {
-        const idx = storedValueLocation.findIndex(
-            (item: IAddress) =>
-                item.full_name === address.full_name &&
-                item.phone === address.phone &&
-                item.address === address.address,
-        );
-
-        if (idx !== -1) {
-            storedValueLocation.splice(idx, 1);
-            setValueLocation(storedValueLocation);
-        }
-    };
-
-    const handleConfirmAddress = () => {
-        setInfo(storedValueLocation[idxAddress]);
-        setOpenAddressModal(false);
-    };
 
     const totalBill = useMemo(() => {
         return storedValueTempBill.list_voucher?.reduce((total: number, voucher: IVoucher) => {
@@ -175,23 +63,18 @@ export default function CheckOut() {
         }, storedValueTempBill.total);
     }, [storedValueTempBill, shipFee]);
 
-    const createBillMutation = useHookMutation((data) => {
-        return billService.createBill(data);
+    const createBillMutation = useMutation({
+        mutationKey: ['createBill'],
+        mutationFn: (data: ICreateBillPayload) => billService.create(data),
     });
 
-    const deleteOrderItemMutation = useHookMutation((id: string) => {
-        return orderItemService.deleteOrderItem(id);
-    });
-
-
-    const paymentMutation = useMutation({
+    const createPaymentMutation = useMutation({
         mutationKey: ['createPayment'],
         mutationFn: (data: IFormPaymentData) => paymentService.create(data),
-    })
-
+    });
 
     const handleCreateBill = () => {
-        if (!info) {
+        if (!info.address || !info.full_name || !info.phone) {
             toast.error('Vui lòng chọn địa chỉ giao hàng!', {
                 position: 'top-right',
                 autoClose: 3000,
@@ -217,20 +100,18 @@ export default function CheckOut() {
             return;
         }
 
-        if (payActive.idx === 1 && payActive.method.includes('Thanh toán qua ngân hàng')) {
+        if (payActive.idx === 1 && payActive.method.includes('BANK TRANSFER')) {
             setOpenAlert(true);
             return;
         }
 
-        const { seller_id, list_bill_detail, list_voucher } = storedValueTempBill;
+        const { seller_id, list_bill_detail, list_voucher, address_delivery_id, list_order_item } = storedValueTempBill;
         createBillMutation.mutate(
             {
                 seller_id,
-                total: totalBill,
+                total_bill: totalBill,
                 pay_method: payActive.method,
-                name_receiver: info.full_name,
-                phone_receiver: info.phone,
-                address_receiver: info.address,
+                address_delivery_id,
                 list_bill_detail: list_bill_detail.map((item: IOrderItem) => ({
                     product_detail_id: item.product_detail_id,
                     quantity: item.quantity,
@@ -240,37 +121,12 @@ export default function CheckOut() {
                 list_voucher: list_voucher.map((voucher: IVoucher) => ({
                     voucher_id: voucher.id,
                 })),
+                list_order_item: list_order_item,
             },
             {
                 onSuccess: async () => {
-                    await deleteOrderItemMutation.mutate(
-                        storedValueTempBill.list_bill_detail.map((item: IOrderItem) => item.id),
-                        {
-                            onSuccess: () => {
-                                storedValueTempBill.list_bill_detail.forEach((item: IOrderItem) => {
-                                    dispatch(
-                                        setDeleteToCart({
-                                            id: item.product_detail_id,
-                                        }),
-                                    );
-                                });
-
-                                router.push(`/purchase`);
-                                removeValueTempBill();
-                            },
-                            onError: () => {
-                                toast.error('Đã có lỗi xảy ra!', {
-                                    position: 'top-right',
-                                    autoClose: 3000,
-                                    hideProgressBar: false,
-                                    closeOnClick: true,
-                                    pauseOnHover: true,
-                                    draggable: true,
-                                    progress: 0,
-                                });
-                            },
-                        },
-                    );
+                    removeValueTempBill();
+                    router.push('/purchase');
                 },
                 onError: () => {
                     toast.error('Đã có lỗi xảy ra!', {
@@ -287,32 +143,41 @@ export default function CheckOut() {
         );
     };
 
-
     const handlePayBank = async () => {
         setValueInfoShipping(info);
 
-        const formData: IFormPaymetData = {
-            amount: parseInt(totalBill) || 0,
-            description: `Hóa đơn ${Math.floor(Math.random() * 100000)}`,
-            items: storedValueTempBill.list_bill_detail.map((item: IOrderItem) => ({
-                name: item.product_detail.product_name,
-                // price:
-                //     item.product_detail.promotional_price > 0
-                //         ? parseInt(item.product_detail.promotional_price.toString())
-                //         : parseInt(item.product_detail.sale_price.toString()),
-                price: 100000,
-                quantity: item.quantity,
-            })),
-            returnUrl: process.env.NEXT_PUBLIC_RETURN_PAYMENT_URL || '',
-            cancelUrl: process.env.NEXT_PUBLIC_CANCEL_PAYMENT_URL || '',
-        };
+        createPaymentMutation.mutate(
+            {
+                amount: 2000,
+                description: `Hóa đơn ${Math.floor(Math.random() * 100000)}`,
+                items: storedValueTempBill.list_bill_detail.map((item: IOrderItem) => ({
+                    name: item.product_detail.product_name,
+                    price:
+                        item.product_detail.promotional_price > 0
+                            ? item.product_detail.promotional_price
+                            : item.product_detail.sale_price,
 
-        paymentMutation.mutate(formData, {
-            onSuccess: (data) => {
-                if (data) {
-                    router.push(data.checkoutUrl);
-                } else {
-                    toast.error('Không thể tạo liên kết thanh toán!', {
+                    quantity: item.quantity,
+                })),
+            },
+            {
+                onSuccess: (data) => {
+                    if (data) {
+                        router.push(data.checkoutUrl);
+                    } else {
+                        toast.error('Không thể tạo liên kết thanh toán!', {
+                            position: 'top-right',
+                            autoClose: 3000,
+                            hideProgressBar: false,
+                            closeOnClick: true,
+                            pauseOnHover: true,
+                            draggable: true,
+                            progress: 0,
+                        });
+                    }
+                },
+                onError: () => {
+                    toast.error('Đã có lỗi xảy ra khi tạo liên kết thanh toán!', {
                         position: 'top-right',
                         autoClose: 3000,
                         hideProgressBar: false,
@@ -321,21 +186,9 @@ export default function CheckOut() {
                         draggable: true,
                         progress: 0,
                     });
-                }
+                },
             },
-            onError: () => {
-                toast.error('Đã có lỗi xảy ra khi tạo liên kết thanh toán!', {
-                    position: 'top-right',
-                    autoClose: 3000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    progress: 0,
-                });
-            },
-        })
-
+        );
     };
 
     return (
@@ -363,7 +216,7 @@ export default function CheckOut() {
                             <p className="font-medium text-lg">{info.address}</p>
                         </div>
                         <button
-                            onClick={() => setOpenAddressModal(true)}
+                            onClick={() => setOpenAddressDialog(true)}
                             className="mt-3 flex items-center gap-1 text-purple-600 hover:text-purple-800 transition-colors font-medium"
                         >
                             <span>Thay đổi địa chỉ</span>
@@ -459,7 +312,20 @@ export default function CheckOut() {
                     <div className="mb-6">
                         <h3 className="text-lg font-bold mb-4">Phương thức thanh toán</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            {['Thanh toán khi nhận hàng', 'Thanh toán qua ngân hàng', 'Pengin Wallet'].map((p, idx) => (
+                            {[
+                                {
+                                    name: 'Thanh toán khi nhận hàng',
+                                    method: 'COD',
+                                },
+                                {
+                                    name: 'Thanh toán qua ngân hàng',
+                                    method: 'BANK TRANSFER',
+                                },
+                                {
+                                    name: 'Pengin Wallet',
+                                    method: 'WALLET',
+                                },
+                            ].map((p, idx) => (
                                 <button
                                     key={idx}
                                     className={`flex items-center justify-center gap-2 border border-solid px-4 py-3 rounded-md relative transition-all ${
@@ -467,23 +333,12 @@ export default function CheckOut() {
                                             ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
                                             : 'border-gray-300 text-gray-700 hover:border-purple-300 hover:bg-purple-50/30'
                                     }`}
-                                    onClick={() => setPayActive({ idx: idx, method: p })}
+                                    onClick={() => setPayActive({ idx: idx, method: p.method })}
                                 >
-                                    <span className="font-medium">{p}</span>
+                                    <span className="font-medium">{p.name}</span>
                                     {payActive.idx === idx && (
                                         <div className="absolute right-3 flex items-center justify-center w-5 h-5 bg-purple-600 rounded-full">
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                viewBox="0 0 24 24"
-                                                fill="white"
-                                                className="w-3 h-3"
-                                            >
-                                                <path
-                                                    fillRule="evenodd"
-                                                    d="M19.916 4.626a.75.75 0 01.208 1.04l-9 13.5a.75.75 0 01-1.154.114l-6-6a.75.75 0 011.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 011.04-.208z"
-                                                    clipRule="evenodd"
-                                                />
-                                            </svg>
+                                            <Check className="text-white" />
                                         </div>
                                     )}
                                 </button>
@@ -555,242 +410,35 @@ export default function CheckOut() {
                 </div>
             </div>
 
-            <Modal open={openAddressModal} className="flex items-center justify-center">
-                <div className="bg-white p-6 w-full max-w-[600px] rounded-lg shadow-xl">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-xl font-bold">Địa chỉ của tôi</h3>
-                        <button
-                            onClick={() => setOpenAddressModal(false)}
-                            className="text-gray-500 hover:text-gray-700 transition-colors"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth={2}
-                                stroke="currentColor"
-                                className="w-6 h-6"
-                            >
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                    <Divider />
+            <DeliveryAddressTableDialog
+                open={openAddressDialog}
+                onOpenChange={setOpenAddressDialog}
+                userId={user?.id || ''}
+                onSelect={(address) => {
+                    setOpenAddressDialog(false);
+                    setInfo({
+                        full_name: address.full_name,
+                        phone: address.phone,
+                        address: address.address,
+                    });
+                    setValueTempBill({
+                        ...storedValueTempBill,
+                        address_delivery_id: address.id,
+                    });
+                }}
+                selectedAddress={{
+                    full_name: info.full_name,
+                    phone: info.phone,
+                    address: info.address,
+                }}
+            />
 
-                    <div className="mt-4 max-h-[300px] overflow-y-auto">
-                        {storedValueLocation.length > 0 ? (
-                            <div className="space-y-3">
-                                {storedValueLocation.map((address: IAddress, index: number) => (
-                                    <div
-                                        key={index}
-                                        className={`flex items-start gap-3 p-3 border rounded-lg transition-colors ${
-                                            idxAddress === index
-                                                ? 'border-purple-500 bg-purple-50'
-                                                : 'border-gray-200 hover:bg-gray-50'
-                                        }`}
-                                        onClick={() => setIdxAddress(index)}
-                                    >
-                                        <input
-                                            type="radio"
-                                            className="w-4 h-4 mt-1 cursor-pointer border-2 border-purple-500 text-purple-600 focus:ring-purple-500"
-                                            name="address"
-                                            value={index}
-                                            checked={idxAddress === index}
-                                            onChange={() => setIdxAddress(index)}
-                                        />
-                                        <div className="flex-1">
-                                            <div className="flex flex-wrap gap-x-2 mb-1">
-                                                <p className="font-medium">{address.full_name}</p>
-                                                <p className="text-gray-600">|</p>
-                                                <p className="text-gray-600">{address.phone}</p>
-                                            </div>
-                                            <p className="text-gray-600 text-sm">{address.address}</p>
-                                        </div>
-                                        <div className="flex gap-3">
-                                            <button className="text-purple-600 text-sm hover:text-purple-800">
-                                                Cập nhật
-                                            </button>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteAddress(address);
-                                                }}
-                                                className="text-red-500 text-sm hover:text-red-700"
-                                            >
-                                                Xóa
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="py-8 text-center text-gray-500">
-                                <p>Bạn chưa có địa chỉ nào. Hãy thêm địa chỉ mới.</p>
-                            </div>
-                        )}
-
-                        <button
-                            onClick={() => {
-                                setOpenNewAddressModal(true);
-                                setOpenAddressModal(false);
-                            }}
-                            className="flex items-center justify-center gap-2 w-full mt-4 border border-dashed border-purple-400 bg-purple-50 hover:bg-purple-100 rounded-lg px-4 py-3 text-purple-700 font-medium transition-colors"
-                        >
-                            <BiPlus size={20} />
-                            Thêm địa chỉ mới
-                        </button>
-                    </div>
-
-                    <div className="flex justify-end mt-6 gap-3">
-                        <button
-                            onClick={() => setOpenAddressModal(false)}
-                            className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                            Đóng
-                        </button>
-                        <button
-                            onClick={handleConfirmAddress}
-                            className="px-6 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors"
-                        >
-                            Xác nhận
-                        </button>
-                    </div>
-                </div>
-            </Modal>
-
-            <Modal open={openNewAddressModal} className="flex items-center justify-center">
-                <div className="bg-white p-6 w-full max-w-[600px] rounded-lg shadow-xl">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-xl font-bold">Thêm địa chỉ mới</h3>
-                        <button
-                            onClick={() => setOpenNewAddressModal(false)}
-                            className="text-gray-500 hover:text-gray-700 transition-colors"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth={2}
-                                stroke="currentColor"
-                                className="w-6 h-6"
-                            >
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                    <Divider />
-
-                    <div className="mt-4 space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Tên người nhận</label>
-                            <input
-                                onChange={handleOnChangeNewAddress}
-                                name="full_name"
-                                value={info.full_name}
-                                className="w-full border border-gray-300 py-2.5 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-                                placeholder="Nhập tên người nhận"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
-                            <input
-                                value={info.phone}
-                                onChange={handleOnChangeNewAddress}
-                                name="phone"
-                                className="w-full border border-gray-300 py-2.5 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-                                placeholder="Nhập số điện thoại"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>
-                            <div className="grid grid-cols-3 gap-3 mb-3">
-                                <div>
-                                    <select
-                                        onChange={handleOnChangeCity}
-                                        className="w-full border border-gray-300 py-2.5 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-                                    >
-                                        <option value="">Chọn tỉnh/thành phố</option>
-                                        {cities.map((city) => (
-                                            <option key={city.code} value={city.code}>
-                                                {city.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <select
-                                        onChange={handleOnChangeDistrict}
-                                        className="w-full border border-gray-300 py-2.5 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-                                    >
-                                        <option value="">Chọn quận/huyện</option>
-                                        {districts &&
-                                            districts.map((district) => (
-                                                <option key={district.code} value={district.code}>
-                                                    {district.name}
-                                                </option>
-                                            ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <select
-                                        onChange={handleOnChangeWard}
-                                        className="w-full border border-gray-300 py-2.5 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-                                    >
-                                        <option value="">Chọn phường/xã</option>
-                                        {wards &&
-                                            wards.map((ward) => (
-                                                <option key={ward.code} value={ward.code}>
-                                                    {ward.name}
-                                                </option>
-                                            ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <textarea
-                                cols={2}
-                                rows={3}
-                                onChange={handleOnChangeNewAddress}
-                                name="address"
-                                className="w-full border border-gray-300 py-2.5 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-                                placeholder="Địa chỉ cụ thể (số nhà, đường, tòa nhà...)"
-                                value={info.address}
-                            />
-                        </div>
-                    </div>
-
-                    <button
-                        onClick={handleGetCurrentLocation}
-                        className="flex items-center gap-2 mt-4 border border-gray-300 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                        <FaLocationDot size={18} className="text-purple-600" />
-                        <span>Lấy vị trí hiện tại của tôi</span>
-                    </button>
-
-                    <div className="flex justify-end mt-6 gap-3">
-                        <button
-                            onClick={() => setOpenNewAddressModal(false)}
-                            className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                            Đóng
-                        </button>
-                        <button
-                            onClick={() => {
-                                setValueLocation([...storedValueLocation, info]);
-                                setOpenNewAddressModal(false);
-                            }}
-                            className="px-6 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors"
-                        >
-                            Xác nhận
-                        </button>
-                    </div>
-                </div>
-            </Modal>
-
-            <Modal open={openAlert} className="flex items-center justify-center">
-                <div>
+            <Dialog open={openAlert} onOpenChange={setOpenAlert}>
+                <DialogTitle>
+                  
+                        <span className="text-lg font-bold">Xác nhận thanh toán</span>
+                </DialogTitle>
+                <DialogContent>
                     <div className="bg-white p-6 w-full max-w-[600px] rounded-lg shadow-xl">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-xl font-bold">Thông báo</h3>
@@ -810,7 +458,7 @@ export default function CheckOut() {
                                 </svg>
                             </button>
                         </div>
-                        <Divider />
+                        <Separator />
 
                         <div className="mt-4 text-center">
                             <p className="text-lg font-medium text-gray-700">
@@ -823,7 +471,7 @@ export default function CheckOut() {
                                 onClick={handlePayBank}
                                 className="px-6 py-2 rounded-lg border bg-blue-500 text-white border-gray-300  hover:bg-blue-300 transition-colors"
                             >
-                                {isGetUrlPayPending ? 'Đang xử lý...' : 'Xác nhận'}
+                                {createPaymentMutation.isPending ? 'Đang xử lý...' : 'Xác nhận'}
                             </button>
                             <button
                                 onClick={() => setOpenAlert(false)}
@@ -833,10 +481,8 @@ export default function CheckOut() {
                             </button>
                         </div>
                     </div>
-                </div>
-            </Modal>
-
-            <ToastContainer />
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

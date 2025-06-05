@@ -26,8 +26,9 @@ namespace Application.ProductDetail.Commands.DeleteSoft
                 throw new NotFoundException("ProductDetail not found.");
             }
             checkExitProductDetail.is_deleted = true;
-            context.ProductDetails.Update(checkExitProductDetail);
-            return mapper.Map<ProductDetailDto>(checkExitProductDetail);
+            var result = context.ProductDetails.Update(checkExitProductDetail);
+            await context.SaveChangesAsync(cancellationToken);
+            return mapper.Map<ProductDetailDto>(result.Entity);
         }
     }
 

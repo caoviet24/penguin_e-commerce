@@ -12,6 +12,25 @@ Penguin E-Commerce is a full-stack application that includes:
 - SQL Server database for data storage
 - Docker containerization for easy deployment
 
+## Live Demo
+
+Access the live demo at: 
+
+### Demo Accounts
+Use the following accounts to test different roles in the system:
+
+#### Admin Account
+- Username: admin
+- Password: admin123
+
+#### Seller Account
+- Username: seller
+- Password: seller123
+
+#### User Account
+- Username: user
+- Password: user123
+
 ## Architecture
 
 The project follows a microservices architecture with the following components:

@@ -14,17 +14,17 @@ namespace Application.ProductReview.Commands.Create
 {
     public class CreateProductReviewCommand : IRequest<ProductReviewDto>
     {
+        public string bill_id { get; set; } = null!;
         public string comment { get; set; } = null!;
         public int rating { get; set; }
-        public string product_detail_id { get; set; } = null!;
+        public string product_id { get; set; } = null!;
         public List<CreateReviewMediaCommand> review_medias { get; set; } = new List<CreateReviewMediaCommand>();
     }
 
     public class CreateReviewMediaCommand : IRequest<ReviewMediaDto>
     {
         public string media_url { get; set; } = null!;
-        public string media_type { get; set; } = null!; // e.g., "image", "video"
-        public string review_id { get; set; } = null!;
+        public string media_type { get; set; } = null!; 
     }
 
     public class CreateProductReviewHandler(IApplicationDbContext context, IMapper mapper) : IRequestHandler<CreateProductReviewCommand, ProductReviewDto>
@@ -37,7 +37,9 @@ namespace Application.ProductReview.Commands.Create
             {
                 var newReview = mapper.Map<ProductReviewEntity>(request);
 
+                newReview.Id = Guid.NewGuid().ToString();   
                 var result = await context.ProductReviews.AddAsync(newReview, cancellationToken);
+                
                 if (result == null)
                 {
                     throw new Exception("Failed to create product review.");
@@ -57,6 +59,16 @@ namespace Application.ProductReview.Commands.Create
                     await context.SaveChangesAsync(cancellationToken);
                     newReview.ReviewMedias.Add(reviewMedia);
                 }
+
+                var checkExitBill = await context.SaleBills.FindAsync(request.bill_id, cancellationToken);
+                if (checkExitBill == null)
+                {
+                    throw new Exception("Bill not found.");
+                }
+
+                checkExitBill.is_evaluated = true;
+                context.SaleBills.Update(checkExitBill);
+                await context.SaveChangesAsync(cancellationToken);
 
                 await transaction.CommitAsync(cancellationToken);
 

@@ -26,6 +26,8 @@ namespace Application.MyBooth.Commands.Ban
 
             findBooth.is_banned = true;
             var data = context.Booths.Update(findBooth);
+            await context.SaveChangesAsync(cancellationToken);
+
             return mapper.Map<BoothDto>(data.Entity);
         }
     }

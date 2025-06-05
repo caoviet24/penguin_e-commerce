@@ -1,291 +1,404 @@
 'use client';
-import EvaluateForm from '@/components/EvaluateForm/EvaluateForm';
+
 import { useUser } from '@/hooks/useAuth';
-import useHookMutation from '@/hooks/useHookMutation';
 import { billService } from '@/services/bill.service';
-import { ISaleBill, ResponseData } from '@/types';
-import { Divider, Modal } from '@mui/material';
-import { useQueries } from '@tanstack/react-query';
+import { BillStatus } from '@/types/enum';
+import { ISaleBill } from '@/types';
+import { useQueries, useMutation } from '@tanstack/react-query';
 import Image from 'next/image';
 import Link from 'next/link';
-import React, { useEffect } from 'react';
-import { BiSearchAlt2 } from 'react-icons/bi';
-import { CiShop } from 'react-icons/ci';
-import { FaFacebookMessenger } from 'react-icons/fa';
-import { toast, ToastContainer } from 'react-toastify';
+import { useEffect, useState, useMemo } from 'react';
+import { toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+
+
+import {
+    Search,
+    ShoppingBag,
+    MessageCircle,
+    Store,
+    Package,
+    CheckCircle,
+    XCircle,
+    RefreshCw,
+    Star,
+    ArchiveRestore,
+} from 'lucide-react';
+import EvaluateForm from '@/app/(main)/purchase/EvaluateForm';
+import BackBillDForm from './FormBackBill';
 
 export default function Purchase() {
     const { user } = useUser();
-    const [tabActice, setTabActive] = React.useState(0);
-    const [tabData, setTabData] = React.useState<ResponseData<ISaleBill>>();
-    const [billSelected, setBillSelected] = React.useState<ISaleBill>();
+    const [activeTab, setActiveTab] = useState<string>('pending');
+    const [tabData, setTabData] = useState<ISaleBill[]>([]);
+    const [billSelected, setBillSelected] = useState<ISaleBill | undefined>();
+    const [searchQuery, setSearchQuery] = useState('');
+    const [openEvaluateForm, setOpenEvaluateForm] = useState(false);
+    const [openBackBillForm, setOpenBackBillForm] = useState(false);
+    const statusMap = useMemo(
+        () => ({
+            pending: BillStatus.PENDING,
+            shipping: BillStatus.SHIPPING,
+            delivered: BillStatus.DELIVERED,
+            userReturnPending: BillStatus.USER_RETURN_PENDING,
+            userCancelled: BillStatus.USER_CANCELLED,
+            sellerCancelled: BillStatus.SELLER_CANCELLED,
+            sellerReturnAccepted: BillStatus.SELLER_RETURN_ACCEPTED,
+            sellerReturnRejected: BillStatus.SELLER_RETURN_REJECTED,
+        }),
+        [],
+    );
+
     const statusMessages = {
-        0: 'Người gửi đang chuẩn bị hàng',
-        1: 'Đang giao hàng',
-        2: 'Đơn hàng giao thành công',
-        3: 'Đơn hàng đã hủy',
-        4: 'Đơn hàng bị hủy',
+        [BillStatus.PENDING]: 'Người gửi đang chuẩn bị hàng',
+        [BillStatus.SHIPPING]: 'Đang giao hàng',
+        [BillStatus.DELIVERED]: 'Đơn hàng giao thành công',
+        [BillStatus.USER_CANCELLED]: 'Đơn hàng đã bị hủy',
+        [BillStatus.USER_RETURN_PENDING]: 'Chờ người bán xác nhận hoàn hàng',
+        [BillStatus.SELLER_CANCELLED]: 'Đơn hàng đã bị người bán hủy',
+        [BillStatus.SELLER_RETURN_ACCEPTED]: 'Đơn hoàn hàng đã được chấp nhận',
+        [BillStatus.SELLER_RETURN_REJECTED]: 'Đơn hoàn hàng bị từ chối',
     };
-    const handleChangeTab = (idx: number) => {
-        setTabActive(idx);
+
+    const statusColors = {
+        [BillStatus.PENDING]: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100',
+        [BillStatus.SHIPPING]: 'bg-blue-100 text-blue-800 hover:bg-blue-100',
+        [BillStatus.DELIVERED]: 'bg-green-100 text-green-800 hover:bg-green-100',
+        [BillStatus.USER_CANCELLED]: 'bg-red-100 text-red-800 hover:bg-red-100',
+        [BillStatus.USER_RETURN_PENDING]: 'bg-orange-100 text-orange-800 hover:bg-orange-100',
+        [BillStatus.SELLER_RETURN_ACCEPTED]: 'bg-green-100 text-green-800 hover:bg-green-100',
+        [BillStatus.SELLER_RETURN_REJECTED]: 'bg-gray-100 text-gray-800 hover:bg-gray-100',
     };
+
 
     const resultBillData = useQueries({
-        queries: [
-            {
-                queryKey: ['bill-wait', user?.id, tabActice === 0],
-                queryFn: () =>
-                    billService.getStatusWaitByBuyerId({
-                        buyer_id: user?.id,
-                        status: tabActice,
-                        page_number: 1,
-                        page_size: 10,
-                    }),
-                enabled: tabActice === 0,
-            },
-            {
-                queryKey: ['bill-transport', user?.id, tabActice === 1],
-                queryFn: () =>
-                    billService.getStatusWaitByBuyerId({
-                        buyer_id: user?.id,
-                        status: tabActice,
-                        page_number: 1,
-                        page_size: 10,
-                    }),
-                enabled: tabActice === 1,
-            },
-            {
-                queryKey: ['bill-success', user?.id, tabActice === 2],
-                queryFn: () =>
-                    billService.getStatusWaitByBuyerId({
-                        buyer_id: user?.id,
-                        status: tabActice,
-                        page_number: 1,
-                        page_size: 10,
-                    }),
-                enabled: tabActice === 2,
-            },
-            {
-                queryKey: ['bill-cancel', user?.id, tabActice === 3],
-                queryFn: () =>
-                    billService.getStatusWaitByBuyerId({
-                        buyer_id: user?.id,
-                        status: tabActice,
-                        page_number: 1,
-                        page_size: 10,
-                    }),
-                enabled: tabActice === 3,
-            },
-            {
-                queryKey: ['seller-cancel', user?.id, tabActice === 4],
-                queryFn: () =>
-                    billService.getStatusWaitByBuyerId({
-                        buyer_id: user?.id,
-                        status: tabActice,
-                        page_number: 1,
-                        page_size: 10,
-                    }),
-                enabled: tabActice === 4,
-            },
-        ],
+    
+        queries: Object.entries(statusMap).map(([tab, status]) => ({
+            queryKey: [`bill-${tab}`, user?.id, activeTab === tab],
+            queryFn: () =>
+                billService.getAllByBuyerId({
+                    buyer_id: user?.id || '',
+                    status: status,
+                }),
+            enabled: !!user?.id && activeTab === tab,
+        })),
     });
 
+    // Update tab data when active tab changes
     useEffect(() => {
-        if (resultBillData[tabActice].isSuccess) {
-            setTabData(resultBillData[tabActice].data);
+        const tabIndex = Object.keys(statusMap).indexOf(activeTab);
+        if (tabIndex >= 0 && resultBillData[tabIndex]?.isSuccess) {
+            setTabData(resultBillData[tabIndex].data || []);
         }
-    }, [resultBillData, tabActice]);
+    }, [resultBillData, activeTab, statusMap]);
 
-    const updateStatusBillMutation = useHookMutation((data: any) => billService.updateStatus(data));
-    const handleUpdateStatus = (status: number, bill_id: string) => {
-        updateStatusBillMutation.mutate(
-            {
-                status: status,
-                bill_id: bill_id,
-            },
-            {
-                onSuccess: () => {
-                    resultBillData[tabActice].refetch();
-                    toast.success('Cập nhật trạng thái đơn hàng thành công', {
-                        position: 'top-right',
-                        autoClose: 2000,
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        progress: undefined,
-                    });
-                },
-                onError: () => {
-                    toast.error('Cập nhật trạng thái đơn hàng thất bại', {
-                        position: 'top-right',
-                        autoClose: 2000,
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        progress: undefined,
-                    });
-                },
-            },
-        );
-    };
+    // Update bill status mutation
+    const updateStatusBillMutation = useMutation({
+        mutationFn: (data: { status: string; id: string }) => billService.updateStatus(data),
+        onSuccess: () => {
+            const tabIndex = Object.keys(statusMap).indexOf(activeTab);
+            resultBillData[tabIndex]?.refetch();
+            toast.success('Cập nhật trạng thái đơn hàng thành công', {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+        },
+        onError: () => {
+            toast.error('Cập nhật trạng thái đơn hàng thất bại', {
+                position: 'top-right',
+                autoClose: 2000,
+            });
+        },
+    });
 
-    const handleEvaluateSuccess = () => {
-        toast.success('Đánh giá thành công', {
-            position: 'top-right',
-            autoClose: 2000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
+    const handleUpdateStatus = (status: string, billId: string) => {
+        updateStatusBillMutation.mutate({
+            status,
+            id: billId,
         });
-        setBillSelected(undefined);
     };
+
+    const filteredBills = tabData.filter(
+        (bill) =>
+            bill.booth?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            bill.list_sale_bill_detail?.some((detail) =>
+                detail.product_detail?.product_name?.toLowerCase().includes(searchQuery.toLowerCase()),
+            ),
+    );
 
     return (
-        <div className="container my-10">
-            <div className="bg-white grid grid-cols-5 w-full mt-5">
-                {['Chờ lấy hàng', 'Vận chuyển', 'Hoàn thành', 'Đã Hủy', 'Bị hủy'].map((a, idx) => (
-                    <button
-                        key={idx}
-                        onClick={() => handleChangeTab(idx)}
-                        className={`py-2 text-gray-500 relative ${tabActice === idx && '!text-black'}`}
-                    >
-                        {a}
-                        {tabActice === idx && (
-                            <div className="absolute w-full h-[2px] bg-purple-500 bottom-0 left-0"></div>
-                        )}
-                    </button>
-                ))}
-            </div>
-            <div className="relative mt-2">
-                <input
-                    className="w-full bg-gray-100 text-gray-700 text-sm border border-gray-300 rounded-md pl-3 pr-28 py-2 transition duration-300 ease-in-out focus:outline-none focus:border-purple-500 hover:border-gray-400 shadow-sm focus:shadow-md"
-                    placeholder="Nhập từ khóa tìm kiếm...."
-                />
-                <button className="absolute top-1 right-1 flex items-center rounded bg-purple-600 py-1 px-2.5 border border-transparent text-center text-sm text-white transition-all shadow-sm hover:shadow-md focus:bg-purple-500 focus:shadow-none active:bg-purple-500 hover:bg-purple-500 disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none">
-                    <BiSearchAlt2 size={20} />
-                    <span className="ml-1">Tìm kiếm</span>
-                </button>
-            </div>
+        <div className="container py-8 space-y-6">
+            <h1 className="text-3xl font-bold tracking-tight">Đơn mua</h1>
 
-            <div>
-                {tabData &&
-                    tabData.data.length > 0 &&
-                    tabData.data.map((item: ISaleBill) => (
-                        <div key={item.id} className="bg-white p-3 mt-3">
-                            <div className="flex justify-between">
-                                <div className="flex items-center gap-2">
-                                    <CiShop size={30} />
-                                    <span className="text-lg capitalize">{item.booth.booth_name}</span>
-                                    <div className="flex gap-2">
-                                        <button className="bg-orange-200 text-orange-500 border border-solid border-orange-500 flex items-center gap-2 py-1 px-3">
-                                            <FaFacebookMessenger size={15} />
-                                            <span>Chat ngay</span>
-                                        </button>
-                                        <Link
-                                            href={`/shop/${item.booth.id}`}
-                                            className="flex items-center gap-2 border border-solid border-gray-200 py-1 px-3"
-                                        >
-                                            <CiShop size={20} />
-                                            <span>Xem shop</span>
-                                        </Link>
-                                    </div>
-                                </div>
+            <div className="flex flex-col space-y-4">
+                <div className="flex w-full items-center space-x-2">
+                    <div className="relative w-full">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Tìm kiếm theo tên shop, sản phẩm..."
+                            className="w-full pl-8"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                </div>
 
-                                <div className="flex items-center gap-2 mt-2 text-[#51A99C]">
-                                    <Image src="/images/freeship.avif" alt="freeship" width={24} height={24} />
-                                    <span>{statusMessages[item.status_bill as keyof typeof statusMessages]}</span>
-                                </div>
-                            </div>
+                <Tabs defaultValue="pending" value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="grid grid-cols-4 h-auto">
+                        <TabsTrigger value="pending" className="py-2">
+                            <ShoppingBag className="mr-2 h-4 w-4" />
+                            Chờ lấy hàng
+                        </TabsTrigger>
+                        <TabsTrigger value="userReturnPending" className="py-2">
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Chờ hoàn hàng
+                        </TabsTrigger>
+                        <TabsTrigger value="shipping" className="py-2">
+                            <Package className="mr-2 h-4 w-4" />
+                            Vận chuyển
+                        </TabsTrigger>
+                        <TabsTrigger value="delivered" className="py-2">
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Hoàn thành
+                        </TabsTrigger>
+                        <TabsTrigger value="sellerCancelled" className="py-2">
+                            <XCircle className="mr-2 h-4 w-4" />
+                            Đơn từ chối hủy
+                        </TabsTrigger>
+                        <TabsTrigger value="userCancelled" className="py-2">
+                            <XCircle className="mr-2 h-4 w-4" />
+                            Đã hủy
+                        </TabsTrigger>
+                        <TabsTrigger value="sellerReturnAccepted" className="py-2">
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Trả hàng thành công
+                        </TabsTrigger>
+                        <TabsTrigger value="sellerReturnRejected" className="py-2">
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Trả hàng thất bại
+                        </TabsTrigger>
+                    </TabsList>
 
-                            <Divider className="py-2" />
-                            {item.list_sale_bill_detail.map((b, idx) => (
-                                <div key={idx} className="flex justify-between items-center gap-2 py-2">
-                                    <div>
-                                        <Image
-                                            src={b.product_detail.image}
-                                            alt={b.product_detail.product_name}
-                                            width={70}
-                                            height={70}
-                                        />
-                                    </div>
-                                    <div className="flex flex-1 flex-col">
-                                        <p>{b.product_detail.product_name}</p>
-                                        <p>
-                                            Phân loại hàng: {b.size} - {b.color}
-                                        </p>
-                                        <p>x{b.quantity}</p>
-                                    </div>
-                                    <div>
-                                        {b.product_detail.promotional_price > 0 ? (
-                                            <div className="flex flex-row gap-2">
-                                                <p className="line-through opacity-60">
-                                                    {b.product_detail.sale_price.toLocaleString()}đ
-                                                </p>
-                                                <p className="text-red-500">
-                                                    {b.product_detail.promotional_price.toLocaleString()}đ
+                    {Object.keys(statusMap).map((tab) => (
+                        <TabsContent key={tab} value={tab} className="space-y-4 mt-4">
+                            {filteredBills.length > 0 ? (
+                                filteredBills.map((bill) => (
+                                    <Card key={bill.id} className="overflow-hidden">
+                                        <CardHeader className="p-4 pb-2">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center space-x-2">
+                                                    <Store className="h-5 w-5" />
+                                                    <CardTitle className="text-lg capitalize">
+                                                        {bill.booth?.name || 'Shop'}
+                                                    </CardTitle>
+                                                    <div className="flex space-x-2">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="border-orange-500 text-orange-500 hover:bg-orange-50"
+                                                        >
+                                                            <MessageCircle className="mr-2 h-4 w-4" />
+                                                            Chat ngay
+                                                        </Button>
+                                                        <Button asChild variant="outline" size="sm">
+                                                            <Link href={`/shop/${bill.booth?.id || '#'}`}>
+                                                                <Store className="mr-2 h-4 w-4" />
+                                                                Xem shop
+                                                            </Link>
+                                                        </Button>
+                                                    </div>
+                                                </div>
+
+                                                <Badge
+                                                    variant="outline"
+                                                    className={statusColors[bill.status as keyof typeof statusColors]}
+                                                >
+                                                    {statusMessages[bill.status as keyof typeof statusMessages]}
+                                                </Badge>
+                                            </div>
+                                        </CardHeader>
+
+                                        <Separator />
+
+                                        <CardContent className="p-0">
+                                            {bill.list_sale_bill_detail?.map((detail, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="flex items-center gap-4 p-4 border-b last:border-0"
+                                                >
+                                                    <div className="flex-shrink-0">
+                                                        <Image
+                                                            src={detail.product_detail?.image || ''}
+                                                            alt={detail.product_detail?.product_name || 'Product'}
+                                                            width={80}
+                                                            height={80}
+                                                            className="rounded-md object-cover"
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-medium line-clamp-2">
+                                                            {detail.product_detail?.product_name || 'Product'}
+                                                        </p>
+                                                        <p className="text-sm text-muted-foreground mt-1">
+                                                            Phân loại: {detail.size} - {detail.color}
+                                                        </p>
+                                                        <p className="text-sm mt-1">x{detail.quantity}</p>
+                                                    </div>
+
+                                                    <div className="text-right">
+                                                        {detail.product_detail?.promotional_price &&
+                                                        detail.product_detail.promotional_price > 0 ? (
+                                                            <div className="space-y-1">
+                                                                <p className="text-sm line-through text-muted-foreground">
+                                                                    {(
+                                                                        detail.product_detail?.sale_price || 0
+                                                                    ).toLocaleString()}
+                                                                    đ
+                                                                </p>
+                                                                <p className="font-medium text-red-600">
+                                                                    {(
+                                                                        detail.product_detail?.promotional_price || 0
+                                                                    ).toLocaleString()}
+                                                                    đ
+                                                                </p>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="font-medium">
+                                                                {(
+                                                                    detail.product_detail?.sale_price || 0
+                                                                ).toLocaleString()}
+                                                                đ
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </CardContent>
+
+                                        <CardFooter className="p-4 flex flex-col items-end space-y-4">
+                                            <div className="flex items-center">
+                                                <p className="text-sm font-medium mr-2">Tổng tiền:</p>
+                                                <p className="text-xl font-bold text-red-600">
+                                                    {bill.total_bill.toLocaleString()}đ
                                                 </p>
                                             </div>
-                                        ) : (
-                                            <p>{b.product_detail.sale_price.toLocaleString()}đ</p>
-                                        )}
-                                    </div>
+
+                                            <div className="flex items-center space-x-2">
+                                                <Button variant="outline" size="sm">
+                                                    Liên hệ người bán
+                                                </Button>
+
+                                                {bill.status === BillStatus.PENDING && (
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            handleUpdateStatus(BillStatus.USER_CANCELLED, bill.id)
+                                                        }
+                                                    >
+                                                        Hủy đơn hàng
+                                                    </Button>
+                                                )}
+
+                                                {bill.status === BillStatus.SHIPPING && (
+                                                    <Button
+                                                        variant="default"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            handleUpdateStatus(BillStatus.DELIVERED, bill.id)
+                                                        }
+                                                    >
+                                                        Đã nhận được hàng
+                                                    </Button>
+                                                )}
+
+                                                {bill.status === BillStatus.USER_RETURN_PENDING && (
+                                                    <Button
+                                                        variant="default"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setOpenBackBillForm(true);
+                                                            setBillSelected(bill);
+                                                        }}
+                                                    >
+                                                        Lý do hoàn hàng
+                                                    </Button>
+                                                )}
+
+                                                {bill.status === BillStatus.DELIVERED && (
+                                                    <div className="flex items-center space-x-2">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="ml-2 bg-orange-500 text-white"
+                                                            onClick={() => {
+                                                                setBillSelected(bill);
+                                                                setOpenBackBillForm(true);
+                                                            }}
+                                                        >
+                                                            <ArchiveRestore className="mr-2 h-4 w-4" />
+                                                            Trả hàng
+                                                        </Button>
+                                                        <Button
+                                                            variant="default"
+                                                            size="sm"
+                                                            disabled={bill.is_evaluated}
+                                                            onClick={() => {
+                                                                setBillSelected(bill);
+                                                                setOpenEvaluateForm(true);
+                                                            }}
+                                                        >
+                                                            <Star className="mr-2 h-4 w-4" />
+                                                            {bill.is_evaluated ? 'Đã đánh giá' : 'Đánh giá sản phẩm'}
+                                                        </Button>
+                                                    </div>
+                                                )}
+
+                                                {bill.status === BillStatus.DELIVERED && (
+                                                    <Button variant="default" size="sm">
+                                                        Mua lại
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </CardFooter>
+                                    </Card>
+                                ))
+                            ) : (
+                                <div className="flex flex-col items-center justify-center p-8 text-center">
+                                    <ShoppingBag className="h-12 w-12 text-muted-foreground mb-4" />
+                                    <h3 className="text-lg font-medium">Không có đơn hàng nào</h3>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                        Bạn chưa có đơn hàng nào trong mục này
+                                    </p>
+                                    <Button variant="outline" className="mt-4" asChild>
+                                        <Link href="/">Tiếp tục mua sắm</Link>
+                                    </Button>
                                 </div>
-                            ))}
-
-                            <Divider className="py-2" />
-
-                            <div className="flex justify-end items-center py-5 mt-2">
-                                <p>Tổng tiền:</p>
-                                <p className="text-3xl text-red-500">{item.total_bill.toLocaleString()}đ</p>
-                            </div>
-                            <div className="flex justify-end items-center gap-2 mt-2">
-                                <button className="bg-white font-medium border opacity-70 border-solid border-purple-500 px-4 py-[8px] rounded transition">
-                                    Liên hệ người bán
-                                </button>
-                                {item.status_bill === 0 && (
-                                    <button
-                                        onClick={() => handleUpdateStatus(3, item.id)}
-                                        className="bg-purple-500 text-white font-medium px-4 py-[9px] rounded transition "
-                                    >
-                                        Hủy đơn hàng
-                                    </button>
-                                )}
-                                {item.status_bill === 1 && (
-                                    <button
-                                        onClick={() => handleUpdateStatus(2, item.id)}
-                                        className="bg-purple-500 text-white font-medium px-4 py-[9px] rounded transition "
-                                    >
-                                        Đã nhận được hàng
-                                    </button>
-                                )}
-                                {item.status_bill === 2 && (
-                                    <button
-                                        onClick={() => setBillSelected(item)}
-                                        className="bg-purple-500 text-white font-medium px-4 py-[9px] rounded transition "
-                                    >
-                                        Đánh giá
-                                    </button>
-                                )}
-                                {item.status_bill === 3 && (
-                                    <button className="bg-purple-500 text-white font-medium px-4 py-[9px] rounded transition ">
-                                        Mua lại hàng
-                                    </button>
-                                )}
-                            </div>
-                        </div>
+                            )}
+                        </TabsContent>
                     ))}
+                </Tabs>
             </div>
-            <Modal
-                open={!!billSelected}
-                className="flex items-center justify-center"
-                onClose={() => setBillSelected(undefined)}
-            >
-                <div>{billSelected && <EvaluateForm bill={billSelected} onSuccess={handleEvaluateSuccess} />}</div>
-            </Modal>
+
+            {billSelected && (
+                <EvaluateForm bill={billSelected} open={openEvaluateForm} onOpenChange={setOpenEvaluateForm} />
+            )}
+            {billSelected && (
+                <BackBillDForm
+                    open={openBackBillForm}
+                    onOpenChange={setOpenBackBillForm}
+                    bill={billSelected}
+                />
+            )}
             <ToastContainer />
         </div>
     );

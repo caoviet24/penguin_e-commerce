@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { IBooth, ResponseData } from '@/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import ShopDialog from './shop-dialog';
-
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function ShopManagementPage() {
     const [pageNumber, setPageNumber] = useState<number>(1);
@@ -18,14 +19,17 @@ export default function ShopManagementPage() {
     const [showBanned, setShowBanned] = useState<boolean | undefined>(undefined);
     const [showActive, setShowActive] = useState<boolean | undefined>(undefined);
     const [showDeleted, setShowDeleted] = useState<boolean | undefined>(undefined);
-    
+
     // Dialog state
     const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [dialogMode, setDialogMode] = useState<
+        'view' | 'ban' | 'unban' | 'active' | 'unactive' | 'delete' | 'restore'
+    >('view');
 
     // Debounced search function
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-    
+
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearchTerm(searchTerm);
@@ -202,9 +206,7 @@ export default function ShopManagementPage() {
                                                         src={shop.avatar || '/default-avatar.png'}
                                                         alt={shop.name}
                                                     />
-                                                    <AvatarFallback>
-                                                        {shop.name.charAt(0).toUpperCase()}
-                                                    </AvatarFallback>
+                                                    <AvatarFallback>{shop.name.charAt(0).toUpperCase()}</AvatarFallback>
                                                 </Avatar>
                                             </div>
                                             <div>
@@ -219,16 +221,26 @@ export default function ShopManagementPage() {
                                         <div className="flex flex-col gap-1">
                                             {shop.is_active ? (
                                                 <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 inline-block w-fit">
-                                                    Hoạt động
+                                                    Đã kích hoạt
                                                 </span>
                                             ) : (
                                                 <span className="px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 inline-block w-fit">
-                                                    Không hoạt động
+                                                    Chờ kích hoạt
                                                 </span>
                                             )}
                                             {shop.is_banned && (
                                                 <span className="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 inline-block w-fit">
                                                     Bị cấm
+                                                </span>
+                                            )}
+
+                                            {shop.is_detele ? (
+                                                <span className="px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 inline-block w-fit">
+                                                    Đã xóa
+                                                </span>
+                                            ) : (
+                                                <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 inline-block w-fit">
+                                                    Hoạt động
                                                 </span>
                                             )}
                                         </div>
@@ -237,21 +249,56 @@ export default function ShopManagementPage() {
                                     <TableCell>{formatDate(shop.created_at)}</TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button 
-                                                variant="outline" 
+                                            <Button
+                                                variant="outline"
                                                 size="sm"
                                                 onClick={() => {
                                                     setSelectedShopId(shop.id);
+                                                    setDialogMode('view');
                                                     setIsDialogOpen(true);
                                                 }}
                                             >
                                                 Xem
                                             </Button>
+
+                                            {shop.is_active ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                                                    onClick={() => {
+                                                        setSelectedShopId(shop.id);
+                                                        setDialogMode('unactive');
+                                                        setIsDialogOpen(true);
+                                                    }}
+                                                >
+                                                    <span className="text-blue-600">Hủy kích hoạt</span>
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="text-green-600 border-green-600 hover:bg-green-50"
+                                                    onClick={() => {
+                                                        setSelectedShopId(shop.id);
+                                                        setDialogMode('active');
+                                                        setIsDialogOpen(true);
+                                                    }}
+                                                >
+                                                    <span className="text-green-600">Kích hoạt</span>
+                                                </Button>
+                                            )}
+
                                             {shop.is_banned ? (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
                                                     className="text-green-600 border-green-600 hover:bg-green-50"
+                                                    onClick={() => {
+                                                        setSelectedShopId(shop.id);
+                                                        setDialogMode('unban');
+                                                        setIsDialogOpen(true);
+                                                    }}
                                                 >
                                                     Bỏ cấm
                                                 </Button>
@@ -260,17 +307,43 @@ export default function ShopManagementPage() {
                                                     variant="outline"
                                                     size="sm"
                                                     className="text-red-600 border-red-600 hover:bg-red-50"
+                                                    onClick={() => {
+                                                        setSelectedShopId(shop.id);
+                                                        setDialogMode('ban');
+                                                        setIsDialogOpen(true);
+                                                    }}
                                                 >
                                                     Cấm
                                                 </Button>
                                             )}
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="text-red-600 border-red-600 hover:bg-red-50"
-                                            >
-                                                Xóa
-                                            </Button>
+
+                                            {shop.is_detele ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="text-green-600 border-green-600 hover:bg-green-50"
+                                                    onClick={() => {
+                                                        setSelectedShopId(shop.id);
+                                                        setDialogMode('restore');
+                                                        setIsDialogOpen(true);
+                                                    }}
+                                                >
+                                                    Khôi phục
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="text-red-600 border-red-600 hover:bg-red-50"
+                                                    onClick={() => {
+                                                        setSelectedShopId(shop.id);
+                                                        setDialogMode('delete');
+                                                        setIsDialogOpen(true);
+                                                    }}
+                                                >
+                                                    Xóa
+                                                </Button>
+                                            )}
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -312,11 +385,9 @@ export default function ShopManagementPage() {
             </div>
 
             {/* Shop Details Dialog */}
-            <ShopDialog
-                shopId={selectedShopId}
-                open={isDialogOpen}
-                onOpenChange={setIsDialogOpen}
-            />
+            <ShopDialog mode={dialogMode} shopId={selectedShopId} open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+
+            <ToastContainer />
         </div>
     );
 }

@@ -25,6 +25,7 @@ function fetchRefreshToken(token: string): Promise<RefreshTokenResponse> {
 function createAxiosJwtInstance() {
     const axiosJWT = axios.create({
         baseURL: process.env.NEXT_PUBLIC_API_URL,
+        // withCredentials: true, // Temporarily disabled due to CORS issues
     });
     axiosJWT.interceptors.request.use(
         async (config) => {

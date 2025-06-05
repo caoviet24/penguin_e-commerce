@@ -7,8 +7,14 @@ using Domain.Common;
 
 namespace Domain.Entities
 {
-    public class ProductEntity : BaseEntity
+    public class ProductEntity 
     {
+        public string Id { get; set; } = null!;
+        public DateTime created_at { get; set; } = DateTime.UtcNow;
+        public string created_by { get; set; } = null!;
+        public DateTime? last_updated { get; set; } = DateTime.UtcNow;
+        public string? updated_by { get; set; } = null!;
+        public bool is_deleted { get; set; } = false;
         public string product_desc { get; set; } = null!;
         public string status { get; set; } = "AVAILABLE";
         public bool is_active { get; set; } = true;

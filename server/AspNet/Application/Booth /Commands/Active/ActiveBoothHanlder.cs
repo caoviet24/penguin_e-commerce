@@ -7,7 +7,7 @@ using Application.Common.Interfaces;
 using Domain.Exceptions;
 using MediatR;
 
-namespace Application.MyBooth .Commands.Active
+namespace Application.MyBooth.Commands.Active
 {
     public class ActiveBoothCommand : IRequest<BoothDto>
     {
@@ -32,6 +32,7 @@ namespace Application.MyBooth .Commands.Active
 
             findBooth.is_active = true;
             var data = context.Booths.Update(findBooth);
+            await context.SaveChangesAsync(cancellationToken);
             return mapper.Map<BoothDto>(data.Entity);
         }
     }

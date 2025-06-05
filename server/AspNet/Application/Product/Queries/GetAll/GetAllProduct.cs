@@ -17,6 +17,7 @@ namespace Application.Product.Queries.GetAll
         public string? category_detail_id { get; set; }
         public string? status { get; set; }
         public bool? is_active { get; set; }
+        public bool? is_deleted { get; set; } 
         public double? min_price { get; set; }
         public double? max_price { get; set; }
     }
@@ -61,6 +62,13 @@ namespace Application.Product.Queries.GetAll
             {
                 query = query.Where(x => x.is_active == request.is_active.Value);
             }
+
+            if (request.is_deleted.HasValue)
+            {
+                query = query.Where(x => x.is_deleted == request.is_deleted.Value);
+            }
+
+
             if (request.min_price.HasValue)
             {
                 query = query.Where(x => x.ListProductDetail.Any(pd => pd.sale_price >= request.min_price));

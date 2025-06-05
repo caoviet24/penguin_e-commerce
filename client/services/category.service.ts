@@ -3,6 +3,22 @@ import axiosJWT from '@/utils/axios.interceptor';
 import delay from '@/utils/delay';
 
 async function getAll({
+    search,
+    is_deleted ,
+}: {
+    search?: string;
+    is_deleted?: boolean;
+}): Promise<ICategory[]> {
+    const res = await axiosJWT.get(`/category/get-all`, {
+        params: {
+            search,
+            is_deleted,
+        },
+    });
+    return res.data;
+}
+
+async function getWithPagination({
     page_number,
     page_size,
     search,
@@ -13,7 +29,7 @@ async function getAll({
     search?: string;
     is_deleted?: boolean;
 }): Promise<ResponseData<ICategory[]>> {
-    const res = await axiosJWT.get(`/category/get-all`, {
+    const res = await axiosJWT.get(`/category/get-with-pagination`, {
         params: {
             page_number,
             page_size,
@@ -24,12 +40,6 @@ async function getAll({
     return res.data;
 }
 
-async function getByName(name: string) {
-    const res = await axiosJWT.get(`/category/get-by-name`, {
-        params: { name },
-    });
-    return res.data;
-}
 
 async function getById(id: string): Promise<ICategory> {
     const res = await axiosJWT.get(`/category/get-by-id/${id}`);
@@ -60,7 +70,7 @@ async function restoreCategory(id: string) {
 
 export const categoryService = {
     getAll,
-    getByName,
+    getWithPagination,
     getById,
     create,
     update,

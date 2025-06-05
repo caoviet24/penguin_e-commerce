@@ -1,6 +1,6 @@
 export interface StatisticalData2 {
-    total: number,
-    rate: number,
+    total: number;
+    rate: number;
 }
 
 export interface StatisticalData {
@@ -29,15 +29,12 @@ export interface Statistical {
     products_sold: number;
 }
 
-
-
 export interface ResponseData<T> {
     page_number: number;
     page_size: number;
     total_record: number;
-    data: T[]; 
+    data: T[];
 }
-
 
 export interface IAccount {
     id: string;
@@ -56,7 +53,6 @@ export interface IAccount {
     updated_at: Date;
     is_detele: boolean;
 }
-
 
 export interface IBooth {
     id: string;
@@ -79,7 +75,7 @@ export interface ICategory {
     created_at: Date;
     created_by: string;
     last_updated?: Date; // Field in JSON response
-    updated_at?: Date;   // Field in interface
+    updated_at?: Date; // Field in interface
     updated_by: string;
     is_deleted: boolean;
     list_category_detail: ICategoryDetail[];
@@ -103,7 +99,7 @@ export interface IProduct {
     booth_id: string;
     updated_at: Date;
     updated_by: string;
-    is_detele: boolean;
+    is_deleted: boolean;
     list_product_detail: IProductDetail[];
 }
 
@@ -157,7 +153,6 @@ export interface IOrderItem {
     product_detail: IProductDetail;
 }
 
-
 export interface IVoucher {
     id: string;
     voucher_type: string;
@@ -174,19 +169,21 @@ export interface IVoucher {
     is_deleted: boolean;
 }
 
-
 export interface ISaleBill {
     id: string;
+    status: string;
+    pay_method: string;
     buyer_id: string;
     seller_id: string;
     total_bill: number;
-    status_bill: number;
+    is_evaluated: boolean;
     created_at: Date;
     updated_at: Date;
     booth: IBooth;
+    delivery_address: IDeliveryAddress;
     list_sale_bill_detail: ISaleBillDetail[];
+    back_bill: IBackBill | null;
 }
-
 
 export interface ISaleBillDetail {
     id: string;
@@ -196,4 +193,78 @@ export interface ISaleBillDetail {
     size: string;
     color: string;
     product_detail: IProductDetail;
+}
+
+export interface IDeliveryAddress {
+    id: string;
+    full_name: string;
+    phone: string;
+    address: string;
+    created_at: Date;
+    created_by: string;
+    updated_at: Date;
+    is_deleted: boolean;
+}
+
+export interface IBackBill {
+    id: string;
+    bill_id: string;
+    reason_back: string;
+    image: string;
+    video: string;
+    reply_content: string;
+    reply_image: string;
+    reply_video: string;
+    created_at: Date;
+    created_by: string;
+    updated_at: Date;
+    updated_by: string;
+    account: IAccount;
+}
+
+export interface IOverView {
+    total_bill_success: number;
+    total_bill_pending: number;
+    total_bill_cancel: number;
+    total_bill_back_pending: number;
+    total_bill_back_success: number;
+    total_bill_back_cancel: number;
+    voucher_count_active: number | null;
+    voucher_count_inactive: number | null;
+    voucher_count_deleted: number | null;
+    product_count_active: number;
+    product_count_inactive: number;
+    product_count_deleted: number | null;
+    product_count_unavailable: number;
+    booth_count_active: number | null;
+    booth_count_inactive: number | null;
+    booth_count_deleted: number | null;
+    booth_count_pending: number | null;
+    booth_count_banned: number | null;
+    account_count: number | null;
+    account_count_banned: number | null;
+    account_count_active: number | null;
+    account_count_deleted: number | null;
+    category_count_deleted: number | null;
+    category_count_active: number | null;
+    category_detail_count: number | null;
+}
+
+export interface IStatistical {
+    previous: string;
+    amount: number;
+    product_sold: number;
+}
+
+export interface IStatisticalData {
+    date: string;
+    revenue: number;
+    orders: number;
+    products_sold: number;
+}
+
+export interface StatisticalDto {
+    previous: string;
+    amount: number;
+    product_sold: number;
 }

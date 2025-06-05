@@ -38,6 +38,9 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("created_at")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("email")
+                        .HasColumnType("text");
+
                     b.Property<string>("full_name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -154,7 +157,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("reply_content")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("reply_image")
@@ -171,7 +173,8 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("bill_id");
+                    b.HasIndex("bill_id")
+                        .IsUnique();
 
                     b.HasIndex("booth_id");
 
@@ -707,6 +710,9 @@ namespace Infrastructure.Migrations
                     b.Property<bool>("is_deleted")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("is_evaluated")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime?>("last_updated")
                         .HasColumnType("timestamp with time zone");
 
@@ -878,8 +884,8 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.BackBillEntity", b =>
                 {
                     b.HasOne("Domain.Entities.SaleBillEntity", "SaleBill")
-                        .WithMany("ListBackBill")
-                        .HasForeignKey("bill_id")
+                        .WithOne("BackBill")
+                        .HasForeignKey("Domain.Entities.BackBillEntity", "bill_id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1227,7 +1233,8 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.SaleBillEntity", b =>
                 {
-                    b.Navigation("ListBackBill");
+                    b.Navigation("BackBill")
+                        .IsRequired();
 
                     b.Navigation("ListSaleBillDetail");
 

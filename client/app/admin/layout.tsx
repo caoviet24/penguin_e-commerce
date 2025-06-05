@@ -32,7 +32,7 @@ export default function DashBoardLayOut({ children }: { children: ReactNode }) {
                                 </Link>
                                 <Link
                                     className="flex flex-row items-center  justify-center lg:justify-start rounded-md h-12 focus:outline-none pr-3.5  lg:pr-6 font-semibold text-black hover:text-primary-400 cursor-pointer "
-                                    href="admin/account"
+                                    href="/admin/account"
                                 >
                                     <span className="inline-flex justify-center items-center ml-3.5">
                                         <AccountIcon />
@@ -43,7 +43,7 @@ export default function DashBoardLayOut({ children }: { children: ReactNode }) {
                                 </Link>
                                 <Link
                                     className="flex flex-row items-center font-bold  justify-center lg:justify-start rounded-md h-12 focus:outline-none pr-3.5  lg:pr-6 text-black hover:text-primary-400 cursor-pointer "
-                                    href="admin/shop"
+                                    href="/admin/shop"
                                 >
                                     <span className="inline-flex justify-center items-center ml-3.5">
                                         <FaShopify size={23} />
@@ -54,7 +54,7 @@ export default function DashBoardLayOut({ children }: { children: ReactNode }) {
                                 </Link>
                                 <Link
                                     className="flex flex-row items-center  justify-center lg:justify-start rounded-md h-12 focus:outline-none pr-3.5  lg:pr-6 font-semibold text-black hover:text-primary-400 cursor-pointer "
-                                    href="/category"
+                                    href="/admin/category"
                                 >
                                     <span className="inline-flex justify-center items-center ml-3.5">
                                         <TbCategory size={23} />
@@ -65,7 +65,7 @@ export default function DashBoardLayOut({ children }: { children: ReactNode }) {
                                 </Link>
                                 <Link
                                     className="flex flex-row items-center  justify-center lg:justify-start rounded-md h-12 focus:outline-none pr-3.5  lg:pr-6 bg-primary-50 shadow-sm text-primary-400 font-bold "
-                                    href="/product"
+                                    href="/admin/product"
                                 >
                                     <span className="inline-flex justify-center items-center ml-3.5">
                                         <FaProductHunt size={23} />
@@ -76,7 +76,7 @@ export default function DashBoardLayOut({ children }: { children: ReactNode }) {
                                 </Link>
                                 <Link
                                     className="flex flex-row items-center  justify-center lg:justify-start rounded-md h-12 focus:outline-none pr-3.5  lg:pr-6 bg-primary-50 shadow-sm text-primary-400 font-bold "
-                                    href="/voucher"
+                                    href="/admin/voucher"
                                 >
                                     <span className="inline-flex justify-center items-center ml-3.5">
                                         <HiMiniTicket size={23} />

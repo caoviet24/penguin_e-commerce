@@ -14,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Infrastructure.Service;
 
 
 namespace Infrastructure;
@@ -36,6 +37,8 @@ public static class Infrastructure
         service.Configure<Configurations.VnPayConfigration>(configuration.GetSection("Vnpay"));
         service.Configure<Configurations.PaymentConfiguration>(configuration.GetSection("PayOS"));
         service.Configure<Configurations.JwtConfiguration>(configuration.GetSection("Jwt"));
+        service.Configure<Configurations.EmailConfiguration>(configuration.GetSection("Email"));
+        service.Configure<Configurations.EnvConfiguration>(configuration.GetSection("Env"));
 
 
 
@@ -61,6 +64,7 @@ public static class Infrastructure
 
         service.AddScoped<IJwtService, JwtService>();
         service.AddScoped<IVnPayService, VnPayService>();
+        service.AddScoped<IEmailService, EmailService>();
         service.AddScoped<IPaymentService, PaymentService>();
         service.AddScoped<IDbConnection>(provider =>
         {

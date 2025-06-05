@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Application.SaleBill.Commands.Create;
 using Application.SaleBill.Commands.UpdateStatus;
+using Application.SaleBill.Queries.Buyer;
+using Application.SaleBill.Queries.Seller;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +18,22 @@ namespace WebApi.Controllers
     public class SaleBillController(ILogger<SaleBillController> logger, IMediator mediator) : ControllerBase
     {
 
-    
+
+        [HttpGet("get-all-by-buyer-id")]
+        public async Task<IActionResult> GetAllBillByBuyerId([FromQuery] GetAllBillByBuyerIdQuery query)
+        {
+            logger.LogInformation("Get all bill by buyer id");
+            return Ok(await mediator.Send(query));
+        }
+
+        [HttpGet("get-all-by-seller-id")]
+        public async Task<IActionResult> GetAllBillBySellerId([FromQuery] GetAllBillBySalerIdQuery query)
+        {
+            logger.LogInformation("Get all bill by seller id");
+            return Ok(await mediator.Send(query));
+        }
+
+
         [HttpPost("create")]
         public async Task<IActionResult> CreateSaleBill([FromBody] CreateSaleBillCommand command)
         {

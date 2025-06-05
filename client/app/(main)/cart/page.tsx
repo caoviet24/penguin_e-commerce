@@ -1,19 +1,17 @@
 'use client';
 import React, { useEffect } from 'react';
-
 import { BiSearchAlt2 } from 'react-icons/bi';
 import Image from 'next/image';
-import { Divider, Modal } from '@mui/material';
 import { IOrderItem, IVoucher } from '@/types';
-import useHookMutation from '@/hooks/useHookMutation';
 import { orderItemService } from '@/services/orderItem.service';
-import { toast, ToastContainer } from 'react-toastify';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { voucherService } from '@/services/voucher.service';
 import Voucher from '@/components/Voucher/voucher';
 import useLocationStorage from '@/hooks/useLocationStorage';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/hooks/useAuth';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 export default function Cart() {
     const [totalBill, setTotalBill] = React.useState(0);
@@ -34,7 +32,6 @@ export default function Cart() {
         key: 'temp-bill',
         initialValue: {},
     });
-
 
     const { data: voucherData, isLoading: voucherLoading, error: voucherError } = useQuery({
         queryKey: ['get-all-voucher'],
@@ -75,30 +72,39 @@ export default function Cart() {
         setOpenVoucher(false);
     };
 
-    const deleteOrderItemMutation = useHookMutation((id: string) => {
-        return orderItemService.deleteOrderItem(id);
-    });
+    const deleteOrderItemMutation = useMutation({
+        mutationFn: (id: string) => orderItemService.remove(id),
+        onError: (error) => {
+            toast.error(`Xóa sản phẩm thất bại: ${String(error)}`, {
+                position: 'top-right',
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: false,
+                draggable: false,
+                progress: undefined,
+                theme: 'light',
+            });
+        },
+        onSuccess: () => {
+            toast.success('Xóa sản phẩm thành công', {
+                position: 'top-right',
+                autoClose: 3000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: false,
+                draggable: false,
+                progress: undefined,
+                theme: 'light',
+            });
+            queryClient.invalidateQueries({
+                queryKey: ['order-items', user?.id],
+            });
+        },
+    })
 
     const handleDeleteOrder = (order: IOrderItem) => {
-        deleteOrderItemMutation.mutate(order.id, {
-            onSuccess: () => {
-                toast.success('Xóa sản phẩm thành công', {
-                    position: 'top-right',
-                    autoClose: 3000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: false,
-                    draggable: false,
-                    progress: undefined,
-                    theme: 'light',
-                });
-                queryClient.invalidateQueries({
-                    queryKey: ['order-items', user?.id],
-                });
-
-                
-            },
-        });
+        deleteOrderItemMutation.mutate(order.id);
     };
 
     const handleBuyOrder = () => {
@@ -121,6 +127,7 @@ export default function Cart() {
             total: totalBill,
             list_bill_detail: orderSelected,
             list_voucher: voucherSelected,
+            list_order_item: orderSelected.map((item) => item.id),
         });
 
         router.push('/checkout');
@@ -162,6 +169,7 @@ export default function Cart() {
                 }
             });
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [orderSelected, voucherSelected]);
 
     return (
@@ -343,15 +351,18 @@ export default function Cart() {
                 </div>
             </div>
 
-            <ToastContainer />
-
-            <Modal
-                open={openVoucher}
-                onClose={() => setOpenVoucher(false)}
-                className="flex justify-center items-center"
-            >
+            <Dialog open={openVoucher}   onOpenChange={setOpenVoucher}>
+                <DialogTitle>
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold">Chọn mã giảm giá</h3>
+                    </div>
+                </DialogTitle>
+                <DialogContent>
                 <div className="bg-white p-4 rounded-md w-[480px] min-h-32">
-                    <p className="pb-2 capitalize text-lg">Chọn mã giảm giá</p>
+                    <p className="text-sm opacity-70 mb-2">
+                        Chọn mã giảm giá phù hợp với đơn hàng của bạn. Bạn có thể chọn một mã giảm giá miễn phí giao hàng và một
+                        mã giảm giá giảm giá.
+                    </p>
                     <div className="relative flex-1">
                         <input
                             className="w-full bg-white text-gray-700 text-sm border border-gray-300 rounded-md pl-3 pr-28 py-2 transition duration-300 ease-in-out focus:outline-none focus:border-purple-500 hover:border-gray-400 shadow-sm focus:shadow-md"
@@ -362,7 +373,6 @@ export default function Cart() {
                             <span className="ml-1">Tìm kiếm</span>
                         </button>
                     </div>
-                    <Divider className="py-2" />
                     <div className="h-[400px] overflow-y-auto">
                         {voucherLoading && (
                             <div className="flex justify-center items-center h-full">
@@ -396,7 +406,7 @@ export default function Cart() {
                                                 ))}
                                         </>
                                     )}
-                                <Divider className="py-2" />
+                        
                                 {voucherData &&
                                     voucherData.some((voucher) => voucher.voucher_type === 'discount') && (
                                         <>
@@ -439,7 +449,9 @@ export default function Cart() {
                         </button>
                     </div>
                 </div>
-            </Modal>
+                </DialogContent>
+            </Dialog>
+
         </div>
     );
 }

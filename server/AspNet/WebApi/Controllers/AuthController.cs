@@ -9,10 +9,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace WebApi.Controllers
 {
-    [Authorize]
+
     [Route("auth")]
     public class AuthController(IAuthService authService) : ControllerBase
     {
+        [Authorize]
         [HttpGet("me")]
         public async Task<IActionResult> Me()
         {

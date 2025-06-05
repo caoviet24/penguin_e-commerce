@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { productService } from '@/services/product.service';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,24 +8,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { IProduct, ResponseData } from '@/types';
 import ProductDialog from './product-dialog';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer } from 'react-toastify';
+import Image from 'next/image';
+import { formatCurrency } from '@/utils/format-currency';
+import { formatDate } from '@/utils/format-date';
 
 export default function ProductManagementPage() {
     const [pageNumber, setPageNumber] = useState<number>(1);
+    const [mode, setMode] = useState<'view' | 'active' | 'inactive' | 'delete' | 'restore'>('view');
     const [pageSize, setPageSize] = useState<number>(10);
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [selectedStatus, setSelectedStatus] = useState<string>('');
-    const [showActive, setShowActive] = useState<boolean | undefined>(true);
+    const [showActive, setShowActive] = useState<string>('');
     const [showDeleted, setShowDeleted] = useState<boolean | undefined>(false);
-    
-    // Dialog state
+
     const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-    // Debounced search function
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-    
+
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearchTerm(searchTerm);
@@ -40,24 +41,21 @@ export default function ProductManagementPage() {
         data: productsData,
         isLoading,
         isError,
-        refetch
     } = useQuery<ResponseData<IProduct>>({
-        queryKey: ['products', pageNumber, pageSize, debouncedSearchTerm, selectedStatus, showActive, showDeleted],
+        queryKey: ['get-products', pageNumber, pageSize, debouncedSearchTerm, selectedStatus, showActive, showDeleted],
         queryFn: () =>
             productService.getAll({
                 page_number: pageNumber,
                 page_size: pageSize,
                 search: debouncedSearchTerm || undefined,
                 status: selectedStatus || undefined,
-                is_active: showActive,
+                is_active: showActive === '' ? undefined : showActive === 'true' ? true : false,
                 is_deleted: showDeleted,
             }),
     });
 
-    // Calculate total pages
     const totalPages = productsData ? Math.ceil(productsData.total_record / pageSize) : 0;
 
-    // Handle page navigation
     const nextPage = () => {
         if (pageNumber < totalPages) {
             setPageNumber(pageNumber + 1);
@@ -70,52 +68,23 @@ export default function ProductManagementPage() {
         }
     };
 
-    // Format date for display
-    const formatDate = (dateString: Date) => {
-        if (!dateString) return 'N/A';
-        try {
-            const date = new Date(dateString);
-            return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1)
-                .toString()
-                .padStart(2, '0')}/${date.getFullYear()}`;
-        } catch {
-            return 'Invalid Date';
-        }
-    };
-
-    // Format currency
-    const formatCurrency = (price: number) => {
-        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-    };
-
-    // Get min price from variants
     const getMinPrice = (product: IProduct) => {
         if (!product.list_product_detail || product.list_product_detail.length === 0) {
             return 0;
         }
-        return Math.min(...product.list_product_detail.map(variant => variant.sale_price));
+        return Math.min(...product.list_product_detail.map((variant) => variant.sale_price));
     };
 
-    // Handle product actions
-    const handleDeleteProduct = async (productId: string) => {
-        try {
-            await productService.deleteSoft(productId);
-            toast.success('Sản phẩm đã được xóa thành công');
-            refetch();
-        } catch {
-            toast.error('Có lỗi xảy ra khi xóa sản phẩm');
-        }
-    };
+    const handleSelectProduct = useCallback((productId: string, mode: 'view' | 'active' | 'inactive' | 'delete' | 'restore') => {
+        setMode(mode);
+        setSelectedProductId(productId);
+        setIsDialogOpen(true);
+    }, []);
+    
+    const handleDialogOpenChange = useCallback((open: boolean) => {
+        setIsDialogOpen(open);
+    }, []);
 
-    const handleRestoreProduct = async (productId: string) => {
-        try {
-            await productService.restore(productId);
-            toast.success('Sản phẩm đã được khôi phục thành công');
-            refetch();
-        } catch {
-            toast.error('Có lỗi xảy ra khi khôi phục sản phẩm');
-        }
-    };
 
     return (
         <div className="p-6 bg-white">
@@ -151,13 +120,11 @@ export default function ProductManagementPage() {
                 <div>
                     <select
                         className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none"
-                        value={showActive === undefined ? '' : showActive ? 'true' : 'false'}
+                        value={showActive === '' ? '' : showActive === 'true' ? 'true' : 'false'}
                         onChange={(e) => {
-                            if (e.target.value === '') {
-                                setShowActive(undefined);
-                            } else {
-                                setShowActive(e.target.value === 'true');
-                            }
+                            console.log('e.target.value', e.target.value, typeof e.target.value);
+                            
+                            setShowActive(e.target.value)
                         }}
                     >
                         <option value="">Tất cả trạng thái kích hoạt</option>
@@ -178,7 +145,7 @@ export default function ProductManagementPage() {
                             }
                         }}
                     >
-                        <option value="false">Sản phẩm hiện tại</option>
+                        <option value="false">Sản phẩm hợp lệ</option>
                         <option value="true">Sản phẩm đã xóa</option>
                         <option value="">Tất cả sản phẩm</option>
                     </select>
@@ -220,10 +187,11 @@ export default function ProductManagementPage() {
                             </TableRow>
                         ) : (
                             productsData.data.map((product: IProduct, index: number) => {
-                                const firstVariant = product.list_product_detail && product.list_product_detail.length > 0 
-                                    ? product.list_product_detail[0] 
-                                    : null;
-                                
+                                const firstVariant =
+                                    product.list_product_detail && product.list_product_detail.length > 0
+                                        ? product.list_product_detail[0]
+                                        : null;
+
                                 return (
                                     <TableRow key={product.id}>
                                         <TableCell className="font-medium">
@@ -233,10 +201,12 @@ export default function ProductManagementPage() {
                                             <div className="flex items-start gap-3">
                                                 {firstVariant && (
                                                     <div className="h-14 w-14 rounded-md overflow-hidden flex-shrink-0">
-                                                        <img 
-                                                            src={firstVariant.image} 
+                                                        <Image
+                                                            src={firstVariant.image || '/placeholder.png'}
                                                             alt={firstVariant.product_name}
-                                                            className="h-full w-full object-cover"
+                                                            width={56}
+                                                            height={56}
+                                                            className="object-cover w-full h-full"
                                                         />
                                                     </div>
                                                 )}
@@ -256,19 +226,33 @@ export default function ProductManagementPage() {
                                         <TableCell>{product.booth_id.substring(0, 8)}...</TableCell>
                                         <TableCell>
                                             <div className="flex flex-col gap-1">
-                                                <span className={`px-2 py-1 rounded-full text-xs font-semibold inline-block w-fit ${
-                                                    product.status === 'AVAILABLE' 
-                                                        ? 'bg-green-100 text-green-800' 
-                                                        : 'bg-red-100 text-red-800'
-                                                }`}>
+                                                <span
+                                                    className={`px-2 py-1 rounded-full text-xs font-semibold inline-block w-fit ${
+                                                        product.status === 'AVAILABLE'
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-red-100 text-red-800'
+                                                    }`}
+                                                >
                                                     {product.status === 'AVAILABLE' ? 'Có sẵn' : 'Không có sẵn'}
                                                 </span>
-                                                <span className={`px-2 py-1 rounded-full text-xs font-semibold inline-block w-fit ${
-                                                    product.is_active 
-                                                        ? 'bg-blue-100 text-blue-800' 
-                                                        : 'bg-gray-100 text-gray-800'
-                                                }`}>
+                                                <span
+                                                    className={`px-2 py-1 rounded-full text-xs font-semibold inline-block w-fit ${
+                                                        product.is_active
+                                                            ? 'bg-blue-100 text-blue-800'
+                                                            : 'bg-gray-100 text-gray-800'
+                                                    }`}
+                                                >
                                                     {product.is_active ? 'Đã kích hoạt' : 'Chưa kích hoạt'}
+                                                </span>
+
+                                                <span
+                                                    className={`px-2 py-1 rounded-full text-xs font-semibold inline-block w-fit ${
+                                                        product.is_deleted
+                                                            ? 'bg-red-100 text-red-800'
+                                                            : 'bg-orange-200 text-orange-800'
+                                                    }`}
+                                                >
+                                                    {product.is_deleted ? 'Đã xóa' : 'Hợp lệ'}
                                                 </span>
                                             </div>
                                         </TableCell>
@@ -276,23 +260,40 @@ export default function ProductManagementPage() {
                                         <TableCell>{formatDate(product.created_at)}</TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
-                                                <Button 
-                                                    variant="outline" 
+                                                <Button
+                                                    variant="outline"
                                                     size="sm"
-                                                    onClick={() => {
-                                                        setSelectedProductId(product.id);
-                                                        setIsDialogOpen(true);
-                                                    }}
+                                                    onClick={() => handleSelectProduct(product.id, 'view')}
                                                 >
                                                     Xem
                                                 </Button>
-                                                
-                                                {!product.is_detele ? (
+
+                                                {product.is_active ? (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="text-yellow-600 border-yellow-600 hover:bg-yellow-50"
+                                                        onClick={() => handleSelectProduct(product.id, 'inactive')}
+                                                    >
+                                                        Hủy kích hoạt
+                                                    </Button>
+                                                ) : (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="text-gray-600 border-gray-600 hover:bg-gray-50"
+                                                        onClick={() => handleSelectProduct(product.id, 'active')}
+                                                    >
+                                                        Kích hoạt
+                                                    </Button>
+                                                )}
+
+                                                {!product.is_deleted ? (
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
                                                         className="text-red-600 border-red-600 hover:bg-red-50"
-                                                        onClick={() => handleDeleteProduct(product.id)}
+                                                        onClick={() => handleSelectProduct(product.id, 'delete')}
                                                     >
                                                         Xóa
                                                     </Button>
@@ -301,7 +302,7 @@ export default function ProductManagementPage() {
                                                         variant="outline"
                                                         size="sm"
                                                         className="text-green-600 border-green-600 hover:bg-green-50"
-                                                        onClick={() => handleRestoreProduct(product.id)}
+                                                        onClick={() => handleSelectProduct(product.id, 'restore')}
                                                     >
                                                         Khôi phục
                                                     </Button>
@@ -347,13 +348,15 @@ export default function ProductManagementPage() {
                 </div>
             </div>
 
-            {/* Product Details Dialog */}
-            <ProductDialog 
-                productId={selectedProductId}
-                open={isDialogOpen}
-                onOpenChange={setIsDialogOpen}
-            />
-            
+            {isDialogOpen && (
+                <ProductDialog
+                    mode={mode}
+                    productId={selectedProductId}
+                    open={isDialogOpen}
+                    onOpenChange={handleDialogOpenChange}
+                />
+            )}
+
             <ToastContainer />
         </div>
     );

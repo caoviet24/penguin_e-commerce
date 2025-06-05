@@ -1,16 +1,16 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 import React, { useEffect, useState, useTransition } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
-import { billService } from '@/services/bill.service';
+import { billService, ICreateBillPayload } from '@/services/bill.service';
 import useLocationStorage from '@/hooks/useLocationStorage';
 import { IOrderItem, IVoucher } from '@/types';
 import { getPaymentInfo, IPaymentInfoResult } from './action';
 import { PaymentStatus } from '@/types/enum';
 import handleTimeVn from '@/utils/handleTimeVn';
-
-// Add CSS animation class
-import '@/app/globals.css';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'react-toastify';
 
 export default function PaymentResultPage() {
     const searchParams = useSearchParams();
@@ -20,17 +20,7 @@ export default function PaymentResultPage() {
     const [isGetPaymentInfoPending, startGetPaymentTransaction] = useTransition();
     const [result, setResult] = useState<IPaymentInfoResult | null>(null);
 
-    const { storedValue: storedValueTempBill } = useLocationStorage({
-        key: 'temp-bill',
-        initialValue: {},
-    });
 
-    const { storedValue: storeValueInfoShipping } = useLocationStorage({
-        key: 'info-shipping',
-        initialValue: {},
-    });
-
-    // Check if page was reloaded to prevent duplicate API calls
     useEffect(() => {
         const isReload =
             (window.performance?.getEntriesByType('navigation')[0] as PerformanceNavigationTiming)?.type === 'reload';
@@ -60,21 +50,31 @@ export default function PaymentResultPage() {
         });
     }, [orderCode]);
 
+    const {
+        storedValue: storedValueTempBill,
+        removeValue: removeValueTempBill,
+    } = useLocationStorage({
+        key: 'temp-bill',
+        initialValue: {},
+    });
+
+
+    const createBillMutation = useMutation({
+        mutationKey: ['createBill'],
+        mutationFn: (data: ICreateBillPayload) => billService.create(data),
+    });
+
     // Create bill when payment is successful
     useEffect(() => {
         if (result?.status !== PaymentStatus.SUCCESS || !shouldCallApi) return;
 
-        const createBill = async () => {
-            const { seller_id, list_bill_detail, list_voucher } = storedValueTempBill;
-            const { full_name, phone, address } = storeValueInfoShipping;
-
-            const formData = {
+        const { seller_id, list_bill_detail, list_voucher, address_delivery_id, list_order_item } = storedValueTempBill;
+        createBillMutation.mutate(
+            {
                 seller_id,
-                total: result.amount,
-                pay_method: 'Thanh toán qua ngân hàng',
-                name_receiver: full_name,
-                phone_receiver: phone,
-                address_receiver: address,
+                total_bill: result?.amount || 0,
+                pay_method: 'BANK TRANSFER',
+                address_delivery_id,
                 list_bill_detail: list_bill_detail.map((item: IOrderItem) => ({
                     product_detail_id: item.product_detail_id,
                     quantity: item.quantity,
@@ -84,13 +84,36 @@ export default function PaymentResultPage() {
                 list_voucher: list_voucher.map((voucher: IVoucher) => ({
                     voucher_id: voucher.id,
                 })),
-            };
-
-            await billService.createBill(formData);
-        };
-
-        createBill();
-    }, [result, shouldCallApi, storedValueTempBill, storeValueInfoShipping]);
+                list_order_item: list_order_item,
+            },
+            {
+                onSuccess: async () => {
+                    removeValueTempBill();
+                    toast.success('Thanh toán thành công!', {
+                        position: 'top-right',
+                        autoClose: 3000,
+                        hideProgressBar: false,
+                        closeOnClick: true,
+                        pauseOnHover: true,
+                        draggable: true,
+                        progress: 0,
+                    });
+                    // router.push('/purchase');
+                },
+                onError: () => {
+                    toast.error('Đã có lỗi xảy ra!', {
+                        position: 'top-right',
+                        autoClose: 3000,
+                        hideProgressBar: false,
+                        closeOnClick: true,
+                        pauseOnHover: true,
+                        draggable: true,
+                        progress: 0,
+                    });
+                },
+            },
+        );
+    }, [result,shouldCallApi]);
 
     if (isGetPaymentInfoPending) {
         return (
@@ -105,11 +128,16 @@ export default function PaymentResultPage() {
 
     const getStatusText = (status: string) => {
         switch (status) {
-            case PaymentStatus.SUCCESS: return "Thanh toán thành công";
-            case PaymentStatus.CANCELLED: return "Đã hủy thanh toán";
-            case PaymentStatus.PENDING: return "Đang chờ xử lý";
-            case PaymentStatus.EXPIRED: return "Đã hết hạn "
-            default: return "";
+            case PaymentStatus.SUCCESS:
+                return 'Thanh toán thành công';
+            case PaymentStatus.CANCELLED:
+                return 'Đã hủy thanh toán';
+            case PaymentStatus.PENDING:
+                return 'Đang chờ xử lý';
+            case PaymentStatus.EXPIRED:
+                return 'Đã hết hạn ';
+            default:
+                return '';
         }
     };
 
@@ -149,20 +177,35 @@ export default function PaymentResultPage() {
                             <div className="space-y-6 bg-gray-50 p-6 rounded-xl border border-gray-100">
                                 {result.status === PaymentStatus.SUCCESS && (
                                     <div className="text-center mb-4">
-                                        <p className="text-sm text-gray-500">Cảm ơn bạn đã mua hàng tại Penguin E-commerce!</p>
+                                        <p className="text-sm text-gray-500">
+                                            Cảm ơn bạn đã mua hàng tại Penguin E-commerce!
+                                        </p>
                                     </div>
                                 )}
-                                
+
                                 {[
-                                    { label: "Mã đơn hàng:", value: result.orderCode, highlight: true },
-                                    { label: "Số tiền thanh toán:", value: `${result.amount?.toLocaleString("vi-VN")} VNĐ`, highlight: result.status === PaymentStatus.SUCCESS },
-                                    { label: "Ngày tạo:", value: handleTimeVn(result.createdAt) },
-                                    { label: "Mã giao dịch:", value: result.id },
-                                    { label: "Trạng thái:", value: getStatusText(result.status), highlight: true }
+                                    { label: 'Mã đơn hàng:', value: result.orderCode, highlight: true },
+                                    {
+                                        label: 'Số tiền thanh toán:',
+                                        value: `${result.amount?.toLocaleString('vi-VN')} VNĐ`,
+                                        highlight: result.status === PaymentStatus.SUCCESS,
+                                    },
+                                    { label: 'Ngày tạo:', value: handleTimeVn(result.createdAt) },
+                                    { label: 'Mã giao dịch:', value: result.id },
+                                    { label: 'Trạng thái:', value: getStatusText(result.status), highlight: true },
                                 ].map((item, index) => (
-                                    <div key={index} className="flex flex-col sm:flex-row sm:items-center py-2 border-b border-gray-100 last:border-0">
+                                    <div
+                                        key={index}
+                                        className="flex flex-col sm:flex-row sm:items-center py-2 border-b border-gray-100 last:border-0"
+                                    >
                                         <p className="text-gray-600 sm:w-1/3">{item.label}</p>
-                                        <p className={`font-medium sm:w-2/3 ${item.highlight ? 'text-purple-700' : ''}`}>{item.value}</p>
+                                        <p
+                                            className={`font-medium sm:w-2/3 ${
+                                                item.highlight ? 'text-purple-700' : ''
+                                            }`}
+                                        >
+                                            {item.value}
+                                        </p>
                                     </div>
                                 ))}
                             </div>
@@ -182,8 +225,19 @@ export default function PaymentResultPage() {
                             onClick={() => router.push('/purchase')}
                             className="bg-gradient-to-r from-purple-600 to-purple-700 text-white py-3 px-8 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 hover:shadow-lg flex items-center justify-center gap-2"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-5 w-5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                                />
                             </svg>
                             Xem đơn hàng
                         </button>
@@ -191,8 +245,19 @@ export default function PaymentResultPage() {
                             onClick={() => router.push('/')}
                             className="bg-white border border-gray-300 text-gray-700 py-3 px-8 rounded-lg font-medium transition-all duration-300 hover:bg-gray-50 hover:shadow-md flex items-center justify-center gap-2"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-5 w-5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                                />
                             </svg>
                             Quay lại trang chủ
                         </button>
