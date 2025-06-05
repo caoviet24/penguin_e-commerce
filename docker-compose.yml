@@ -1,36 +1,49 @@
 version: '3.8'
 
 services:
-  # Next.js client application
-  client:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: penguin-postgres
     environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:5000
-      - NEXT_PUBLIC_FILE_SERVER_URL=http://localhost:8000
-    depends_on:
-      - aspnet-api
-      - express-api
+      - POSTGRES_DB=penguin
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
     networks:
       - penguin-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   # ASP.NET API
   aspnet-api:
     build:
       context: ./server/AspNet
       dockerfile: Dockerfile
+    container_name: penguin-aspnet-api
     ports:
-      - "5000:80"
+      - "5000:5000"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Server=db;Database=PenguinDB;User=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True
+      - ASPNETCORE_URLS=http://+:5000
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=penguin;Username=postgres;Password=123
+      - Jwt__AccessKey=f71757666c33af119d16f86e20dde626d4dbeb3858e20aac52704d3bf430fdd81c739dd2f47a9d8b45690ae9bed91bb0
+      - Jwt__RefreshKey=1c9955f76c640f8d19a0d2681c55f7c0829e88cc9b7d7a568bedf1121087aafd354f39a76dab528eccbe4a024a6b5093
+      - Jwt__Issuer=PenguinECommerce.Admin.Prod
+      - Jwt__Audience=PenguinECommerce.AdminUsers.Prod
+      - Vnpay__ReturnUrl=http://localhost:3000/payment-result
+      - Cors__Origins__0=http://localhost:3000
+      - Cors__Origins__1=http://client:3000
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - penguin-network
     restart: unless-stopped
@@ -40,36 +53,44 @@ services:
     build:
       context: ./server/expressjs_sv
       dockerfile: Dockerfile
+    container_name: penguin-express-api
     ports:
       - "8000:8000"
     environment:
       - NODE_ENV=production
       - PORT=8000
-      - CORS_ORIGIN=http://localhost:3000
+      - CORS_ORIGIN=http://localhost:3000,http://client:3000
     volumes:
       - file-uploads:/app/uploads
     networks:
       - penguin-network
     restart: unless-stopped
 
-  # SQL Server database
-  db:
-    image: mcr.microsoft.com/mssql/server:2019-latest
-    environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=YourStrong@Passw0rd
-      - MSSQL_PID=Express
+  # Next.js client application
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: penguin-client
     ports:
-      - "1433:1433"
-    volumes:
-      - mssql-data:/var/opt/mssql
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:5000
+      - NEXT_PUBLIC_FILE_SERVER_URL=http://localhost:8000
+      - HOSTNAME=0.0.0.0
+    depends_on:
+      - aspnet-api
+      - express-api
     networks:
       - penguin-network
     restart: unless-stopped
 
 volumes:
-  mssql-data:
+  postgres-data:
+    driver: local
   file-uploads:
+    driver: local
 
 networks:
   penguin-network:
