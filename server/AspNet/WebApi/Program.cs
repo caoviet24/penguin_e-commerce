@@ -67,20 +67,24 @@ builder.Services.AddApplicationService();
 builder.Services.AddInfrastructureService(builder.Configuration);
 
 
+
 var MyAllowSpecificOrigins = "MyPolicy";
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins, policy =>
     {
-        policy.WithOrigins(
-            "http://localhost:3000",
-             "http://localhost:3003"
-        )
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials();
+        var devOrigin = builder.Configuration["Env:Dev"];
+        var prodOrigin = builder.Configuration["Env:Prod"];
+
+        policy.WithOrigins(devOrigin!, prodOrigin!)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
+
+
 var app = builder.Build();
 
 
