@@ -36,7 +36,7 @@ export default function ResponseBackBillForm({ open, onOpenChange, bill }: Respo
     const [replyVideoPreview, setReplyVideoPreview] = useState<string>('');
     const queryClient = useQueryClient();
     console.log(bill);
-    
+
     const form = useForm<ResponseBackBillFormValues>({
         resolver: zodResolver(responseBackBillSchema),
         defaultValues: {
@@ -130,7 +130,7 @@ export default function ResponseBackBillForm({ open, onOpenChange, bill }: Respo
                 <DialogTitle>
                     <span className="text-lg font-semibold">Phản hồi yêu cầu trả hàng</span>
                 </DialogTitle>
-                
+
                 <div className="space-y-6">
                     {/* Order Information */}
                     <div className="bg-gray-50 p-4 rounded-lg">
@@ -154,19 +154,19 @@ export default function ResponseBackBillForm({ open, onOpenChange, bill }: Respo
                         </div>
                     </div>
 
-                    {/* Customer Return Request */}
                     {bill.back_bill && (
                         <div className="border border-red-200 bg-red-50 p-4 rounded-lg">
                             <h3 className="text-lg font-semibold mb-3 text-red-700 flex items-center gap-2">
                                 <User className="w-5 h-5" />
                                 Yêu cầu trả hàng từ khách hàng
                             </h3>
-                            
+
                             <div className="space-y-3">
                                 <div>
-                                    <span className="font-medium text-gray-700">Khách hàng:</span> {bill.back_bill.account?.full_name || bill.back_bill.account?.username}
+                                    <span className="font-medium text-gray-700">Khách hàng:</span>{' '}
+                                    {bill.back_bill.account?.full_name || bill.back_bill.account?.username}
                                 </div>
-                                
+
                                 <div>
                                     <span className="font-medium text-gray-700">Lý do trả hàng:</span>
                                     <p className="mt-1 text-gray-900">{bill.back_bill.reason_back}</p>
@@ -210,9 +210,7 @@ export default function ResponseBackBillForm({ open, onOpenChange, bill }: Respo
 
                     {/* Product Details */}
                     <div className="bg-blue-50 p-4 rounded-lg">
-                        <h3 className="text-lg font-semibold mb-3 text-blue-700">
-                            Chi tiết sản phẩm
-                        </h3>
+                        <h3 className="text-lg font-semibold mb-3 text-blue-700">Chi tiết sản phẩm</h3>
                         <div className="space-y-3">
                             {bill.list_sale_bill_detail?.map((item) => (
                                 <div key={item.id} className="flex items-center gap-4 bg-white p-3 rounded-md">
@@ -226,7 +224,8 @@ export default function ResponseBackBillForm({ open, onOpenChange, bill }: Respo
                                     <div className="flex-1">
                                         <h4 className="font-medium">{item.product_detail.product_name}</h4>
                                         <div className="text-sm text-gray-600">
-                                            <span>Màu: {item.color}</span> | <span>Size: {item.size}</span> | <span>Số lượng: {item.quantity}</span>
+                                            <span>Màu: {item.color}</span> | <span>Size: {item.size}</span> |{' '}
+                                            <span>Số lượng: {item.quantity}</span>
                                         </div>
                                         <div className="text-sm font-medium text-green-600">
                                             {item.product_detail.sale_price.toLocaleString()} VNĐ
@@ -245,9 +244,15 @@ export default function ResponseBackBillForm({ open, onOpenChange, bill }: Respo
                                 Địa chỉ giao hàng
                             </h3>
                             <div className="space-y-2 text-sm">
-                                <div><span className="font-medium">Tên:</span> {bill.delivery_address.full_name}</div>
-                                <div><span className="font-medium">Số điện thoại:</span> {bill.delivery_address.phone}</div>
-                                <div><span className="font-medium">Địa chỉ:</span> {bill.delivery_address.address}</div>
+                                <div>
+                                    <span className="font-medium">Tên:</span> {bill.delivery_address.full_name}
+                                </div>
+                                <div>
+                                    <span className="font-medium">Số điện thoại:</span> {bill.delivery_address.phone}
+                                </div>
+                                <div>
+                                    <span className="font-medium">Địa chỉ:</span> {bill.delivery_address.address}
+                                </div>
                             </div>
                         </div>
                     )}
@@ -255,7 +260,7 @@ export default function ResponseBackBillForm({ open, onOpenChange, bill }: Respo
                     {/* Response Form */}
                     <div className="border-t pt-6">
                         <h3 className="text-lg font-semibold mb-4">Phản hồi của shop</h3>
-                        
+
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                                 <FormField
@@ -378,11 +383,7 @@ export default function ResponseBackBillForm({ open, onOpenChange, bill }: Respo
                                 </div>
 
                                 <div className="flex justify-end gap-3 pt-4">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => onOpenChange(false)}
-                                    >
+                                    <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                                         Đóng
                                     </Button>
                                     <Button

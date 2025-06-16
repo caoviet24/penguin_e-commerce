@@ -77,7 +77,7 @@ namespace Application.Statistical.Seller
 
                 result.Add(new StatisticalDto
                 {
-                    previous = $"{hour:00}:00",
+                    period = $"{hour:00}:00",
                     amount = revenue,
                     product_sold = productsSold
                 });
@@ -114,7 +114,7 @@ namespace Application.Statistical.Seller
 
                 result.Add(new StatisticalDto
                 {
-                    previous = date.ToString("dd/MM/yyyy"),
+                    period = date.ToString("dd/MM/yyyy"),
                     amount = revenue,
                     product_sold = productsSold
                 });
@@ -153,7 +153,7 @@ namespace Application.Statistical.Seller
 
                 result.Add(new StatisticalDto
                 {
-                    previous = date.ToString("dd/MM/yyyy"),
+                    period = date.ToString("dd/MM/yyyy"),
                     amount = revenue,
                     product_sold = productsSold
                 });
@@ -191,7 +191,7 @@ namespace Application.Statistical.Seller
 
                 result.Add(new StatisticalDto
                 {
-                    previous = startOfMonth.ToString("MM/yyyy"),
+                    period = startOfMonth.ToString("MM/yyyy"),
                     amount = revenue,
                     product_sold = productsSold
                 });
@@ -232,7 +232,7 @@ namespace Application.Statistical.Seller
 
                 result.Add(new StatisticalDto
                 {
-                    previous = monthStart.ToString("MM/yyyy"),
+                    period = monthStart.ToString("MM/yyyy"),
                     amount = revenue,
                     product_sold = productsSold
                 });

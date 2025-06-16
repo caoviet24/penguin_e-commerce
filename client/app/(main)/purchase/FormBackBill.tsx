@@ -173,7 +173,7 @@ export default function BackBillDForm({ open, onOpenChange, bill }: BackBillDial
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogTitle>
-                <span className="text-lg font-semibold">Yêu cầu trả hàng</span>
+                
             </DialogTitle>
             <DialogContent className="sm:max-w-[600px]">
                 <div className="bg-white p-6 w-full max-w-[600px] rounded-lg">

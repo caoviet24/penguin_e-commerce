@@ -24,7 +24,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const { data, isSuccess } = useQuery({
         queryKey: ['auth'],
         queryFn: identityService.authMe,
-        enabled: !user,
         retry: false,
     });
 
@@ -34,11 +33,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, [isSuccess, data]);
 
-    useEffect(() => {
-        console.log(user);
-        
-    }, [user]);
-    
 
     const value = useMemo(
         () => ({

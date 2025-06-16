@@ -170,9 +170,7 @@ export default function DeliveryAddressDialog({ mode, open, onOpenChange }: Deli
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogTitle>
-                <span className="text-lg font-semibold">
-                    {mode === 'create' ? 'Thêm địa chỉ mới' : 'Chỉnh sửa địa chỉ'}
-                </span>
+               {mode && ''}
             </DialogTitle>
             <DialogContent>
                 <div className="bg-white p-6 w-full max-w-[600px] rounded-lg shadow-xl">

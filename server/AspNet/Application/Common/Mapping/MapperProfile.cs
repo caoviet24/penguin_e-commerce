@@ -20,6 +20,7 @@ using Application.ProductDetail.Commands.Update;
 using Application.ProductReview.Commands.Create;
 using Application.SaleBill.Commands.Create;
 using Application.Voucher.Commands.Create;
+using Application.Voucher.Commands.Update;
 using AutoMapper;
 using Domain.Entities;
 
@@ -114,6 +115,7 @@ namespace Application.Common.Mapping
             CreateMap<VoucherUseSaleBillEntity, CreateVoucherUseBillSaleCommand>().ReverseMap();
 
             CreateMap<VoucherEntity, CreateVoucherCommand>().ReverseMap();
+            CreateMap<VoucherEntity, UpdateVoucherCommand>().ReverseMap();
             CreateMap<VoucherEntity, VoucherDto>().ReverseMap();
 
             CreateMap<BackBillEntity, BackBillDto>()
@@ -127,7 +129,7 @@ namespace Application.Common.Mapping
 
 
             CreateMap<RefreshTokenEntity, RefreshTokenDto>().ReverseMap();
-            
+
         }
     }
 }

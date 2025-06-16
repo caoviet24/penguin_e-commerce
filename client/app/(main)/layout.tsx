@@ -5,6 +5,7 @@ import Footer from '@/components/layout/footer';
 import { usePathname } from 'next/navigation';
 import Header2 from '@/components/layout/header2';
 import { ToastContainer } from 'react-toastify';
+import AiChatDialog from '@/components/AiChat/AiChatDialog';
 
 export default function MainLayOut({ children }: { children: ReactNode }) {
     const [title, setTitle] = useState<string | null>(null);
@@ -25,11 +26,10 @@ export default function MainLayOut({ children }: { children: ReactNode }) {
     return (
         <div className="h-screen flex flex-col">
             {_Header}
-            <div className='flex-1 bg-gray-100'>
-                {children}
-            </div>
+            <div className="flex-1 bg-gray-100">{children}</div>
             <Footer />
             <ToastContainer />
+            <AiChatDialog />
         </div>
     );
 }

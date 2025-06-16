@@ -55,12 +55,13 @@ namespace WebApi.Controllers
             return mediator.Send(command);
         }
 
-        [HttpPut("update")]
+        [HttpPut("update/{id}")]
         public Task<VoucherDto> update([FromBody] UpdateVoucherCommand command)
         {
-            logger.LogInformation("update voucher with id: {id}", command.voucher_id);
+            logger.LogInformation("update voucher with id: {id}", command.Id);
             return mediator.Send(command);
         }
+
 
         [HttpPut("active/{id}")]
         public Task<VoucherDto> active([FromRoute] ActiveVoucherCommand command)

@@ -30,13 +30,12 @@ export default function PaymentResultPage() {
         }
     }, []);
 
-    // Get order code from URL parameters
     useEffect(() => {
         const code = searchParams.get('orderCode');
         if (code) setOrderCode(Number(code));
     }, [searchParams]);
 
-    // Fetch payment information
+    
     useEffect(() => {
         if (!orderCode) return;
 

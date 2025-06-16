@@ -13,7 +13,7 @@ namespace Application.Statistical.Seller
         public string seller_id { get; set; } = null!;
     }
 
-    public class GetOverViewSellerHandler(IApplicationDbContext context, IMapper mapper) : IRequestHandler<GetOverViewSeller, OverViewDto>
+    public class GetOverViewSellerHandler(IApplicationDbContext context) : IRequestHandler<GetOverViewSeller, OverViewDto>
     {
         public async Task<OverViewDto> Handle(GetOverViewSeller request, CancellationToken cancellationToken)
         {

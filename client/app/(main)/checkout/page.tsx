@@ -148,7 +148,7 @@ export default function CheckOut() {
 
         createPaymentMutation.mutate(
             {
-                amount: 2000,
+                amount: totalBill,
                 description: `Hóa đơn ${Math.floor(Math.random() * 100000)}`,
                 items: storedValueTempBill.list_bill_detail.map((item: IOrderItem) => ({
                     name: item.product_detail.product_name,
@@ -435,8 +435,6 @@ export default function CheckOut() {
 
             <Dialog open={openAlert} onOpenChange={setOpenAlert}>
                 <DialogTitle>
-                  
-                        <span className="text-lg font-bold">Xác nhận thanh toán</span>
                 </DialogTitle>
                 <DialogContent>
                     <div className="bg-white p-6 w-full max-w-[600px] rounded-lg shadow-xl">

@@ -1,4 +1,4 @@
-import { IOverView, IStatisticalData, StatisticalDto } from '@/types';
+import { IOverView, IRevenueData,  } from '@/types';
 import axiosJWT from '@/utils/axios.interceptor';
 
 interface IStatisticalByUser {
@@ -14,15 +14,10 @@ export const statisticalBySellerService = {
         return response.data;
     },
 
-    getStatistical: async (data: IStatisticalByUser): Promise<StatisticalDto[]> => {
+    getStatistical: async (data: IStatisticalByUser): Promise<IRevenueData[]> => {
         const response = await axiosJWT.get('/statistical/statistics-by-seller', { params: data });
         return response.data;
     },
-
-    getStatisticalData: async (seller_id: string, period: string = 'week'): Promise<IStatisticalData[]> => {
-        const response = await axiosJWT.get(`/statistical/data-seller/${seller_id}?period=${period}`);
-        return response.data;
-    }
 };
 
 

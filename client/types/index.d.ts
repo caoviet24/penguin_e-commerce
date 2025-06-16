@@ -23,12 +23,6 @@ export interface CardData {
     icon: JSX.Element;
 }
 
-export interface Statistical {
-    date: string;
-    total: number;
-    products_sold: number;
-}
-
 export interface ResponseData<T> {
     page_number: number;
     page_size: number;
@@ -250,8 +244,8 @@ export interface IOverView {
     category_detail_count: number | null;
 }
 
-export interface IStatistical {
-    previous: string;
+export interface IRevenueData {
+    period: string;
     amount: number;
     product_sold: number;
 }
@@ -263,8 +257,3 @@ export interface IStatisticalData {
     products_sold: number;
 }
 
-export interface StatisticalDto {
-    previous: string;
-    amount: number;
-    product_sold: number;
-}

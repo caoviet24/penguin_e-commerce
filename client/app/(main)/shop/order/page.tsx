@@ -183,7 +183,7 @@ export default function OrderOfShop() {
     }
 
     return (
-        <div className="container py-8 space-y-6">
+        <div className="container py-8 space-y-6 bg-white w-full my-4">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold tracking-tight">Quản lý đơn hàng</h1>
                 <Button asChild variant="outline">

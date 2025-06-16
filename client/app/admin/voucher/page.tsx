@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { voucherService } from '@/services/voucher.service';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { IVoucher, ResponseData } from '@/types';
 import VoucherDialog from './voucher-dialog';
-import { toast, ToastContainer } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import useDebounce from '@/hooks/useDebounce';
 
 export default function VoucherManagementPage() {
     const [pageNumber, setPageNumber] = useState<number>(1);
@@ -18,46 +19,33 @@ export default function VoucherManagementPage() {
     const [selectedType, setSelectedType] = useState<string>('');
     const [selectedStatus, setSelectedStatus] = useState<string>('');
     const [showDeleted, setShowDeleted] = useState<boolean | undefined>(false);
-    
-    // Dialog state
+
     const [selectedVoucherId, setSelectedVoucherId] = useState<string | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [dialogMode, setDialogMode] = useState<'view' | 'create' | 'edit' | 'delete' | 'restore'>('view');
 
-    // Debounced search function
-    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-    
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearchTerm(searchTerm);
-        }, 500);
+    const searchDebounceValue = useDebounce(searchTerm, 500);
 
-        return () => {
-            clearTimeout(timer);
-        };
-    }, [searchTerm]);
 
     const {
         data: vouchersData,
         isLoading,
         isError,
-        refetch
     } = useQuery<ResponseData<IVoucher[]>>({
-        queryKey: ['vouchers', pageNumber, pageSize, debouncedSearchTerm, selectedType, selectedStatus, showDeleted],
+        queryKey: ['vouchers', pageNumber, pageSize, searchDebounceValue, selectedType, selectedStatus, showDeleted],
         queryFn: () =>
             voucherService.getWithPagination({
                 page_number: pageNumber,
                 page_size: pageSize,
-                search: debouncedSearchTerm || undefined,
+                search: searchDebounceValue || undefined,
                 type: selectedType || undefined,
                 status: selectedStatus || undefined,
                 is_deleted: showDeleted,
             }),
     });
 
-    // Calculate total pages
     const totalPages = vouchersData ? Math.ceil(vouchersData.total_record / pageSize) : 0;
 
-    // Handle page navigation
     const nextPage = () => {
         if (pageNumber < totalPages) {
             setPageNumber(pageNumber + 1);
@@ -70,7 +58,6 @@ export default function VoucherManagementPage() {
         }
     };
 
-    // Format date for display
     const formatDate = (dateString: Date) => {
         if (!dateString) return 'N/A';
         try {
@@ -80,14 +67,13 @@ export default function VoucherManagementPage() {
                 month: '2-digit',
                 year: 'numeric',
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
             }).format(date);
         } catch {
             return 'Invalid Date';
         }
     };
 
-    // Format discount display
     const formatDiscount = (voucher: IVoucher) => {
         if (voucher.type_discount === 'percent') {
             return `${voucher.discount}%`;
@@ -96,28 +82,18 @@ export default function VoucherManagementPage() {
         }
     };
 
-    // Handle voucher actions
-    const handleDeleteVoucher = async (voucherId: string) => {
-        try {
-            await voucherService.deleteSoft(voucherId);
-            toast.success('Phiếu giảm giá đã được xóa thành công');
-            refetch();
-        } catch {
-            toast.error('Có lỗi xảy ra khi xóa phiếu giảm giá');
-        }
+    const openDeleteDialog = (voucherId: string) => {
+        setSelectedVoucherId(voucherId);
+        setDialogMode('delete');
+        setIsDialogOpen(true);
     };
 
-    const handleRestoreVoucher = async (voucherId: string) => {
-        try {
-            await voucherService.restore(voucherId);
-            toast.success('Phiếu giảm giá đã được khôi phục thành công');
-            refetch();
-        } catch {
-            toast.error('Có lỗi xảy ra khi khôi phục phiếu giảm giá');
-        }
+    const openRestoreDialog = (voucherId: string) => {
+        setSelectedVoucherId(voucherId);
+        setDialogMode('restore');
+        setIsDialogOpen(true);
     };
 
-    // Get badge color based on voucher type
     const getVoucherTypeBadge = (type: string) => {
         switch (type.toLowerCase()) {
             case 'freeship':
@@ -133,7 +109,15 @@ export default function VoucherManagementPage() {
         <div className="p-6 bg-white">
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold">Quản lý phiếu giảm giá</h1>
-                <Button variant="outline" className="ml-auto">
+                <Button
+                    variant="outline"
+                    className="ml-auto"
+                    onClick={() => {
+                        setSelectedVoucherId(null);
+                        setDialogMode('create');
+                        setIsDialogOpen(true);
+                    }}
+                >
                     Thêm phiếu giảm giá
                 </Button>
             </div>
@@ -234,54 +218,78 @@ export default function VoucherManagementPage() {
                                     <TableCell>
                                         <div className="space-y-1">
                                             <div className="font-medium">{voucher.voucher_name}</div>
-                                            <div className="text-xs font-mono text-gray-500">{voucher.voucher_code}</div>
+                                            <div className="text-xs font-mono text-gray-500">
+                                                {voucher.voucher_code}
+                                            </div>
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getVoucherTypeBadge(voucher.voucher_type)}`}>
+                                        <span
+                                            className={`px-2 py-1 rounded-full text-xs font-semibold ${getVoucherTypeBadge(
+                                                voucher.voucher_type,
+                                            )}`}
+                                        >
                                             {voucher.voucher_type === 'freeship' ? 'Miễn phí vận chuyển' : 'Giảm giá'}
                                         </span>
                                     </TableCell>
                                     <TableCell>
-                                        <span className="font-medium">
-                                            {formatDiscount(voucher)}
-                                        </span>
+                                        <span className="font-medium">{formatDiscount(voucher)}</span>
                                     </TableCell>
                                     <TableCell>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                            voucher.status === 1 
-                                                ? 'bg-green-100 text-green-800' 
-                                                : 'bg-red-100 text-red-800'
-                                        }`}>
+                                        <span
+                                            className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                                voucher.status === 1
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-red-100 text-red-800'
+                                            }`}
+                                        >
                                             {voucher.status === 1 ? 'Kích hoạt' : 'Không kích hoạt'}
                                         </span>
                                     </TableCell>
                                     <TableCell>{formatDate(voucher.expiry_date)}</TableCell>
                                     <TableCell>
                                         <div className="text-sm">
-                                            <div>Còn lại: <span className="font-medium">{voucher.quantity_remain}</span></div>
-                                            <div>Đã dùng: <span className="font-medium">{voucher.quantity_used}</span></div>
+                                            <div>
+                                                Còn lại: <span className="font-medium">{voucher.quantity_remain}</span>
+                                            </div>
+                                            <div>
+                                                Đã dùng: <span className="font-medium">{voucher.quantity_used}</span>
+                                            </div>
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex justify-end gap-2">
-                                            <Button 
-                                                variant="outline" 
+                                            <Button
+                                                variant="outline"
                                                 size="sm"
                                                 onClick={() => {
                                                     setSelectedVoucherId(voucher.id);
+                                                    setDialogMode('view');
                                                     setIsDialogOpen(true);
                                                 }}
                                             >
                                                 Xem
                                             </Button>
-                                            
+
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className='text-blue-600 border-blue-600 hover:bg-blue-50'
+                                                onClick={() => {
+                                                    setSelectedVoucherId(voucher.id);
+                                                    setDialogMode('edit');
+                                                    setIsDialogOpen(true);
+                                                }}
+                                            >
+                                                Sửa
+                                            </Button>
+
                                             {!voucher.is_deleted ? (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
                                                     className="text-red-600 border-red-600 hover:bg-red-50"
-                                                    onClick={() => handleDeleteVoucher(voucher.id)}
+                                                    onClick={() => openDeleteDialog(voucher.id)}
                                                 >
                                                     Xóa
                                                 </Button>
@@ -290,7 +298,7 @@ export default function VoucherManagementPage() {
                                                     variant="outline"
                                                     size="sm"
                                                     className="text-green-600 border-green-600 hover:bg-green-50"
-                                                    onClick={() => handleRestoreVoucher(voucher.id)}
+                                                    onClick={() => openRestoreDialog(voucher.id)}
                                                 >
                                                     Khôi phục
                                                 </Button>
@@ -304,7 +312,6 @@ export default function VoucherManagementPage() {
                 </Table>
             </div>
 
-            {/* Pagination */}
             <div className="flex items-center justify-between mt-4">
                 <div className="text-sm text-gray-500">
                     Showing {vouchersData?.data?.length || 0} of {vouchersData?.total_record || 0} vouchers
@@ -335,13 +342,13 @@ export default function VoucherManagementPage() {
                 </div>
             </div>
 
-            {/* Voucher Details Dialog */}
-            <VoucherDialog 
+            <VoucherDialog
                 voucherId={selectedVoucherId}
                 open={isDialogOpen}
                 onOpenChange={setIsDialogOpen}
+                mode={dialogMode}
             />
-            
+
             <ToastContainer />
         </div>
     );

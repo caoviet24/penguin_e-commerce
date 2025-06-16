@@ -91,7 +91,6 @@ export default function Purchase() {
         })),
     });
 
-    // Update tab data when active tab changes
     useEffect(() => {
         const tabIndex = Object.keys(statusMap).indexOf(activeTab);
         if (tabIndex >= 0 && resultBillData[tabIndex]?.isSuccess) {
@@ -99,7 +98,6 @@ export default function Purchase() {
         }
     }, [resultBillData, activeTab, statusMap]);
 
-    // Update bill status mutation
     const updateStatusBillMutation = useMutation({
         mutationFn: (data: { status: string; id: string }) => billService.updateStatus(data),
         onSuccess: () => {
@@ -134,7 +132,7 @@ export default function Purchase() {
     );
 
     return (
-        <div className="container py-8 space-y-6">
+        <div className="container py-8 space-y-6 bg-white w-full my-4">
             <h1 className="text-3xl font-bold tracking-tight">Đơn mua</h1>
 
             <div className="flex flex-col space-y-4">

@@ -149,7 +149,7 @@ export default function Register() {
                         </div>
                     )}
 
-                    {/* Shop Banned */}
+               
                     {boothData && boothData?.is_banned && (
                         <div className="space-y-6">
                             <div className="flex items-center gap-4">

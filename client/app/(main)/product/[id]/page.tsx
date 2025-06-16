@@ -98,7 +98,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     const addToCartMutaion = useMutation({
         mutationKey: ['add-to-cart'],
         mutationFn: (data: ICreateOrderItemPayload) => orderItemService.addToCart(data),
-    })
+    });
 
     const deleteReviewMutation = useMutation({
         mutationKey: ['delete-review'],
@@ -150,10 +150,16 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
     const handleAddToCart = () => {
 
-        if(formData.quantity <= 0) {
+        if(productDetailActive && productDetailActive.stock_quantity <= 0) {
+            toast.error('Sản phẩm đã hết hàng!');
+            return;
+        }
+
+
+        if (formData.quantity <= 0) {
             toast.error('Số lượng sản phẩm phải lớn hơn 0!', {
                 position: 'top-right',
-                autoClose: 3000,    
+                autoClose: 3000,
                 hideProgressBar: false,
                 closeOnClick: true,
                 pauseOnHover: false,
@@ -192,8 +198,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 });
 
                 queryClient.invalidateQueries({
-                    queryKey: ["order-items"]
-                })
+                    queryKey: ['order-items'],
+                });
 
                 setFormData({
                     ...formData,
@@ -201,7 +207,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                     product_detail_id: '',
                     size: '',
                     color: '',
-                })
+                });
             },
         });
     };
@@ -220,7 +226,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             const date = new Date(Date.now() + randomDays * 24 * 60 * 60 * 1000);
             setDeliveryDate(date.toLocaleDateString('vi-VN'));
         }
-    }, [productData, isSuccess, formData]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [productData, isSuccess]);
 
     const totalSale = useMemo(() => {
         if (!productData?.list_product_detail) return 0;
@@ -302,6 +309,16 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                         <div className="flex items-center flex-1 gap-2">
                             <Image src="/images/shield.svg" alt="secure" width={30} height={30} />
                             <p>Đổi trả hàng trong 15 ngày</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center">
+                        <p className="w-1/5 opacity-60 capitalize">Số lượng tồn</p>
+                        <div className="flex items-center flex-1 gap-2">
+                            <p className="text-red-500">
+                                {productDetailActive && productDetailActive?.stock_quantity > 0
+                                    ? productDetailActive?.stock_quantity + ' sản phẩm'
+                                    : 'Hết hàng'}
+                            </p>
                         </div>
                     </div>
 
@@ -393,9 +410,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 <div className="flex gap-5">
                     <Avatar>
                         <AvatarImage src={boothData?.avatar} alt="booth" />
-                        <AvatarFallback>
-                            {boothData?.name?.charAt(0).toUpperCase() || 'B'}
-                        </AvatarFallback>
+                        <AvatarFallback>{boothData?.name?.charAt(0).toUpperCase() || 'B'}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col gap-1 justify-center">
                         <p className="capitalize">{boothData?.name}</p>

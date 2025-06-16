@@ -72,7 +72,7 @@ export default function DeliveryAddressTableDialog({
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogTitle>
-                <span className="text-lg font-semibold">Chọn địa chỉ giao hàng</span>
+                
             </DialogTitle>
             <DialogContent>
                 <div className="bg-white p-6 w-full max-w-[600px] rounded-lg shadow-xl">

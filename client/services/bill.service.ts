@@ -42,7 +42,7 @@ export interface ICreateBillPayload {
     list_bill_detail: IBillDetailsData[];
     list_voucher?: IVoucherData[];
     address_delivery_id: string;
-    list_order_item: string[];
+    list_order_item?: string[];
 }
 
 async function create(data: ICreateBillPayload) {

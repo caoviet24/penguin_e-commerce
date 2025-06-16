@@ -21,6 +21,7 @@ import { StatisticalChart, MetricCard, StatCard } from '@/components/charts/Stat
 import { useUser } from '@/hooks/useAuth';
 import { boothService } from '@/services/booth.service';
 import Link from 'next/link';
+import RevenueDialog from './RevenueDialog';
 
 export default function Statistical() {
     const [period, setPeriod] = useState<string>('week');
@@ -131,6 +132,14 @@ export default function Statistical() {
                             <SelectItem value="year">Năm này</SelectItem>
                         </SelectContent>
                     </Select>
+
+                    <div className="flex justify-center ">
+                        <RevenueDialog
+                            data={statisticalData || []}
+                            period={period}
+                            shopName={boothData?.name || 'Cửa hàng'}
+                        />
+                    </div>
                     <Button onClick={handleRefresh} variant="outline" size="icon">
                         <RefreshCw className="h-4 w-4" />
                     </Button>
@@ -142,7 +151,7 @@ export default function Statistical() {
                 </div>
             </div>
 
-            {/* Overview Cards */}
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
                 <MetricCard
                     title="Tổng doanh thu"
@@ -188,7 +197,7 @@ export default function Statistical() {
                 />
             </div>
 
-            {/* Detailed Stats */}
+         
             <Tabs defaultValue="revenue" className="space-y-4">
                 <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="revenue">Doanh thu</TabsTrigger>
@@ -214,7 +223,7 @@ export default function Statistical() {
                                 <StatisticalChart
                                     data={
                                         statisticalData?.map((item) => ({
-                                            name: item.previous,
+                                            name: item.period,
                                             value: item.amount,
                                             label: `${item.amount.toLocaleString()}đ`,
                                         })) || []
@@ -227,7 +236,7 @@ export default function Statistical() {
                                 <StatisticalChart
                                     data={
                                         statisticalData?.map((item) => ({
-                                            name: item.previous,
+                                            name: item.period,
                                             value: item.product_sold,
                                             label: `${item.product_sold} sản phẩm`,
                                         })) || []

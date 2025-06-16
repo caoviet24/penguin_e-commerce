@@ -21,7 +21,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
                 // optionsBuilder.UseSqlServer(_configuration.GetConnectionString("DefaultConnection"));
 
                 optionsBuilder.UseNpgsql(_configuration?.GetConnectionString("DefaultConnection") ??
-                    "Host=dpg-d118m86mcj7s739vdm8g-a.singapore-postgres.render.com;Port=5432;Database=postgre_b06h;Username=postgre_b06h_user;Password=NuJcfULmbAKTKcSvZBpOkPLl6vZkv006;Pooling=true;SSL Mode=Require;Trust Server Certificate=true");
+                    "Host=localhost;Port=5432;Database=penguin;Username=portgre;Password=123;Pooling=true;SSL Mode=Require;Trust Server Certificate=true");
         }
 
         public DbSet<AccountEntity> Accounts { get; set; } = null!;

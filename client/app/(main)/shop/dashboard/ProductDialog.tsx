@@ -261,6 +261,7 @@ export default function ProductDialog({ mode, open, onOpenChange, product }: Pro
                                                 <TableCell>{detail.stock_quantity || 0}</TableCell>
                                                 <TableCell>{detail.sale_quantity || 0}</TableCell>
                                                 <TableCell>
+                                                    <div className="flex flex-col items-center justify-center gap-2">
                                                     <span
                                                         className={`px-2 py-1 rounded-full text-xs font-semibold inline-block w-fit ${
                                                             detail.is_deleted
@@ -268,8 +269,19 @@ export default function ProductDialog({ mode, open, onOpenChange, product }: Pro
                                                                 : 'bg-orange-200 text-orange-800'
                                                         }`}
                                                     >
-                                                        {detail.is_deleted ? 'Đã xóa' : 'OK'}
+                                                        {detail.is_deleted ? 'Đã xóa' : 'Hoạt động'}
                                                     </span>
+
+                                                    <span
+                                                        className={`px-2 py-1 rounded-full text-xs font-semibold inline-block w-fit ${
+                                                            detail.stock_quantity <= 0
+                                                                ? 'bg-red-100 text-red-800'
+                                                                : 'bg-green-100 text-green-800'
+                                                        }`}
+                                                    >
+                                                        {detail.stock_quantity <= 0 ? 'Hết hàng' : 'Còn hàng'}
+                                                    </span>
+                                                    </div>
                                                 </TableCell>
 
                                                 {mode === 'edit' && (

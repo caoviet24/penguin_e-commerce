@@ -77,12 +77,12 @@ export default function ProductsOfBooth({ boothId }: ProductsOfBoothProps) {
         let startPage = Math.max(1, pageNumber - Math.floor(displayCount / 2));
         const endPage = Math.min(totalPages, startPage + displayCount - 1);
 
-        // Adjust if we're near the end
+
         if (endPage - startPage + 1 < displayCount) {
             startPage = Math.max(1, endPage - displayCount + 1);
         }
 
-        // Previous button
+
         items.push(
             <Button
                 key="prev"
@@ -96,7 +96,6 @@ export default function ProductsOfBooth({ boothId }: ProductsOfBoothProps) {
             </Button>,
         );
 
-        // First page
         if (startPage > 1) {
             items.push(
                 <Button
@@ -109,7 +108,6 @@ export default function ProductsOfBooth({ boothId }: ProductsOfBoothProps) {
                 </Button>,
             );
 
-            // Ellipsis if needed
             if (startPage > 2) {
                 items.push(
                     <Button key="ellipsis1" variant="outline" className="h-9 w-9 p-0" disabled>
@@ -119,7 +117,6 @@ export default function ProductsOfBooth({ boothId }: ProductsOfBoothProps) {
             }
         }
 
-        // Page numbers
         for (let i = startPage; i <= endPage; i++) {
             items.push(
                 <Button
@@ -154,7 +151,6 @@ export default function ProductsOfBooth({ boothId }: ProductsOfBoothProps) {
             );
         }
 
-        // Next button
         items.push(
             <Button
                 key="next"
@@ -262,13 +258,13 @@ export default function ProductsOfBooth({ boothId }: ProductsOfBoothProps) {
                                                                 className="w-10 h-10 rounded-md object-cover"
                                                             />
                                                             <span className="text-sm font-medium line-clamp-1">
-                                                                {detail.product_name}
+                                                                {product.product_desc}
                                                             </span>
                                                         </div>
                                                     ))}
                                                     {product.list_product_detail.length > 1 && (
                                                         <span className="text-xs text-muted-foreground">
-                                                            +{product.list_product_detail.length - 1} more variants
+                                                            +{product.list_product_detail.length} sản phẩm khác
                                                         </span>
                                                     )}
                                                 </div>

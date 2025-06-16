@@ -1,402 +1,490 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { voucherService } from '@/services/voucher.service';
-import { IVoucher } from '@/types';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { IVoucher } from '@/types';
+import { voucherService } from '@/services/voucher.service';
 import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { Loader } from 'lucide-react';
 
 interface VoucherDialogProps {
     voucherId: string | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    mode?: 'view' | 'create' | 'edit' | 'delete' | 'restore';
 }
 
-export default function VoucherDialog({ voucherId, open, onOpenChange }: VoucherDialogProps) {
+const getVoucherSchema = (mode: string | undefined) => {
+    const baseSchema = {
+        voucher_name: z.string().min(1, { message: 'Tên phiếu giảm giá không được để trống' }),
+        voucher_type: z.string().min(1, { message: 'Loại phiếu giảm giá không được để trống' }),
+        expiry_date: z.date({ required_error: 'Vui lòng chọn ngày hết hạn' }),
+        quantity_remain: z.coerce.number().min(1, { message: 'Số lượng phiếu phải lớn hơn 0' }),
+        discount: z.coerce.number().min(1, { message: 'Giá trị giảm giá phải lớn hơn 0' }),
+        type_discount: z.string().min(1, { message: 'Loại giảm giá không được để trống' }),
+        apply_for: z.string().min(1, { message: 'Đối tượng áp dụng không được để trống' }),
+        status: z.coerce.number(),
+    };
+
+    if (mode === 'create') {
+        return z.object({
+            ...baseSchema,
+            voucher_code: z.string().optional(),
+        });
+    }
+
+    return z.object({
+        ...baseSchema,
+        voucher_code: z.string().min(1, { message: 'Mã phiếu giảm giá không được để trống' }),
+    });
+};
+
+type VoucherFormValues = z.infer<ReturnType<typeof getVoucherSchema>>;
+
+export default function VoucherDialog({ voucherId, open, onOpenChange, mode }: VoucherDialogProps) {
     const queryClient = useQueryClient();
-    const [isEditing, setIsEditing] = useState(false);
 
-    const {
-        register,
-        handleSubmit,
-        reset,
-        formState: { errors },
-    } = useForm<IVoucher>();
-
-    // Fetch voucher details
-    const {
-        data: voucher,
-        isLoading,
-        isError,
-    } = useQuery<IVoucher>({
-        queryKey: ['voucher', voucherId],
-        queryFn: () => voucherService.getById(voucherId as string),
-        enabled: !!voucherId && open,
+    const form = useForm<VoucherFormValues>({
+        resolver: zodResolver(getVoucherSchema(mode)),
+        defaultValues: {
+            voucher_name: '',
+            voucher_code: '',
+            voucher_type: 'discount',
+            expiry_date: new Date(),
+            quantity_remain: 0,
+            discount: 0,
+            type_discount: 'percent',
+            apply_for: 'all',
+            status: 1,
+        },
     });
 
-    // Reset form when voucher data changes
+    const { data: voucherData, isLoading: isLoadingVoucher } = useQuery({
+        queryKey: ['voucher', voucherId],
+        queryFn: () => (voucherId ? voucherService.getById(voucherId) : null),
+        enabled: !!voucherId && open,
+        staleTime: 0,
+    });
+
     useEffect(() => {
-        if (voucher) {
-            reset(voucher);
+        if (voucherData) {
+            form.reset({
+                voucher_name: voucherData.voucher_name,
+                voucher_code: voucherData.voucher_code,
+                voucher_type: voucherData.voucher_type,
+                expiry_date: new Date(voucherData.expiry_date),
+                quantity_remain: voucherData.quantity_remain,
+                discount: voucherData.discount,
+                type_discount: voucherData.type_discount,
+                apply_for: voucherData.apply_for,
+                status: voucherData.status,
+            });
+        } else if (!voucherId) {
+            form.reset({
+                voucher_name: '',
+                voucher_code: '',
+                voucher_type: 'discount',
+                expiry_date: new Date(),
+                quantity_remain: 0,
+                discount: 0,
+                type_discount: 'percent',
+                apply_for: 'all',
+                status: 1,
+            });
         }
-    }, [voucher, reset]);
+    }, [voucherData, voucherId, form]);
 
-    const onSubmit = async (data: IVoucher) => {
-        try {
-            await voucherService.update(voucherId as string, data);
-            toast.success('Cập nhật phiếu giảm giá thành công');
-            queryClient.invalidateQueries({ queryKey: ['voucher', voucherId] });
+    // Update the form resolver when mode changes
+    useEffect(() => {
+        form.clearErrors();
+        form.setFocus('voucher_name');
+    }, [mode, form]);
+
+    const createMutation = useMutation({
+        mutationFn: (data: Partial<IVoucher>) => voucherService.create(data),
+        onSuccess: () => {
+            toast.success('Thêm phiếu giảm giá thành công');
             queryClient.invalidateQueries({ queryKey: ['vouchers'] });
-            setIsEditing(false);
-        } catch {
+            onOpenChange(false);
+        },
+        onError: () => {
+            toast.error('Có lỗi xảy ra khi thêm phiếu giảm giá');
+        },
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: (data: Partial<IVoucher>) =>
+            voucherService.update({
+                id: voucherId!,
+                ...data,
+            }),
+        onSuccess: () => {
+            toast.success('Cập nhật phiếu giảm giá thành công');
+            queryClient.invalidateQueries({ queryKey: ['vouchers'] });
+            onOpenChange(false);
+        },
+        onError: () => {
             toast.error('Có lỗi xảy ra khi cập nhật phiếu giảm giá');
+        },
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (id: string) => voucherService.deleteSoft(id),
+        onSuccess: () => {
+            toast.success('Xóa phiếu giảm giá thành công');
+            queryClient.invalidateQueries({ queryKey: ['vouchers'] });
+            onOpenChange(false);
+        },
+        onError: () => {
+            toast.error('Có lỗi xảy ra khi xóa phiếu giảm giá');
+        },
+    });
+
+    const restoreMutation = useMutation({
+        mutationFn: (id: string) => voucherService.restore(id),
+        onSuccess: () => {
+            toast.success('Khôi phục phiếu giảm giá thành công');
+            queryClient.invalidateQueries({ queryKey: ['vouchers'] });
+            onOpenChange(false);
+        },
+        onError: () => {
+            toast.error('Có lỗi xảy ra khi khôi phục phiếu giảm giá');
+        },
+    });
+    const onSubmit = (values: VoucherFormValues) => {
+        const data: Partial<IVoucher> = {
+            voucher_name: values.voucher_name,
+            voucher_type: values.voucher_type,
+            expiry_date: values.expiry_date,
+            quantity_remain: values.quantity_remain,
+            discount: values.discount,
+            type_discount: values.type_discount,
+            apply_for: values.apply_for,
+            status: values.status,
+        };
+
+        // Only include voucher_code for non-create modes or if it's provided
+        if (mode !== 'create' || values.voucher_code) {
+            data.voucher_code = values.voucher_code;
+        }
+
+        console.log('Submitting data:', data);
+
+        if (mode === 'create') {
+            createMutation.mutate(data);
+        } else if (mode === 'edit' && voucherId) {
+            updateMutation.mutate(data);
+        } else if (mode === 'delete' && voucherId) {
+            deleteMutation.mutate(voucherId);
+        } else if (mode === 'restore' && voucherId) {
+            restoreMutation.mutate(voucherId);
         }
     };
 
-    const handleDialogClose = () => {
-        setIsEditing(false);
-        onOpenChange(false);
-    };
-
-    // Get badge color based on voucher type
-    const getVoucherTypeBadge = (type: string) => {
-        switch (type.toLowerCase()) {
-            case 'freeship':
-                return 'bg-green-100 text-green-800';
-            case 'discount':
-                return 'bg-blue-100 text-blue-800';
+    const getDialogTitle = () => {
+        switch (mode) {
+            case 'create':
+                return 'Thêm phiếu giảm giá mới';
+            case 'edit':
+                return 'Chỉnh sửa phiếu giảm giá';
+            case 'delete':
+                return 'Xóa phiếu giảm giá';
+            case 'restore':
+                return 'Khôi phục phiếu giảm giá';
             default:
-                return 'bg-gray-100 text-gray-800';
+                return 'Chi tiết phiếu giảm giá';
         }
     };
 
-    // Format discount value
-    const formatDiscount = (voucher: IVoucher) => {
-        if (!voucher) return '';
-
-        if (voucher.type_discount === 'percent') {
-            return `${voucher.discount}%`;
-        } else {
-            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(voucher.discount);
-        }
-    };
-
-    // Format date for display
-    const formatDate = (date: Date) => {
-        if (!date) return 'N/A';
-        try {
-            return new Intl.DateTimeFormat('vi-VN', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-            }).format(date);
-        } catch {
-            return 'Invalid Date';
-        }
-    };
+    if (isLoadingVoucher) {
+        return (
+            <Dialog open={open} onOpenChange={onOpenChange}>
+                <DialogContent className="sm:max-w-[550px]">
+                    <DialogHeader>
+                        <DialogTitle>Đang tải...</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex items-center justify-center py-6">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        );
+    }
 
     return (
-        <Dialog open={open} onOpenChange={handleDialogClose}>
-            <DialogContent className="sm:max-w-[625px]">
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-[550px]">
                 <DialogHeader>
-                    <DialogTitle>{isEditing ? 'Chỉnh sửa phiếu giảm giá' : 'Thông tin phiếu giảm giá'}</DialogTitle>
+                    <DialogTitle>{getDialogTitle()}</DialogTitle>
                 </DialogHeader>
 
-                {isLoading && <div className="py-8 text-center">Đang tải...</div>}
-                {isError && (
-                    <div className="py-8 text-center text-red-500">
-                        Có lỗi xảy ra khi tải thông tin phiếu giảm giá. Vui lòng thử lại.
-                    </div>
-                )}
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <div className={`grid gap-4 ${mode === 'create' ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                            <FormField
+                                control={form.control}
+                                name="voucher_name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Tên phiếu giảm giá</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Nhập tên phiếu giảm giá"
+                                                {...field}
+                                                disabled={mode === 'view'}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                {voucher && !isLoading && !isError && (
-                    <form onSubmit={handleSubmit(onSubmit)}>
-                        <div className="grid gap-6 py-4">
-                            {/* Basic Info Section */}
-                            <div className="space-y-4">
-                                <h3 className="font-medium text-lg">Thông tin cơ bản</h3>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Tên phiếu giảm giá</label>
-                                        {isEditing ? (
-                                            <>
+                            {mode !== 'create' && (
+                                <FormField
+                                    control={form.control}
+                                    name="voucher_code"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Mã phiếu giảm giá</FormLabel>
+                                            <FormControl>
                                                 <Input
-                                                    {...register('voucher_name', {
-                                                        required: 'Tên không được để trống',
-                                                    })}
-                                                    className="w-full"
+                                                    placeholder="Nhập mã phiếu giảm giá"
+                                                    {...field}
+                                                    disabled={mode === 'view'}
                                                 />
-                                                {errors.voucher_name && (
-                                                    <p className="text-sm text-red-500">
-                                                        {errors.voucher_name.message}
-                                                    </p>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <div className="py-2 px-3 border rounded-md bg-gray-50">
-                                                {voucher.voucher_name}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Mã phiếu giảm giá</label>
-                                        <div className="py-2 px-3 border rounded-md bg-gray-50 font-mono">
-                                            {voucher.voucher_code}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Loại phiếu giảm giá</label>
-                                        {isEditing ? (
-                                            <>
-                                                <select
-                                                    {...register('voucher_type', {
-                                                        required: 'Loại không được để trống',
-                                                    })}
-                                                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none"
-                                                >
-                                                    <option value="discount">Giảm giá</option>
-                                                    <option value="freeship">Miễn phí vận chuyển</option>
-                                                </select>
-                                                {errors.voucher_type && (
-                                                    <p className="text-sm text-red-500">
-                                                        {errors.voucher_type.message}
-                                                    </p>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <div className="py-2 px-3 border rounded-md bg-gray-50">
-                                                <span
-                                                    className={`px-2 py-1 rounded-full text-xs font-semibold ${getVoucherTypeBadge(
-                                                        voucher.voucher_type,
-                                                    )}`}
-                                                >
-                                                    {voucher.voucher_type === 'freeship'
-                                                        ? 'Miễn phí vận chuyển'
-                                                        : 'Giảm giá'}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Trạng thái</label>
-                                        {isEditing ? (
-                                            <>
-                                                <select
-                                                    {...register('status', {
-                                                        required: 'Trạng thái không được để trống',
-                                                    })}
-                                                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none"
-                                                >
-                                                    <option value={1}>Kích hoạt</option>
-                                                    <option value={0}>Không kích hoạt</option>
-                                                </select>
-                                                {errors.status && (
-                                                    <p className="text-sm text-red-500">{errors.status.message}</p>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <div className="py-2 px-3 border rounded-md bg-gray-50">
-                                                <span
-                                                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                                        voucher.status === 1
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : 'bg-red-100 text-red-800'
-                                                    }`}
-                                                >
-                                                    {voucher.status === 1 ? 'Kích hoạt' : 'Không kích hoạt'}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Discount Section */}
-                            <div className="space-y-4">
-                                <h3 className="font-medium text-lg">Thông tin giảm giá</h3>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Giá trị</label>
-                                        {isEditing ? (
-                                            <>
-                                                <Input
-                                                    type="number"
-                                                    {...register('discount', {
-                                                        required: 'Giá trị không được để trống',
-                                                        min: { value: 1, message: 'Giá trị phải lớn hơn 0' },
-                                                    })}
-                                                    className="w-full"
-                                                />
-                                                {errors.discount && (
-                                                    <p className="text-sm text-red-500">{errors.discount.message}</p>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <div className="py-2 px-3 border rounded-md bg-gray-50 font-medium">
-                                                {formatDiscount(voucher)}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Loại giảm giá</label>
-                                        {isEditing ? (
-                                            <>
-                                                <select
-                                                    {...register('type_discount', {
-                                                        required: 'Loại giảm giá không được để trống',
-                                                    })}
-                                                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none"
-                                                >
-                                                    <option value="percent">Phần trăm (%)</option>
-                                                    <option value="amount">Số tiền cố định</option>
-                                                </select>
-                                                {errors.type_discount && (
-                                                    <p className="text-sm text-red-500">
-                                                        {errors.type_discount.message}
-                                                    </p>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <div className="py-2 px-3 border rounded-md bg-gray-50">
-                                                {voucher.type_discount === 'percent'
-                                                    ? 'Phần trăm (%)'
-                                                    : 'Số tiền cố định'}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Usage Section */}
-                            <div className="space-y-4">
-                                <h3 className="font-medium text-lg">Thông tin sử dụng</h3>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Ngày hết hạn</label>
-                                        {isEditing ? (
-                                            <>
-                                                <Input
-                                                    type="datetime-local"
-                                                    {...register('expiry_date', {
-                                                        required: 'Ngày hết hạn không được để trống',
-                                                    })}
-                                                    className="w-full"
-                                                />
-                                                {errors.expiry_date && (
-                                                    <p className="text-sm text-red-500">{errors.expiry_date.message}</p>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <div className="py-2 px-3 border rounded-md bg-gray-50">
-                                                {formatDate(new Date(voucher.expiry_date))}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Áp dụng cho</label>
-                                        {isEditing ? (
-                                            <>
-                                                <Input {...register('apply_for')} className="w-full" />
-                                            </>
-                                        ) : (
-                                            <div className="py-2 px-3 border rounded-md bg-gray-50">
-                                                {voucher.apply_for || 'Tất cả'}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Số lượng còn lại</label>
-                                        {isEditing ? (
-                                            <>
-                                                <Input
-                                                    type="number"
-                                                    {...register('quantity_remain', {
-                                                        required: 'Số lượng không được để trống',
-                                                        min: { value: 0, message: 'Số lượng không được âm' },
-                                                    })}
-                                                    className="w-full"
-                                                />
-                                                {errors.quantity_remain && (
-                                                    <p className="text-sm text-red-500">
-                                                        {errors.quantity_remain.message}
-                                                    </p>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <div className="py-2 px-3 border rounded-md bg-gray-50">
-                                                {voucher.quantity_remain}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Số lượng đã sử dụng</label>
-                                        <div className="py-2 px-3 border rounded-md bg-gray-50">
-                                            {voucher.quantity_used}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Additional Info */}
-                            <div className="grid grid-cols-1 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">ID Người tạo</label>
-                                    <div className="py-2 px-3 border rounded-md bg-gray-50 font-mono text-sm">
-                                        {voucher.created_by}
-                                    </div>
-                                </div>
-                            </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
                         </div>
 
-                        <DialogFooter>
-                            {isEditing ? (
-                                <>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => {
-                                            setIsEditing(false);
-                                            reset(voucher);
-                                        }}
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="voucher_type"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Loại phiếu giảm giá</FormLabel>
+                                        <Select
+                                            disabled={mode === 'view'}
+                                            onValueChange={field.onChange}
+                                            defaultValue={field.value}
+                                            value={field.value}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Chọn loại phiếu giảm giá" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="discount">Giảm giá</SelectItem>
+                                                <SelectItem value="freeship">Miễn phí vận chuyển</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="apply_for"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Áp dụng cho</FormLabel>
+                                        <Select
+                                            disabled={mode === 'view'}
+                                            onValueChange={field.onChange}
+                                            defaultValue={field.value}
+                                            value={field.value}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Chọn đối tượng áp dụng" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="all">Tất cả sản phẩm</SelectItem>
+                                                <SelectItem value="category">Danh mục</SelectItem>
+                                                <SelectItem value="product">Sản phẩm cụ thể</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="discount"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Giá trị giảm giá</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="number"
+                                                placeholder="Nhập giá trị giảm giá"
+                                                {...field}
+                                                disabled={mode === 'view'}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="type_discount"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Loại giảm giá</FormLabel>
+                                        <Select
+                                            disabled={mode === 'view'}
+                                            onValueChange={field.onChange}
+                                            defaultValue={field.value}
+                                            value={field.value}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Chọn loại giảm giá" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="percent">Phần trăm (%)</SelectItem>
+                                                <SelectItem value="amount">Số tiền cụ thể</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="expiry_date"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Ngày hết hạn</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="date"
+                                                {...field}
+                                                value={
+                                                    field.value ? new Date(field.value).toISOString().split('T')[0] : ''
+                                                }
+                                                onChange={(e) => {
+                                                    field.onChange(e.target.value ? new Date(e.target.value) : null);
+                                                }}
+                                                disabled={mode === 'view'}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="quantity_remain"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Số lượng</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="number"
+                                                placeholder="Nhập số lượng phiếu giảm giá"
+                                                {...field}
+                                                disabled={mode === 'view'}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <FormField
+                            control={form.control}
+                            name="status"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Trạng thái</FormLabel>
+                                    <Select
+                                        disabled={mode === 'view'}
+                                        onValueChange={(value) => field.onChange(parseInt(value))}
+                                        defaultValue={field.value.toString()}
+                                        value={field.value.toString()}
                                     >
-                                        Hủy
-                                    </Button>
-                                    <Button type="submit">Lưu thay đổi</Button>
-                                </>
-                            ) : (
-                                <>
-                                    <Button type="button" variant="outline" onClick={handleDialogClose}>
-                                        Đóng
-                                    </Button>
-                                    <Button type="button" onClick={() => setIsEditing(true)}>
-                                        Chỉnh sửa
-                                    </Button>
-                                </>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Chọn trạng thái" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="1">Kích hoạt</SelectItem>
+                                            <SelectItem value="0">Không kích hoạt</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                onClick={() => onOpenChange(false)}
+                                variant="outline"
+                                disabled={mode === 'view'}
+                            >
+                                Đóng
+                            </Button>
+
+                            {mode === 'create' && (
+                                <Button type="submit" disabled={createMutation.isPending}>
+                                    Thêm phiếu giảm giá
+                                    {createMutation.isPending && <Loader className="ml-2 h-4 w-4 animate-spin" />}
+                                </Button>
+                            )}
+
+                            {mode === 'edit' && (
+                                <Button type="submit" disabled={updateMutation.isPending}>
+                                    Cập nhật phiếu giảm giá
+                                    {updateMutation.isPending && <Loader className="ml-2 h-4 w-4 animate-spin" />}
+                                </Button>
+                            )}
+
+                            {mode === 'delete' && (
+                                <Button type="submit" disabled={deleteMutation.isPending}>
+                                    Xóa phiếu giảm giá
+                                    {deleteMutation.isPending && <Loader className="ml-2 h-4 w-4 animate-spin" />}
+                                </Button>
+                            )}
+
+                            {mode === 'restore' && (
+                                <Button type="submit" disabled={restoreMutation.isPending}>
+                                    Khôi phục phiếu giảm giá
+                                    {restoreMutation.isPending && <Loader className="ml-2 h-4 w-4 animate-spin" />}
+                                </Button>
                             )}
                         </DialogFooter>
                     </form>
-                )}
+                </Form>
             </DialogContent>
         </Dialog>
     );

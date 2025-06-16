@@ -29,10 +29,10 @@ namespace Application.Identities.Commands.SignUp
     {
         public async Task<AccountDto> Handle(CreateSignUpCommand request, CancellationToken cancellationToken)
         {
-            var checkExitAccount = await context.Accounts.FirstOrDefaultAsync(a => a.username == request.username, cancellationToken);
+            var checkExitAccount = await context.Accounts.FirstOrDefaultAsync(a => a.username == request.username || a.email == request.username, cancellationToken);
             if (checkExitAccount?.Id != null)
             {
-                throw new BadRequestException("username is already exist");
+                throw new BadRequestException("Tài khoản đã tồn tại.");
             }
 
             var newAccount = new AccountEntity

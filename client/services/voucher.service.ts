@@ -1,6 +1,5 @@
 import { IVoucher, ResponseData } from '@/types';
 import axiosJWT from '@/utils/axios.interceptor';
-import delay from '@/utils/delay';
 
 async function getAll(): Promise<IVoucher[]> {
     const res = await axiosJWT.get(`/voucher/get-all`);
@@ -41,14 +40,12 @@ async function getById(id: string): Promise<IVoucher> {
 }
 
 async function create(data: Partial<IVoucher>): Promise<IVoucher> {
-    await delay(1000);
     const res = await axiosJWT.post(`/voucher/create`, data);
     return res.data;
 }
 
-async function update(id: string, data: Partial<IVoucher>): Promise<IVoucher> {
-    await delay(1000);
-    const res = await axiosJWT.put(`/voucher/update/${id}`, data);
+async function update( data: Partial<IVoucher>): Promise<IVoucher> {
+    const res = await axiosJWT.put(`/voucher/update/${data.id}`, data);
     return res.data;
 }
 
@@ -69,5 +66,5 @@ export const voucherService = {
     create,
     update,
     deleteSoft,
-    restore
+    restore,
 };
